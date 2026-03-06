@@ -29,15 +29,17 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Wavy divider SVG — overlaps between left and right */}
-      <div className="absolute top-0 bottom-0 left-[45%] md:left-[47%] w-[10%] md:w-[6%] z-20 pointer-events-none">
+      {/* Zigzag divider — photo side bites into text side */}
+      <div className="absolute top-0 bottom-0 left-[35%] md:left-[38%] w-[18%] md:w-[14%] z-20 pointer-events-none">
         <svg
-          viewBox="0 0 100 1000"
+          viewBox="0 0 200 1000"
           preserveAspectRatio="none"
           className="h-full w-full"
-          fill="hsl(70 7% 16%)"
         >
-          <path d="M100,0 L100,0 L0,0 C30,80 70,160 40,250 C10,340 80,420 50,500 C20,580 70,660 40,750 C10,840 60,920 50,1000 L100,1000 Z" />
+          <path
+            d="M200,0 L200,0 L80,0 L0,100 L160,200 L0,300 L160,400 L0,500 L160,600 L0,700 L160,800 L0,900 L80,1000 L200,1000 Z"
+            className="fill-secondary"
+          />
         </svg>
       </div>
 
