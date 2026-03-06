@@ -28,42 +28,42 @@
 
 @layer base {
   :root {
-    /* Doorium palette: Platinum / Chamoisee / Smoky Black / Jet */
-    --background: 0 0% 89%;
-    --foreground: 40 10% 8%;
+    /* Exact Doorium palette */
+    --background: 240 2% 90%;          /* #E4E4E5 Platinum */
+    --foreground: 50 14% 8%;           /* #181712 Smoky Black */
 
-    --card: 0 0% 89%;
-    --card-foreground: 40 10% 8%;
+    --card: 240 2% 90%;
+    --card-foreground: 50 14% 8%;
 
-    --popover: 0 0% 89%;
-    --popover-foreground: 40 10% 8%;
+    --popover: 240 2% 90%;
+    --popover-foreground: 50 14% 8%;
 
-    --primary: 30 24% 48%;
-    --primary-foreground: 0 0% 89%;
+    --primary: 34 24% 48%;             /* #987E5D Chamoisee */
+    --primary-foreground: 240 2% 90%;
 
-    --secondary: 72 4% 16%;
-    --secondary-foreground: 0 0% 89%;
+    --secondary: 70 7% 16%;            /* #2B2C26 Jet */
+    --secondary-foreground: 240 2% 90%;
 
-    --muted: 72 4% 16%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 70 7% 16%;
+    --muted-foreground: 240 2% 60%;
 
-    --accent: 30 24% 48%;
-    --accent-foreground: 0 0% 89%;
+    --accent: 34 24% 48%;
+    --accent-foreground: 240 2% 90%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 30 10% 30%;
-    --input: 30 10% 30%;
-    --ring: 30 24% 48%;
+    --border: 34 12% 30%;
+    --input: 34 12% 30%;
+    --ring: 34 24% 48%;
 
     --radius: 1rem;
 
-    --doorium-platinum: 0 0% 89%;
-    --doorium-chamoisee: 30 24% 48%;
-    --doorium-smoky: 40 10% 8%;
-    --doorium-jet: 72 4% 16%;
-    --doorium-text-light: 0 0% 89%;
+    --doorium-platinum: 240 2% 90%;       /* #E4E4E5 */
+    --doorium-chamoisee: 34 24% 48%;      /* #987E5D */
+    --doorium-smoky: 50 14% 8%;           /* #181712 */
+    --doorium-jet: 70 7% 16%;             /* #2B2C26 */
+    --doorium-text-light: 240 2% 90%;     /* #E4E4E5 */
 
     --sidebar-background: 40 10% 8%;
     --sidebar-foreground: 0 0% 89%;
@@ -76,33 +76,33 @@
   }
 
   .dark {
-    --background: 40 10% 8%;
-    --foreground: 0 0% 89%;
+    --background: 50 14% 8%;           /* #181712 */
+    --foreground: 240 2% 90%;          /* #E4E4E5 */
 
-    --card: 72 4% 16%;
-    --card-foreground: 0 0% 89%;
+    --card: 70 7% 16%;
+    --card-foreground: 240 2% 90%;
 
-    --popover: 72 4% 16%;
-    --popover-foreground: 0 0% 89%;
+    --popover: 70 7% 16%;
+    --popover-foreground: 240 2% 90%;
 
-    --primary: 30 24% 48%;
-    --primary-foreground: 0 0% 89%;
+    --primary: 34 24% 48%;
+    --primary-foreground: 240 2% 90%;
 
-    --secondary: 72 4% 16%;
-    --secondary-foreground: 0 0% 89%;
+    --secondary: 70 7% 16%;
+    --secondary-foreground: 240 2% 90%;
 
-    --muted: 72 4% 16%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 70 7% 16%;
+    --muted-foreground: 240 2% 60%;
 
-    --accent: 30 24% 48%;
-    --accent-foreground: 40 10% 8%;
+    --accent: 34 24% 48%;
+    --accent-foreground: 50 14% 8%;
 
     --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 89%;
+    --destructive-foreground: 240 2% 90%;
 
-    --border: 30 10% 30%;
-    --input: 72 4% 16%;
-    --ring: 30 24% 48%;
+    --border: 34 12% 30%;
+    --input: 70 7% 16%;
+    --ring: 34 24% 48%;
   }
 }
 
