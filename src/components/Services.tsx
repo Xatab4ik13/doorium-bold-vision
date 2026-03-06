@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import serviceInterior from "@/assets/service-interior-doors.jpg";
 import serviceEntrance from "@/assets/service-entrance-doors.jpg";
 import serviceRepair from "@/assets/service-repair.jpg";
