@@ -88,17 +88,16 @@ export const FeatureCarousel = React.forwardRef<HTMLDivElement, FeatureCarouselP
                 {/* Framed card */}
                 <div
                   className={cn(
-                    "border p-2.5 md:p-3.5 transition-all duration-500",
+                    "rounded-3xl overflow-hidden transition-all duration-500",
                     isCenter
-                      ? "border-primary/40 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)]"
-                      : "border-primary/10 cursor-pointer"
+                      ? "shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)]"
+                      : "cursor-pointer"
                   )}
                   style={{
                     width: "clamp(260px, 26vw, 400px)",
-                    background: "hsl(50 14% 10% / 0.5)",
                   }}
                 >
-                  <div className="relative overflow-hidden" style={{ aspectRatio: "3/4" }}>
+                  <div className="relative overflow-hidden rounded-3xl" style={{ aspectRatio: "3/4" }}>
                     <img
                       src={image.src}
                       alt={image.alt}
