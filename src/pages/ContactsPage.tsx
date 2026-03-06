@@ -101,6 +101,7 @@ const ContactsPage = () => {
 
       {/* Contact form */}
       <ContactForm />
+      <Footer />
     </div>
   );
 };
