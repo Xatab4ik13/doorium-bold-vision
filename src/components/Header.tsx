@@ -48,7 +48,7 @@ const MagneticLink = ({ href, label }: { href: string; label: string }) => {
 
 const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState<string | null>(null);
+  
 
   return (
     <>
