@@ -4,19 +4,16 @@ import serviceRepair from "@/assets/service-repair.jpg";
 
 const services = [
   {
-    num: "01",
     title: "УСТАНОВКА\nМЕЖКОМНАТНЫХ\nДВЕРЕЙ",
     desc: "Профессиональный монтаж любой сложности с гарантией идеальной геометрии и бесшумной работы механизмов.",
     image: serviceInterior,
   },
   {
-    num: "02",
     title: "УСТАНОВКА\nВХОДНЫХ\nДВЕРЕЙ",
     desc: "Надёжная установка входных дверей с полной герметизацией, утеплением и регулировкой фурнитуры.",
     image: serviceEntrance,
   },
   {
-    num: "03",
     title: "РЕКЛАМАЦИЯ",
     desc: "Устранение дефектов, регулировка и восстановление дверных конструкций любых производителей.",
     image: serviceRepair,
@@ -48,7 +45,7 @@ const Services = () => {
           const isEven = i % 2 === 0;
           return (
             <a
-              key={service.num}
+              key={service.title}
               href="#contacts"
               className="group block relative cursor-pointer"
             >
@@ -61,16 +58,13 @@ const Services = () => {
                     : "polygon(0 8%, 100% 0, 100% 92%, 0 100%)",
                 }}
               >
-                {/* Background image */}
+                {/* Background image — no overlay */}
                 <img
                   src={service.image}
                   alt=""
                   aria-hidden="true"
                   className="absolute inset-0 w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-[1.2s] ease-out"
                 />
-
-                {/* Dark overlay */}
-                <div className="absolute inset-0 bg-secondary/80 group-hover:bg-secondary/60 transition-colors duration-700" />
 
                 {/* Diagonal border lines */}
                 <div
@@ -82,30 +76,20 @@ const Services = () => {
                 />
 
                 <div className="relative z-10 px-8 md:px-16 lg:px-24 flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-16">
-                  {/* Large number */}
-                  <span
-                    className="font-display-stencil text-[6rem] md:text-[8rem] lg:text-[10rem] leading-none text-primary/20 group-hover:text-primary/40 transition-colors duration-500 select-none"
-                    style={{
-                      transform: isEven ? "rotate(-3deg)" : "rotate(3deg)",
-                    }}
-                  >
-                    {service.num}
-                  </span>
-
-                  {/* Title */}
+                  {/* Title — positioned left where numbers used to be */}
                   <div className="flex-1">
-                    <h3 className="font-display-stencil text-2xl md:text-3xl lg:text-4xl text-doorium-platinum leading-[1.1] whitespace-pre-line group-hover:text-primary transition-colors duration-500">
+                    <h3 className="font-display-stencil text-2xl md:text-3xl lg:text-4xl text-doorium-platinum leading-[1.1] whitespace-pre-line group-hover:text-primary transition-colors duration-500 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                       {service.title}
                     </h3>
                   </div>
 
                   {/* Description */}
-                  <p className="hidden md:block max-w-xs font-body text-sm text-doorium-platinum/50 group-hover:text-doorium-platinum/80 transition-colors duration-500 leading-relaxed">
+                  <p className="hidden md:block max-w-xs font-body text-sm text-doorium-platinum/70 group-hover:text-doorium-platinum transition-colors duration-500 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
                     {service.desc}
                   </p>
 
                   {/* Arrow */}
-                  <span className="font-display-stencil text-3xl md:text-4xl text-primary/30 group-hover:text-primary group-hover:translate-x-3 transition-all duration-500">
+                  <span className="font-display-stencil text-3xl md:text-4xl text-primary/50 group-hover:text-primary group-hover:translate-x-3 transition-all duration-500 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
                     →
                   </span>
                 </div>
