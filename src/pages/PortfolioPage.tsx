@@ -13,6 +13,15 @@ import work07 from "@/assets/portfolio/work-07.jpg";
 import work08 from "@/assets/portfolio/work-08.jpg";
 import work09 from "@/assets/portfolio/work-09.jpg";
 import work10 from "@/assets/portfolio/work-10.jpg";
+import work11 from "@/assets/portfolio/work-11.jpg";
+import work12 from "@/assets/portfolio/work-12.jpg";
+import work13 from "@/assets/portfolio/work-13.jpg";
+import work14 from "@/assets/portfolio/work-14.jpg";
+import work15 from "@/assets/portfolio/work-15.jpg";
+import work16 from "@/assets/portfolio/work-16.jpg";
+import work17 from "@/assets/portfolio/work-17.jpg";
+import work18 from "@/assets/portfolio/work-18.jpg";
+import work19 from "@/assets/portfolio/work-19.jpg";
 
 const portfolioItems = [
   { src: work01, alt: "Межкомнатная дверь с чёрными стеклянными вставками" },
@@ -25,12 +34,23 @@ const portfolioItems = [
   { src: work08, alt: "Двери в деревянном доме" },
   { src: work09, alt: "Классическая дверь с золотой фурнитурой" },
   { src: work10, alt: "Белая дверь с золотыми молдингами" },
+  { src: work11, alt: "Коридор с белыми дверями и золотой фурнитурой" },
+  { src: work12, alt: "Зелёная дверь в современном интерьере" },
+  { src: work13, alt: "Зелёная межкомнатная дверь с молдингами" },
+  { src: work14, alt: "Зелёные двери со стеклом в деревянном доме" },
+  { src: work15, alt: "Три зелёные двери в доме из бруса" },
+  { src: work16, alt: "Входная дверь с дизайнерской панелью" },
+  { src: work17, alt: "Чёрная входная дверь с хромированной ручкой" },
+  { src: work18, alt: "Входная дверь со стеклянной вставкой" },
+  { src: work19, alt: "Белая входная дверь с зеркалом" },
 ];
 
 // Masonry column assignment — alternate tall/short for visual interest
 const columnHeights: ("tall" | "short")[] = [
   "tall", "short", "short", "tall", "short",
   "tall", "short", "tall", "short", "tall",
+  "short", "short", "tall", "short", "tall",
+  "tall", "short", "short", "tall",
 ];
 
 /* ─── Lightbox ─── */
