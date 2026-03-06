@@ -17,9 +17,9 @@ const Hero = () => {
       <div className="absolute inset-0 bg-doorium-smoky/20" />
       {/* Bottom gradient fade into next section (Smoky Black) */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-48 z-30 pointer-events-none"
+        className="absolute bottom-0 left-0 right-0 h-72 z-30 pointer-events-none"
         style={{
-          background: "linear-gradient(to bottom, transparent, hsl(50 14% 8%))",
+          background: "linear-gradient(to bottom, transparent 0%, hsl(50 14% 8% / 0.1) 20%, hsl(50 14% 8% / 0.4) 50%, hsl(50 14% 8% / 0.8) 75%, hsl(50 14% 8%) 100%)",
         }}
       />
 

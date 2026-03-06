@@ -108,7 +108,7 @@ const Stats = () => {
       id="stats"
       className="relative py-24 md:py-32"
       style={{
-        background: "linear-gradient(to bottom, hsl(50 14% 8%) 0%, hsl(50 14% 8%) 30%, hsl(70 7% 16%) 60%, hsl(70 7% 16%) 100%)",
+        background: "linear-gradient(to bottom, hsl(50 14% 8%) 0%, hsl(50 14% 8%) 20%, hsl(53 10% 11%) 35%, hsl(60 8% 13%) 50%, hsl(70 7% 16%) 65%, hsl(70 7% 16%) 100%)",
       }}
     >
       <div className="relative z-10 px-8 md:px-16 lg:px-24 mb-16 md:mb-20">
