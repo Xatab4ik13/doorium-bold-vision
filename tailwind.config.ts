@@ -14,10 +14,11 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Brigadier Stencil", "sans-serif"],
+        display: ["Brigadier Stencil Custom", "sans-serif"],
+        "display-stencil": ["Brigadier Stencil Custom", "sans-serif"],
         "display-ext": ["Brigadier Extended", "sans-serif"],
         "display-regular": ["Brigadier", "sans-serif"],
-        body: ["Brigadier Stencil", "sans-serif"],
+        body: ["Brigadier Stencil Custom", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

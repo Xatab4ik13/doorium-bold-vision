@@ -9,7 +9,7 @@ const Hero = () => {
           <p className="font-body text-sm md:text-base tracking-[0.3em] uppercase text-primary mb-4 animate-fade-in-up">
             Doorium Service
           </p>
-          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold leading-[0.95] text-doorium-platinum mb-6 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+          <h1 className="font-display-stencil text-5xl md:text-6xl lg:text-7xl font-normal leading-[0.95] text-doorium-platinum mb-6 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
             ПРЕМИАЛЬНЫЙ
             <br />
             МОНТАЖ
@@ -21,7 +21,7 @@ const Hero = () => {
           <div className="animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
             <a
               href="#contacts"
-              className="inline-block font-display text-sm font-bold tracking-widest uppercase px-8 py-4 rounded-2xl bg-primary text-primary-foreground hover:bg-doorium-chamoisee/80 transition-all duration-300"
+              className="inline-block font-display-stencil text-sm font-normal tracking-widest uppercase px-8 py-4 rounded-2xl bg-primary text-primary-foreground hover:bg-doorium-chamoisee/80 transition-all duration-300"
             >
               Оставить заявку
             </a>
