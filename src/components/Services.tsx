@@ -63,7 +63,7 @@ const Services = () => {
                   src={service.image}
                   alt=""
                   aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-[1.2s] ease-out"
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
 
                 {/* Diagonal border lines */}
