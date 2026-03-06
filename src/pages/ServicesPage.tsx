@@ -258,7 +258,7 @@ const ServicesPage = () => {
   const prices = priceData[activeType];
 
   return (
-    <div className="min-h-screen" style={{ background: "hsl(50 14% 8%)" }}>
+    <div className="min-h-screen overflow-x-hidden" style={{ background: "hsl(50 14% 8%)" }}>
       <Header />
 
       {/* Hero */}
