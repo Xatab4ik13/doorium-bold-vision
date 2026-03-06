@@ -3,7 +3,7 @@ import { Menu, X } from "lucide-react";
 import dooriumLogo from "@/assets/doorium-logo-new.png";
 
 const navItems = [
-  { label: "Услуги", href: "#services" },
+  { label: "Услуги", href: "/services" },
   { label: "Наши работы", href: "#portfolio" },
   { label: "Новости", href: "#news" },
   { label: "Контакты", href: "#contacts" },
