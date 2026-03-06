@@ -1,6 +1,6 @@
 import Header from "@/components/Header";
 import ContactForm from "@/components/ContactForm";
-import { MapPin, Phone, Clock, Mail } from "lucide-react";
+import { Phone, Mail, MapPin } from "lucide-react";
 
 const contactInfo = [
   {
@@ -12,16 +12,6 @@ const contactInfo = [
     icon: Mail,
     title: "ПОЧТА",
     lines: ["info@doorium.ru"],
-  },
-  {
-    icon: MapPin,
-    title: "АДРЕС",
-    lines: ["г. Москва, ул. Примерная, д. 10", "офис 205"],
-  },
-  {
-    icon: Clock,
-    title: "РЕЖИМ РАБОТЫ",
-    lines: ["Пн–Пт: 09:00 – 20:00", "Сб: 10:00 – 18:00"],
   },
 ];
 
@@ -51,7 +41,7 @@ const ContactsPage = () => {
 
       {/* Contact cards */}
       <section className="px-8 md:px-16 lg:px-24 pb-20 md:pb-28">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-lg sm:max-w-2xl">
           {contactInfo.map((item) => (
             <div
               key={item.title}
@@ -74,20 +64,6 @@ const ContactsPage = () => {
               ))}
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* Map placeholder */}
-      <section className="px-8 md:px-16 lg:px-24 pb-20 md:pb-28">
-        <div className="max-w-5xl mx-auto">
-          <div className="w-full h-[300px] md:h-[400px] border border-border/20 flex items-center justify-center">
-            <div className="text-center">
-              <MapPin className="w-10 h-10 text-primary/40 mx-auto mb-3" strokeWidth={1} />
-              <p className="font-body text-sm text-muted-foreground tracking-wider uppercase">
-                Москва
-              </p>
-            </div>
-          </div>
         </div>
       </section>
 
