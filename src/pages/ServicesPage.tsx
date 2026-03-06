@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -429,10 +430,7 @@ const ServicesPage = () => {
         </FadeIn>
       </section>
 
-      {/* Back */}
-      <section className="py-12 px-8 md:px-16 lg:px-24 text-center" style={{ background: "hsl(70 7% 16%)" }}>
-        <Link to="/" className="font-body text-sm tracking-[0.15em] uppercase text-primary hover:text-doorium-platinum transition-colors duration-300">← На главную</Link>
-      </section>
+      <Footer />
     </div>
   );
 };
