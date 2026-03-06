@@ -31,18 +31,23 @@ const MagneticLink = ({
 }) => {
   const divRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<HTMLAnchorElement>(null);
-  const ref = submenu ? divRef : anchorRef;
+  const [transform, setTransform] = useState("translate(0px, 0px)");
   const [submenuOpen, setSubmenuOpen] = useState(false);
 
+  const getRect = () => {
+    const el = submenu ? divRef.current : anchorRef.current;
+    return el?.getBoundingClientRect();
+  };
+
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
+    const rect = getRect();
+    if (!rect) return;
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     const deltaX = (e.clientX - centerX) * 0.35;
     const deltaY = (e.clientY - centerY) * 0.35;
     setTransform(`translate(${deltaX}px, ${deltaY}px)`);
-  }, []);
+  }, [submenu]);
 
   const handleMouseLeave = useCallback(() => {
     setTransform("translate(0px, 0px)");
@@ -52,7 +57,7 @@ const MagneticLink = ({
   if (submenu) {
     return (
       <div
-        ref={ref}
+        ref={divRef}
         className="relative"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -74,7 +79,6 @@ const MagneticLink = ({
           <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-[1px] w-0 bg-primary transition-all duration-500 group-hover:w-3/4" />
         </a>
 
-        {/* Desktop dropdown */}
         <div
           className={`absolute top-full left-1/2 -translate-x-1/2 pt-2 transition-all duration-300 ${
             submenuOpen ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-2 pointer-events-none"
@@ -98,7 +102,7 @@ const MagneticLink = ({
 
   return (
     <a
-      ref={ref as React.RefObject<HTMLAnchorElement>}
+      ref={anchorRef}
       href={href}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
