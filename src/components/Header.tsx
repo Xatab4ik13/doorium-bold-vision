@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import logo from "@/assets/doorium-logo.jpg";
+import logo from "@/assets/doorium-logo.png";
 
 const navItems = [
   { label: "Услуги", href: "#services" },
@@ -14,60 +13,48 @@ const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-doorium-dark/80 backdrop-blur-md border-b border-border/20">
-      <div className="container flex items-center justify-between h-20">
-        {/* Logo */}
-        <a href="/" className="flex items-center gap-3">
-          <img src={logo} alt="Doorium Service" className="h-12 w-auto" />
-        </a>
+    <header className="fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-4 px-4">
+      {/* Logo above nav */}
+      <a href="/" className="mb-3">
+        <img src={logo} alt="Doorium Service" className="h-14 w-auto" />
+      </a>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-8">
-          {navItems.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="font-body text-sm font-medium tracking-wide text-doorium-grey-light hover:text-doorium-gold transition-colors duration-300 uppercase"
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
+      {/* Liquid glass nav bar — centered */}
+      <nav className="hidden md:flex items-center gap-1 px-2 py-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]">
+        {navItems.map((item) => (
+          <a
+            key={item.href}
+            href={item.href}
+            className="font-body text-sm font-medium tracking-wide text-doorium-text-light/80 hover:text-doorium-gold hover:bg-white/10 transition-all duration-300 uppercase px-5 py-2 rounded-full"
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
 
-        {/* CTA */}
-        <div className="hidden md:block">
-          <Button className="bg-doorium-gold hover:bg-doorium-gold-light text-doorium-dark font-display text-sm tracking-wider px-6 uppercase">
-            Оставить заявку
-          </Button>
-        </div>
-
-        {/* Mobile burger */}
-        <button
-          className="md:hidden text-doorium-text-light"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Меню"
-        >
-          {mobileOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
-      </div>
+      {/* Mobile burger */}
+      <button
+        className="md:hidden absolute top-4 right-4 text-doorium-text-light"
+        onClick={() => setMobileOpen(!mobileOpen)}
+        aria-label="Меню"
+      >
+        {mobileOpen ? <X size={28} /> : <Menu size={28} />}
+      </button>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-doorium-dark/95 backdrop-blur-lg border-t border-border/20">
-          <nav className="container flex flex-col gap-6 py-8">
+        <div className="md:hidden mt-3 w-full max-w-sm rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+          <nav className="flex flex-col gap-1 p-3">
             {navItems.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className="font-display text-lg tracking-wider text-doorium-grey-light hover:text-doorium-gold transition-colors uppercase"
+                className="font-body text-base tracking-wider text-doorium-text-light/80 hover:text-doorium-gold hover:bg-white/10 transition-all uppercase px-4 py-3 rounded-xl"
               >
                 {item.label}
               </a>
             ))}
-            <Button className="bg-doorium-gold hover:bg-doorium-gold-light text-doorium-dark font-display tracking-wider uppercase w-full mt-2">
-              Оставить заявку
-            </Button>
           </nav>
         </div>
       )}
