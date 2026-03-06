@@ -9,10 +9,10 @@ const navLinks = [
 const Footer = () => {
   return (
     <footer
-      className="relative pt-24 pb-10 px-8 md:px-16 lg:px-24"
+      className="relative pt-32 md:pt-40 pb-10 px-8 md:px-16 lg:px-24"
       style={{
         background:
-          "linear-gradient(to bottom, transparent 0%, hsl(240 2% 90%) 100%)",
+          "linear-gradient(to bottom, transparent 0%, hsl(240 2% 90% / 0.08) 15%, hsl(240 2% 90% / 0.2) 30%, hsl(240 2% 90% / 0.45) 50%, hsl(240 2% 90% / 0.75) 70%, hsl(240 2% 90%) 100%)",
       }}
     >
       <div className="max-w-6xl mx-auto">
