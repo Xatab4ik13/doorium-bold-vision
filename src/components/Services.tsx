@@ -88,10 +88,6 @@ const Services = () => {
                     {service.desc}
                   </p>
 
-                  {/* Arrow */}
-                  <span className="font-display-stencil text-3xl md:text-4xl text-primary/50 group-hover:text-primary group-hover:translate-x-3 transition-all duration-500 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
-                    →
-                  </span>
                 </div>
               </div>
             </a>
