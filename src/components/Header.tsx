@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Menu, X } from "lucide-react";
 import dooriumLogo from "@/assets/doorium-logo-new.png";
 
@@ -8,6 +8,43 @@ const navItems = [
   { label: "Новости", href: "#news" },
   { label: "Контакты", href: "#contacts" },
 ];
+
+const MagneticLink = ({ href, label }: { href: string; label: string }) => {
+  const ref = useRef<HTMLAnchorElement>(null);
+  const [transform, setTransform] = useState("translate(0px, 0px)");
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const deltaX = (e.clientX - centerX) * 0.35;
+    const deltaY = (e.clientY - centerY) * 0.35;
+    setTransform(`translate(${deltaX}px, ${deltaY}px)`);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setTransform("translate(0px, 0px)");
+  }, []);
+
+  return (
+    <a
+      ref={ref}
+      href={href}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="group relative font-display-stencil text-base font-normal tracking-[0.25em] text-doorium-platinum/70 uppercase px-6 py-3 transition-colors duration-300 hover:text-primary"
+      style={{
+        transform,
+        transition: "transform 0.25s cubic-bezier(0.33, 1, 0.68, 1), color 0.3s",
+      }}
+    >
+      {label}
+      {/* Underline that grows from center */}
+      <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-[1px] w-0 bg-primary transition-all duration-500 group-hover:w-3/4" />
+    </a>
+  );
+};
 
 const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -23,24 +60,17 @@ const Header = () => {
         />
       </a>
 
-      {/* Navigation bar — separate from logo */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-6 md:px-10 py-4">
-        {/* Liquid glass nav — right-aligned on desktop */}
-        <nav className="hidden md:flex items-center gap-1 px-3 py-2.5 rounded-2xl bg-white/8 backdrop-blur-xl border border-white/12 shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)]">
+      {/* Navigation bar — no container, bare magnetic links */}
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-6 md:px-10 py-5">
+        <nav className="hidden md:flex items-center gap-2">
           {navItems.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="font-display-stencil text-sm font-normal tracking-widest text-doorium-platinum/80 hover:text-primary hover:bg-white/10 transition-all duration-300 uppercase px-5 py-2 rounded-xl"
-            >
-              {item.label}
-            </a>
+            <MagneticLink key={item.href} href={item.href} label={item.label} />
           ))}
         </nav>
 
         {/* Mobile burger */}
         <button
-          className="md:hidden text-doorium-platinum z-[60]"
+          className="md:hidden text-doorium-platinum z-[60] ml-auto"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Меню"
         >
