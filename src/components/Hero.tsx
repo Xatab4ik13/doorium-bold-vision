@@ -1,12 +1,17 @@
+import heroVideo from "@/assets/hero-video.mp4";
 import heroImage from "@/assets/hero-interior.jpg";
 
 const Hero = () => {
   return (
     <section className="relative h-screen w-full overflow-hidden">
-      {/* Bottom layer: full-width photo */}
-      <img
-        src={heroImage}
-        alt="Премиальный интерьер с дверьми"
+      {/* Bottom layer: full-width video */}
+      <video
+        src={heroVideo}
+        poster={heroImage}
+        autoPlay
+        muted
+        loop
+        playsInline
         className="absolute inset-0 w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-doorium-smoky/20" />
