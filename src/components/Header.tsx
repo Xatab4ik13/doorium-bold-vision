@@ -29,8 +29,9 @@ const MagneticLink = ({
   label: string;
   submenu?: { label: string; href: string }[];
 }) => {
-  const ref = useRef<HTMLDivElement | HTMLAnchorElement>(null);
-  const [transform, setTransform] = useState("translate(0px, 0px)");
+  const divRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLAnchorElement>(null);
+  const ref = submenu ? divRef : anchorRef;
   const [submenuOpen, setSubmenuOpen] = useState(false);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
