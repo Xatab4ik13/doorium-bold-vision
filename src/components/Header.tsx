@@ -141,8 +141,10 @@ const Header = () => {
 
       {/* ── Mobile menu: the puzzle piece that completes the Hero wave ── */}
       <div
-        className={`md:hidden fixed inset-0 z-[65] pointer-events-none transition-opacity duration-500 ${
-          mobileOpen ? "opacity-100" : "opacity-0"
+        className={`md:hidden fixed inset-0 z-[65] transition-opacity duration-500 ${
+          mobileOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none invisible"
         }`}
         style={{ transitionDelay: mobileOpen ? "0s" : "0.3s" }}
       >
