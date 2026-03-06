@@ -108,17 +108,6 @@ export const FeatureCarousel = React.forwardRef<HTMLDivElement, FeatureCarouselP
                   </div>
                 </div>
 
-                {/* Center label */}
-                {isCenter && (
-                  <div className="mt-4 text-center">
-                    <p className="font-body text-sm text-doorium-platinum/80 mb-1">
-                      {image.alt}
-                    </p>
-                    <p className="font-body text-[10px] tracking-[0.3em] text-primary/50">
-                      {String(index + 1).padStart(2, "0")} / {String(images.length).padStart(2, "0")}
-                    </p>
-                  </div>
-                )}
               </div>
             );
           })}
