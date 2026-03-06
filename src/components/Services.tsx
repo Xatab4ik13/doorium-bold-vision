@@ -9,16 +9,19 @@ const services = [
     title: "УСТАНОВКА\nМЕЖКОМНАТНЫХ\nДВЕРЕЙ",
     desc: "Профессиональный монтаж любой сложности с гарантией идеальной геометрии и бесшумной работы механизмов.",
     image: serviceInterior,
+    filterType: "interior",
   },
   {
     title: "УСТАНОВКА\nВХОДНЫХ\nДВЕРЕЙ",
     desc: "Надёжная установка входных дверей с полной герметизацией, утеплением и регулировкой фурнитуры.",
     image: serviceEntrance,
+    filterType: "entrance",
   },
   {
     title: "РЕКЛАМАЦИЯ",
     desc: "Устранение дефектов, регулировка и восстановление дверных конструкций любых производителей.",
     image: serviceRepair,
+    filterType: "repair",
   },
 ];
 
@@ -58,8 +61,8 @@ const ServiceStrip = ({
   const hoverRotation = isEven ? "rotate(-0.5deg)" : "rotate(0.5deg)";
 
   return (
-    <a
-      href="#contacts"
+    <Link
+      to={`/services?type=${service.filterType}`}
       className="group block relative cursor-pointer"
       onMouseEnter={() => {
         if (stripRef.current) {
@@ -115,7 +118,7 @@ const ServiceStrip = ({
           </p>
         </div>
       </div>
-    </a>
+    </Link>
   );
 };
 
