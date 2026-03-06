@@ -170,6 +170,19 @@ const Header = () => {
           />
         </svg>
 
+        {/* Close button inside the menu */}
+        <button
+          className="absolute top-5 right-5 text-doorium-platinum/70 hover:text-primary transition-colors duration-300 pointer-events-auto z-10"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Закрыть меню"
+          style={{
+            opacity: mobileOpen ? 1 : 0,
+            transition: "opacity 0.3s ease-out 0.2s",
+          }}
+        >
+          <X size={28} />
+        </button>
+
         {/* Menu content — positioned on right side, over the SVG shape */}
         <div
           className="absolute top-0 right-0 bottom-0 flex flex-col justify-center px-8 pointer-events-auto"
