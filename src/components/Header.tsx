@@ -118,63 +118,75 @@ const Header = () => {
           ))}
         </nav>
 
-        {/* Mobile burger — always on top */}
+        {/* Mobile burger */}
         <button
           className="md:hidden text-doorium-platinum z-[80] ml-auto relative"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Меню"
         >
-          {mobileOpen ? <X size={28} /> : <Menu size={28} />}
+          <Menu
+            size={28}
+            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ${
+              mobileOpen ? "opacity-0 rotate-90 scale-75" : "opacity-100 rotate-0 scale-100"
+            }`}
+          />
+          <X
+            size={28}
+            className={`transition-all duration-300 ${
+              mobileOpen ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-75"
+            }`}
+          />
         </button>
       </header>
 
-      {/* ── Mobile menu: the "second puzzle piece" slides from right ── */}
-
-      {/* Overlay */}
+      {/* ── Mobile menu: the puzzle piece that completes the Hero wave ── */}
       <div
-        className={`md:hidden fixed inset-0 z-[60] transition-opacity duration-500 ${
-          mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        className={`md:hidden fixed inset-0 z-[65] pointer-events-none transition-opacity duration-500 ${
+          mobileOpen ? "opacity-100" : "opacity-0"
         }`}
-        style={{ background: "hsl(50 14% 8% / 0.4)" }}
-        onClick={() => setMobileOpen(false)}
-      />
-
-      {/* Panel with wave edge — mirrors the Hero wave */}
-      <div
-        className={`md:hidden fixed top-0 bottom-0 z-[65] transition-transform duration-600 ease-[cubic-bezier(0.33,1,0.68,1)]`}
-        style={{
-          right: 0,
-          width: "calc(100% - 100px)",
-          maxWidth: "400px",
-          transform: mobileOpen ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.6s cubic-bezier(0.33, 1, 0.68, 1)",
-        }}
+        style={{ transitionDelay: mobileOpen ? "0s" : "0.3s" }}
       >
-        {/* Wavy left edge — same curves as Hero section wave */}
+        {/*
+          The SVG fills the ENTIRE screen.
+          The path is the exact complement of the Hero wave:
+          Hero fills left side → menu fills right side.
+          Together they form a complete rectangle.
+        */}
         <svg
-          className="absolute top-0 bottom-0 h-full pointer-events-none"
-          style={{ left: "-79px", width: "80px" }}
-          viewBox="0 0 80 900"
+          viewBox="0 0 1440 900"
           preserveAspectRatio="none"
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{
+            transform: mobileOpen ? "translateX(0)" : "translateX(100%)",
+            transition: "transform 0.6s cubic-bezier(0.33, 1, 0.68, 1)",
+          }}
         >
+          {/* Exact complement of Hero wave path */}
           <path
-            d="M80,0 C60,75 80,150 60,225 C40,300 80,375 60,450 C40,525 80,600 60,675 C40,750 80,825 60,900 L80,900 Z"
+            d="M700,0 C720,75 620,150 660,225 C700,300 600,375 640,450 C680,525 580,600 620,675 C660,750 600,825 640,900 L1440,900 L1440,0 Z"
             className="fill-secondary"
           />
         </svg>
 
-        {/* Menu content */}
-        <div className="relative h-full bg-secondary flex flex-col justify-center px-8 overflow-hidden">
+        {/* Menu content — positioned on right side, over the SVG shape */}
+        <div
+          className="absolute top-0 right-0 bottom-0 flex flex-col justify-center px-8 pointer-events-auto"
+          style={{
+            width: "55%",
+            transform: mobileOpen ? "translateX(0)" : "translateX(100%)",
+            transition: "transform 0.6s cubic-bezier(0.33, 1, 0.68, 1)",
+          }}
+        >
           <nav className="flex flex-col gap-1">
             {navItems.map((item, i) => (
               <button
                 key={item.href}
                 onClick={() => handleNav(item.href, () => setMobileOpen(false))}
-                className="font-display-stencil text-xl font-normal tracking-[0.2em] text-doorium-platinum/80 hover:text-primary transition-all duration-300 uppercase py-4 text-left bg-transparent border-none cursor-pointer"
+                className="font-display-stencil text-lg font-normal tracking-[0.2em] text-doorium-platinum/80 hover:text-primary transition-all duration-300 uppercase py-3 text-left bg-transparent border-none cursor-pointer"
                 style={{
                   opacity: mobileOpen ? 1 : 0,
-                  transform: mobileOpen ? "translateX(0)" : "translateX(40px)",
-                  transition: `opacity 0.4s ease-out ${0.2 + i * 0.07}s, transform 0.4s ease-out ${0.2 + i * 0.07}s, color 0.3s`,
+                  transform: mobileOpen ? "translateX(0)" : "translateX(30px)",
+                  transition: `opacity 0.35s ease-out ${0.25 + i * 0.06}s, transform 0.35s ease-out ${0.25 + i * 0.06}s, color 0.3s`,
                 }}
               >
                 {item.label}
@@ -182,18 +194,17 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Contact info */}
           <div
-            className="mt-10 pt-5 border-t border-border/20"
+            className="mt-8 pt-4 border-t border-border/20"
             style={{
               opacity: mobileOpen ? 1 : 0,
-              transition: "opacity 0.5s ease-out 0.55s",
+              transition: "opacity 0.4s ease-out 0.6s",
             }}
           >
-            <a href="tel:+74951234567" className="font-body text-sm tracking-wider text-doorium-platinum/50 hover:text-primary transition-colors block mb-2">
+            <a href="tel:+74951234567" className="font-body text-xs tracking-wider text-doorium-platinum/50 hover:text-primary transition-colors block mb-1.5">
               +7 (495) 123-45-67
             </a>
-            <a href="mailto:info@doorium.ru" className="font-body text-sm tracking-wider text-doorium-platinum/50 hover:text-primary transition-colors block">
+            <a href="mailto:info@doorium.ru" className="font-body text-xs tracking-wider text-doorium-platinum/50 hover:text-primary transition-colors block">
               info@doorium.ru
             </a>
           </div>
