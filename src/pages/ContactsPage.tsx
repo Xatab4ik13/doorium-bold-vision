@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
 import ContactForm from "@/components/ContactForm";
+import Footer from "@/components/Footer";
 import { Phone, Mail } from "lucide-react";
 
 const contactInfo = [
@@ -100,6 +101,7 @@ const ContactsPage = () => {
 
       {/* Contact form */}
       <ContactForm />
+      <Footer />
     </div>
   );
 };
