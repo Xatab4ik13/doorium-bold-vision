@@ -64,21 +64,17 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
         doorium: {
-          dark: "hsl(var(--doorium-dark))",
-          darker: "hsl(var(--doorium-darker))",
-          gold: "hsl(var(--doorium-gold))",
-          "gold-light": "hsl(var(--doorium-gold-light))",
-          beige: "hsl(var(--doorium-beige))",
-          "beige-warm": "hsl(var(--doorium-beige-warm))",
-          grey: "hsl(var(--doorium-grey))",
-          "grey-light": "hsl(var(--doorium-grey-light))",
+          platinum: "hsl(var(--doorium-platinum))",
+          chamoisee: "hsl(var(--doorium-chamoisee))",
+          smoky: "hsl(var(--doorium-smoky))",
+          jet: "hsl(var(--doorium-jet))",
           "text-light": "hsl(var(--doorium-text-light))",
         },
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "calc(var(--radius) - 4px)",
+        sm: "calc(var(--radius) - 8px)",
       },
       keyframes: {
         "accordion-down": {

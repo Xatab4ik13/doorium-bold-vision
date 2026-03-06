@@ -49,86 +49,82 @@
 
 @layer base {
   :root {
-    /* Doorium brutal palette */
-    --background: 40 18% 90%;
-    --foreground: 20 6% 4%;
+    /* Doorium palette: Platinum / Chamoisee / Smoky Black / Jet */
+    --background: 0 0% 89%;          /* #E4E4E5 Platinum */
+    --foreground: 40 10% 8%;         /* #181712 Smoky Black */
 
-    --card: 30 20% 88%;
-    --card-foreground: 20 6% 4%;
+    --card: 0 0% 89%;
+    --card-foreground: 40 10% 8%;
 
-    --popover: 30 20% 88%;
-    --popover-foreground: 20 6% 4%;
+    --popover: 0 0% 89%;
+    --popover-foreground: 40 10% 8%;
 
-    --primary: 39 43% 43%;
-    --primary-foreground: 40 18% 90%;
+    --primary: 30 24% 48%;           /* #987E5D Chamoisee */
+    --primary-foreground: 0 0% 89%;
 
-    --secondary: 30 9% 19%;
-    --secondary-foreground: 40 18% 90%;
+    --secondary: 72 4% 16%;          /* #2B2C26 Jet */
+    --secondary-foreground: 0 0% 89%;
 
-    --muted: 20 5% 57%;
-    --muted-foreground: 0 1% 41%;
+    --muted: 72 4% 16%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 30 25% 67%;
-    --accent-foreground: 20 6% 4%;
+    --accent: 30 24% 48%;
+    --accent-foreground: 0 0% 89%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 30 8% 35%;
-    --input: 20 5% 57%;
-    --ring: 39 43% 43%;
+    --border: 30 10% 30%;
+    --input: 30 10% 30%;
+    --ring: 30 24% 48%;
 
-    --radius: 0.25rem;
+    --radius: 1rem;
 
     /* Custom Doorium tokens */
-    --doorium-dark: 20 6% 4%;
-    --doorium-darker: 40 10% 8%;
-    --doorium-gold: 39 43% 43%;
-    --doorium-gold-light: 30 25% 67%;
-    --doorium-beige: 40 18% 90%;
-    --doorium-beige-warm: 25 25% 86%;
-    --doorium-grey: 0 1% 41%;
-    --doorium-grey-light: 0 2% 73%;
-    --doorium-text-light: 0 1% 89%;
+    --doorium-platinum: 0 0% 89%;       /* #E4E4E5 */
+    --doorium-chamoisee: 30 24% 48%;    /* #987E5D */
+    --doorium-smoky: 40 10% 8%;         /* #181712 */
+    --doorium-jet: 72 4% 16%;           /* #2B2C26 */
+    --doorium-text-light: 0 0% 89%;     /* #E4E4E5 */
 
     --sidebar-background: 40 10% 8%;
-    --sidebar-foreground: 0 1% 89%;
-    --sidebar-primary: 39 43% 43%;
-    --sidebar-primary-foreground: 0 1% 89%;
-    --sidebar-accent: 30 25% 67%;
-    --sidebar-accent-foreground: 20 6% 4%;
-    --sidebar-border: 30 8% 35%;
-    --sidebar-ring: 39 43% 43%;
+    --sidebar-foreground: 0 0% 89%;
+    --sidebar-primary: 30 24% 48%;
+    --sidebar-primary-foreground: 0 0% 89%;
+    --sidebar-accent: 30 24% 48%;
+    --sidebar-accent-foreground: 40 10% 8%;
+    --sidebar-border: 30 10% 30%;
+    --sidebar-ring: 30 24% 48%;
   }
 
   .dark {
-    --background: 20 6% 4%;
-    --foreground: 0 1% 89%;
+    --background: 40 10% 8%;
+    --foreground: 0 0% 89%;
 
-    --card: 40 10% 8%;
-    --card-foreground: 0 1% 89%;
+    --card: 72 4% 16%;
+    --card-foreground: 0 0% 89%;
 
-    --popover: 40 10% 8%;
-    --popover-foreground: 0 1% 89%;
+    --popover: 72 4% 16%;
+    --popover-foreground: 0 0% 89%;
 
-    --primary: 39 43% 43%;
-    --primary-foreground: 0 1% 89%;
+    --primary: 30 24% 48%;
+    --primary-foreground: 0 0% 89%;
 
-    --secondary: 30 8% 35%;
-    --secondary-foreground: 0 1% 89%;
+    --secondary: 72 4% 16%;
+    --secondary-foreground: 0 0% 89%;
 
-    --muted: 0 1% 41%;
-    --muted-foreground: 0 2% 73%;
+    --muted: 72 4% 16%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 30 25% 67%;
-    --accent-foreground: 20 6% 4%;
+    --accent: 30 24% 48%;
+    --accent-foreground: 40 10% 8%;
 
     --destructive: 0 63% 31%;
-    --destructive-foreground: 0 1% 89%;
+    --destructive-foreground: 0 0% 89%;
 
-    --border: 30 8% 35%;
-    --input: 0 1% 41%;
-    --ring: 39 43% 43%;
+    --border: 30 10% 30%;
+    --input: 72 4% 16%;
+    --ring: 30 24% 48%;
   }
 }
 
