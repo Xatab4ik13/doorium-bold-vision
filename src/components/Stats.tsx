@@ -107,7 +107,9 @@ const Stats = () => {
     <section
       id="stats"
       className="relative py-24 md:py-32"
-      style={{ background: "hsl(var(--doorium-jet))" }}
+      style={{
+        background: "linear-gradient(to bottom, hsl(50 14% 8%) 0%, hsl(50 14% 8%) 30%, hsl(70 7% 16%) 60%, hsl(70 7% 16%) 100%)",
+      }}
     >
       <div className="relative z-10 px-8 md:px-16 lg:px-24 mb-16 md:mb-20">
         <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">
