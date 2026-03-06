@@ -1,6 +1,6 @@
 import Header from "@/components/Header";
 import ContactForm from "@/components/ContactForm";
-import { MapPin, Phone, Clock, Mail } from "lucide-react";
+import { Phone, Mail, MapPin } from "lucide-react";
 
 const contactInfo = [
   {
@@ -12,16 +12,6 @@ const contactInfo = [
     icon: Mail,
     title: "ПОЧТА",
     lines: ["info@doorium.ru"],
-  },
-  {
-    icon: MapPin,
-    title: "АДРЕС",
-    lines: ["г. Москва, ул. Примерная, д. 10", "офис 205"],
-  },
-  {
-    icon: Clock,
-    title: "РЕЖИМ РАБОТЫ",
-    lines: ["Пн–Пт: 09:00 – 20:00", "Сб: 10:00 – 18:00"],
   },
 ];
 
