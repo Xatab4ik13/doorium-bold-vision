@@ -19,12 +19,12 @@ const Header = () => {
         <img
           src={dooriumLogo}
           alt="Doorium Service"
-          className="h-80 md:h-[28rem] w-auto brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+          className="h-28 md:h-36 w-auto brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
         />
       </a>
 
       {/* Navigation bar — separate from logo */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-end px-6 md:px-10 py-4">
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-6 md:px-10 py-4">
         {/* Liquid glass nav — right-aligned on desktop */}
         <nav className="hidden md:flex items-center gap-1 px-3 py-2.5 rounded-2xl bg-white/8 backdrop-blur-xl border border-white/12 shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)]">
           {navItems.map((item) => (
