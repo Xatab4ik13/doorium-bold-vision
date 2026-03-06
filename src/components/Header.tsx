@@ -29,7 +29,7 @@ const MagneticLink = ({
   label: string;
   submenu?: { label: string; href: string }[];
 }) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement | HTMLAnchorElement>(null);
   const [transform, setTransform] = useState("translate(0px, 0px)");
   const [submenuOpen, setSubmenuOpen] = useState(false);
 
