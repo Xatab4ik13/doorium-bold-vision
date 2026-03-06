@@ -45,13 +45,7 @@ const portfolioItems = [
   { src: work19, alt: "Белая входная дверь с зеркалом" },
 ];
 
-// Masonry column assignment — alternate tall/short for visual interest
-const columnHeights: ("tall" | "short")[] = [
-  "tall", "short", "short", "tall", "short",
-  "tall", "short", "tall", "short", "tall",
-  "short", "short", "tall", "short", "tall",
-  "tall", "short", "short", "tall",
-];
+// No masonry heights needed — uniform grid
 
 /* ─── Lightbox ─── */
 const Lightbox = ({
@@ -121,16 +115,14 @@ const Lightbox = ({
   );
 };
 
-/* ─── Single masonry card ─── */
-const MasonryCard = ({
+/* ─── Portfolio card with frame ─── */
+const PortfolioCard = ({
   item,
   index,
-  heightClass,
   onClick,
 }: {
   item: (typeof portfolioItems)[0];
   index: number;
-  heightClass: string;
   onClick: () => void;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -150,29 +142,36 @@ const MasonryCard = ({
   return (
     <div
       ref={ref}
-      className={`group relative overflow-hidden cursor-pointer ${heightClass}`}
+      className="group cursor-pointer"
       onClick={onClick}
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0) scale(1)" : "translateY(40px) scale(0.97)",
-        transition: `opacity 0.7s ease-out ${index * 0.08}s, transform 0.7s ease-out ${index * 0.08}s`,
+        transform: visible ? "translateY(0)" : "translateY(30px)",
+        transition: `opacity 0.6s ease-out ${index * 0.06}s, transform 0.6s ease-out ${index * 0.06}s`,
       }}
     >
-      <img
-        src={item.src}
-        alt={item.alt}
-        loading="lazy"
-        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-      />
-      {/* Hover overlay */}
-      <div className="absolute inset-0 bg-doorium-smoky/0 group-hover:bg-doorium-smoky/40 transition-all duration-500 flex items-end p-6">
-        <p className="font-body text-sm text-doorium-platinum opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-y-4 group-hover:translate-y-0 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]"
-           style={{ transition: "opacity 0.5s, transform 0.5s" }}>
-          {item.alt}
-        </p>
+      {/* Outer frame */}
+      <div className="border border-primary/20 group-hover:border-primary/50 transition-all duration-500 p-3 md:p-4">
+        {/* Inner image container */}
+        <div className="relative aspect-[3/4] overflow-hidden">
+          <img
+            src={item.src}
+            alt={item.alt}
+            loading="lazy"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+          {/* Hover overlay */}
+          <div className="absolute inset-0 bg-doorium-smoky/0 group-hover:bg-doorium-smoky/50 transition-all duration-500 flex items-end justify-center pb-6">
+            <p className="font-body text-xs md:text-sm text-doorium-platinum text-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-3 group-hover:translate-y-0 px-4 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
+              {item.alt}
+            </p>
+          </div>
+        </div>
       </div>
-      {/* Subtle border on hover */}
-      <div className="absolute inset-0 border border-primary/0 group-hover:border-primary/30 transition-all duration-500 pointer-events-none" />
+      {/* Number below frame */}
+      <p className="font-body text-[10px] tracking-[0.3em] text-primary/40 group-hover:text-primary/70 transition-colors duration-500 mt-3 text-center uppercase">
+        {String(index + 1).padStart(2, "0")}
+      </p>
     </div>
   );
 };
@@ -212,18 +211,16 @@ const PortfolioPage = () => {
         </p>
       </section>
 
-      {/* Masonry grid */}
-      <section className="px-4 md:px-8 lg:px-16 pb-24 md:pb-32">
-        <div className="columns-2 md:columns-3 gap-3 md:gap-4">
+      {/* Grid */}
+      <section className="px-6 md:px-12 lg:px-20 pb-24 md:pb-32">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
           {portfolioItems.map((item, i) => (
-            <div key={i} className="mb-3 md:mb-4 break-inside-avoid">
-              <MasonryCard
-                item={item}
-                index={i}
-                heightClass={columnHeights[i] === "tall" ? "h-[380px] md:h-[520px]" : "h-[260px] md:h-[360px]"}
-                onClick={() => openLightbox(i)}
-              />
-            </div>
+            <PortfolioCard
+              key={i}
+              item={item}
+              index={i}
+              onClick={() => openLightbox(i)}
+            />
           ))}
         </div>
       </section>
