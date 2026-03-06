@@ -1,4 +1,47 @@
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@font-face {
+  font-family: 'Brigadier';
+  src: url('/fonts/Brigadier_Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Brigadier';
+  src: url('/fonts/Brigadier_Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Brigadier';
+  src: url('/fonts/Brigadier_Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Brigadier Extended';
+  src: url('/fonts/Brigadier_Extended_Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Brigadier Extended';
+  src: url('/fonts/Brigadier_Extended_Bold_Italic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Brigadier Stencil';
+  src: url('/fonts/Brigadier_Stencil.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,46 +50,46 @@
 @layer base {
   :root {
     /* Doorium brutal palette */
-    --background: 40 18% 90%; /* #EAE0D5 - warm beige for light sections */
-    --foreground: 20 6% 4%; /* #0A0908 - near black */
+    --background: 40 18% 90%;
+    --foreground: 20 6% 4%;
 
-    --card: 30 20% 88%; /* #E9DACC */
+    --card: 30 20% 88%;
     --card-foreground: 20 6% 4%;
 
     --popover: 30 20% 88%;
     --popover-foreground: 20 6% 4%;
 
-    --primary: 39 43% 43%; /* #9B7B3F - gold accent */
+    --primary: 39 43% 43%;
     --primary-foreground: 40 18% 90%;
 
-    --secondary: 30 9% 19%; /* #22333B - dark teal */
+    --secondary: 30 9% 19%;
     --secondary-foreground: 40 18% 90%;
 
-    --muted: 20 5% 57%; /* #968E8B - warm grey */
-    --muted-foreground: 0 1% 41%; /* #686A6A */
+    --muted: 20 5% 57%;
+    --muted-foreground: 0 1% 41%;
 
-    --accent: 30 25% 67%; /* #C6AC8F - light gold */
+    --accent: 30 25% 67%;
     --accent-foreground: 20 6% 4%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 30 8% 35%; /* #5E503F - dark warm */
+    --border: 30 8% 35%;
     --input: 20 5% 57%;
     --ring: 39 43% 43%;
 
     --radius: 0.25rem;
 
     /* Custom Doorium tokens */
-    --doorium-dark: 20 6% 4%; /* #0A0908 */
-    --doorium-darker: 40 10% 8%; /* #181712 */
-    --doorium-gold: 39 43% 43%; /* #9B7B3F */
-    --doorium-gold-light: 30 25% 67%; /* #C6AC8F */
-    --doorium-beige: 40 18% 90%; /* #EAE0D5 */
-    --doorium-beige-warm: 25 25% 86%; /* #E9DACC */
-    --doorium-grey: 0 1% 41%; /* #686A6A */
-    --doorium-grey-light: 0 2% 73%; /* #BABABB */
-    --doorium-text-light: 0 1% 89%; /* #E4E4E5 */
+    --doorium-dark: 20 6% 4%;
+    --doorium-darker: 40 10% 8%;
+    --doorium-gold: 39 43% 43%;
+    --doorium-gold-light: 30 25% 67%;
+    --doorium-beige: 40 18% 90%;
+    --doorium-beige-warm: 25 25% 86%;
+    --doorium-grey: 0 1% 41%;
+    --doorium-grey-light: 0 2% 73%;
+    --doorium-text-light: 0 1% 89%;
 
     --sidebar-background: 40 10% 8%;
     --sidebar-foreground: 0 1% 89%;
@@ -100,7 +143,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Oswald', sans-serif;
+    font-family: 'Brigadier', sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
