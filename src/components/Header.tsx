@@ -15,11 +15,12 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 px-4">
       {/* Logo — same level as nav, fixed top-left */}
-      <a
-        href="/"
-        className="fixed top-4 left-4 md:left-6 z-[60] rounded-2xl bg-doorium-beige/75 backdrop-blur-md border border-doorium-beige/40 px-3 py-2"
-      >
-        <img src={logo} alt="Doorium Service" className="h-48 md:h-64 w-auto" />
+      <a href="/" className="fixed top-4 left-4 md:left-6 z-[60]">
+        <img
+          src={logo}
+          alt="Doorium Service"
+          className="h-48 md:h-64 w-auto invert brightness-200 drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]"
+        />
       </a>
 
       {/* Liquid glass nav bar — centered, Brigadier font */}
