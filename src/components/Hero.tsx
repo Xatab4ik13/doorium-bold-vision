@@ -24,7 +24,7 @@ const Hero = () => {
       />
 
       {/* Top layer: dark overlay with zigzag cut on the right */}
-      <div className="absolute inset-0 z-10">
+      <div className="absolute inset-0 z-10 hidden md:block">
         <svg
           viewBox="0 0 1440 900"
           preserveAspectRatio="none"
@@ -37,26 +37,29 @@ const Hero = () => {
         </svg>
       </div>
 
+      {/* Mobile: full dark overlay for readability */}
+      <div className="absolute inset-0 z-10 md:hidden bg-doorium-smoky/60" />
+
       {/* Content on top of the dark mask */}
-      <div className="absolute inset-0 z-20 flex items-center">
-        <div className="w-full md:w-1/2 px-8 md:px-16 lg:px-24">
+      <div className="absolute inset-0 z-20 flex items-end pb-32 md:items-center md:pb-0">
+        <div className="w-full md:w-1/2 px-6 md:px-16 lg:px-24">
           <div className="max-w-lg">
-            <p className="font-body text-sm md:text-base tracking-[0.3em] uppercase text-primary mb-4 animate-fade-in-up">
+            <p className="font-body text-xs md:text-base tracking-[0.3em] uppercase text-primary mb-3 md:mb-4 animate-fade-in-up">
               Doorium Service
             </p>
-            <h1 className="font-display-stencil text-5xl md:text-6xl lg:text-7xl font-normal leading-[0.95] text-doorium-platinum mb-6 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+            <h1 className="font-display-stencil text-4xl md:text-6xl lg:text-7xl font-normal leading-[0.95] text-doorium-platinum mb-4 md:mb-6 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
               ПРЕМИАЛЬНЫЙ
               <br />
               МОНТАЖ
             </h1>
-            <p className="font-body text-base md:text-lg text-doorium-platinum/60 mb-8 max-w-sm animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+            <p className="font-body text-sm md:text-lg text-doorium-platinum/70 mb-6 md:mb-8 max-w-sm animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
               Установка межкомнатных и входных дверей
               с гарантией качества в&nbsp;Москве
             </p>
             <div className="animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
               <a
                 href="#contacts"
-                className="inline-block font-display-stencil text-sm font-normal tracking-widest uppercase px-8 py-4 rounded-2xl bg-primary text-primary-foreground hover:bg-doorium-chamoisee/80 transition-all duration-300"
+                className="inline-block font-display-stencil text-xs md:text-sm font-normal tracking-widest uppercase px-6 md:px-8 py-3 md:py-4 rounded-2xl bg-primary text-primary-foreground hover:bg-doorium-chamoisee/80 transition-all duration-300"
               >
                 Оставить заявку
               </a>

@@ -109,11 +109,11 @@ const Header = () => {
   return (
     <>
       {/* Logo — NOT clickable */}
-      <div className="absolute top-0 -left-6 md:-left-4 z-[60] overflow-hidden pointer-events-none">
+      <div className="absolute top-0 -left-6 md:-left-4 z-40 overflow-hidden pointer-events-none">
         <img
           src={dooriumLogo}
           alt="Doorium Service"
-          className="h-80 md:h-[28rem] w-auto brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] -mt-24 md:-mt-32"
+          className="h-56 md:h-[28rem] w-auto brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] -mt-16 md:-mt-32"
         />
       </div>
 
