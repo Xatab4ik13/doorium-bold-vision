@@ -29,6 +29,18 @@ const Hero = () => {
         </div>
       </div>
 
+      {/* Wavy divider SVG — overlaps between left and right */}
+      <div className="absolute top-0 bottom-0 left-[45%] md:left-[47%] w-[10%] md:w-[6%] z-20 pointer-events-none">
+        <svg
+          viewBox="0 0 100 1000"
+          preserveAspectRatio="none"
+          className="h-full w-full"
+          fill="hsl(70 7% 16%)"
+        >
+          <path d="M100,0 L100,0 L0,0 C30,80 70,160 40,250 C10,340 80,420 50,500 C20,580 70,660 40,750 C10,840 60,920 50,1000 L100,1000 Z" />
+        </svg>
+      </div>
+
       {/* Right: Photo */}
       <div className="relative w-full md:w-1/2 h-1/2 md:h-full">
         <img
