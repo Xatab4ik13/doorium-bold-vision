@@ -15,11 +15,11 @@ const Header = () => {
   return (
     <>
       {/* Logo — fixed top, independent of nav */}
-      <a href="/" className="fixed top-0 -left-4 md:-left-2 z-[60]">
+      <a href="/" className="fixed top-0 -left-4 md:-left-2 z-[60] overflow-hidden">
         <img
           src={dooriumLogo}
           alt="Doorium Service"
-          className="h-80 md:h-[28rem] w-auto brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+          className="h-80 md:h-[28rem] w-auto brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] -mt-14 md:-mt-20"
         />
       </a>
 
