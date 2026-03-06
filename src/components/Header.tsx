@@ -131,7 +131,6 @@ const Header = () => {
               key={item.href}
               href={item.href}
               label={item.label}
-              submenu={item.submenu}
             />
           ))}
         </nav>
@@ -150,49 +149,15 @@ const Header = () => {
           <div className="md:hidden fixed top-20 left-4 right-4 rounded-2xl bg-doorium-jet/90 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             <nav className="flex flex-col gap-1 p-4">
               {navItems.map((item) => (
-                <div key={item.href}>
-                  {item.submenu ? (
-                    <>
-                      <button
-                        onClick={() =>
-                          setMobileSubmenuOpen(
-                            mobileSubmenuOpen === item.label ? null : item.label
-                          )
-                        }
-                        className="w-full flex items-center justify-between font-display-stencil text-lg font-normal tracking-widest text-doorium-platinum/80 hover:text-primary hover:bg-white/10 transition-all uppercase px-4 py-3 rounded-xl"
-                      >
-                        {item.label}
-                        {mobileSubmenuOpen === item.label ? (
-                          <ChevronUp size={18} />
-                        ) : (
-                          <ChevronDown size={18} />
-                        )}
-                      </button>
-                      {mobileSubmenuOpen === item.label && (
-                        <div className="pl-6 flex flex-col gap-0.5">
-                          {item.submenu.map((sub) => (
-                            <a
-                              key={sub.href}
-                              href={sub.href}
-                              onClick={() => setMobileOpen(false)}
-                              className="font-body text-sm text-doorium-platinum/60 hover:text-primary transition-colors px-4 py-2 rounded-lg"
-                            >
-                              {sub.label}
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <a
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className="font-display-stencil text-lg font-normal tracking-widest text-doorium-platinum/80 hover:text-primary hover:bg-white/10 transition-all uppercase px-4 py-3 rounded-xl block"
-                    >
-                      {item.label}
-                    </a>
-                  )}
-                </div>
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="font-display-stencil text-lg font-normal tracking-widest text-doorium-platinum/80 hover:text-primary hover:bg-white/10 transition-all uppercase px-4 py-3 rounded-xl block"
+                >
+                  {item.label}
+                </a>
+              ))}
               ))}
             </nav>
           </div>
