@@ -21,7 +21,7 @@ const Hero = () => {
           <div className="animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
             <a
               href="#contacts"
-              className="inline-block font-display text-sm font-bold tracking-widest uppercase px-8 py-4 rounded-2xl bg-primary text-primary-foreground hover:bg-doorium-chamoisee/80 transition-all duration-300"
+              className="inline-block font-display-stencil text-sm font-normal tracking-widest uppercase px-8 py-4 rounded-2xl bg-primary text-primary-foreground hover:bg-doorium-chamoisee/80 transition-all duration-300"
             >
               Оставить заявку
             </a>
