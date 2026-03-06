@@ -18,16 +18,13 @@ const useRouterNav = () => {
   const handleNav = useCallback(
     (href: string, cb?: () => void) => {
       cb?.();
-
-      // Hash link on another page → navigate first, then scroll
       if (href.startsWith("/#")) {
-        const hash = href.slice(1); // e.g. #contacts
+        const hash = href.slice(1);
         if (location.pathname === "/") {
           const el = document.querySelector(hash);
           el?.scrollIntoView({ behavior: "smooth" });
         } else {
           navigate("/");
-          // wait for page render then scroll
           setTimeout(() => {
             const el = document.querySelector(hash);
             el?.scrollIntoView({ behavior: "smooth" });
@@ -35,7 +32,6 @@ const useRouterNav = () => {
         }
         return;
       }
-
       navigate(href);
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
@@ -80,8 +76,7 @@ const MagneticLink = ({
       className="group relative font-display-stencil text-base font-normal tracking-[0.25em] text-doorium-platinum uppercase px-6 py-3 transition-colors duration-300 hover:text-primary drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)] bg-transparent border-none cursor-pointer"
       style={{
         transform,
-        transition:
-          "transform 0.25s cubic-bezier(0.33, 1, 0.68, 1), color 0.3s",
+        transition: "transform 0.25s cubic-bezier(0.33, 1, 0.68, 1), color 0.3s",
       }}
     >
       {label}
@@ -94,16 +89,9 @@ const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const handleNav = useRouterNav();
 
-  // Lock body scroll when mobile menu is open
   useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
   return (
@@ -130,9 +118,9 @@ const Header = () => {
           ))}
         </nav>
 
-        {/* Mobile burger */}
+        {/* Mobile burger — always on top */}
         <button
-          className="md:hidden text-doorium-platinum z-[70] ml-auto relative"
+          className="md:hidden text-doorium-platinum z-[80] ml-auto relative"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Меню"
         >
@@ -140,40 +128,44 @@ const Header = () => {
         </button>
       </header>
 
-      {/* Mobile menu — slides from right with wave edge */}
+      {/* ── Mobile menu: the "second puzzle piece" slides from right ── */}
+
       {/* Overlay */}
       <div
-        className={`md:hidden fixed inset-0 z-[60] bg-doorium-smoky/60 backdrop-blur-sm transition-opacity duration-500 ${
-          mobileOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+        className={`md:hidden fixed inset-0 z-[60] transition-opacity duration-500 ${
+          mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
+        style={{ background: "hsl(50 14% 8% / 0.4)" }}
         onClick={() => setMobileOpen(false)}
       />
 
-      {/* Panel */}
+      {/* Panel with wave edge — mirrors the Hero wave */}
       <div
-        className={`md:hidden fixed top-0 right-0 bottom-0 z-[65] w-[80%] max-w-[320px] transition-transform duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] ${
-          mobileOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`md:hidden fixed top-0 bottom-0 z-[65] transition-transform duration-600 ease-[cubic-bezier(0.33,1,0.68,1)]`}
+        style={{
+          right: 0,
+          width: "calc(100% - 100px)",
+          maxWidth: "400px",
+          transform: mobileOpen ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 0.6s cubic-bezier(0.33, 1, 0.68, 1)",
+        }}
       >
-        {/* Wave edge SVG on the left side */}
-        <div className="absolute top-0 bottom-0 -left-[60px] w-[60px] overflow-hidden">
-          <svg
-            viewBox="0 0 60 900"
-            preserveAspectRatio="none"
-            className="w-full h-full"
-          >
-            <path
-              d="M60,0 C40,75 60,150 40,225 C20,300 60,375 40,450 C20,525 60,600 40,675 C20,750 60,825 40,900 L60,900 Z"
-              className="fill-secondary"
-            />
-          </svg>
-        </div>
+        {/* Wavy left edge — same curves as Hero section wave */}
+        <svg
+          className="absolute top-0 bottom-0 h-full pointer-events-none"
+          style={{ left: "-79px", width: "80px" }}
+          viewBox="0 0 80 900"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M80,0 C60,75 80,150 60,225 C40,300 80,375 60,450 C40,525 80,600 60,675 C40,750 80,825 60,900 L80,900 Z"
+            className="fill-secondary"
+          />
+        </svg>
 
         {/* Menu content */}
-        <div className="relative h-full bg-secondary flex flex-col justify-center px-8">
-          <nav className="flex flex-col gap-2">
+        <div className="relative h-full bg-secondary flex flex-col justify-center px-8 overflow-hidden">
+          <nav className="flex flex-col gap-1">
             {navItems.map((item, i) => (
               <button
                 key={item.href}
@@ -181,10 +173,8 @@ const Header = () => {
                 className="font-display-stencil text-xl font-normal tracking-[0.2em] text-doorium-platinum/80 hover:text-primary transition-all duration-300 uppercase py-4 text-left bg-transparent border-none cursor-pointer"
                 style={{
                   opacity: mobileOpen ? 1 : 0,
-                  transform: mobileOpen
-                    ? "translateX(0)"
-                    : "translateX(30px)",
-                  transition: `opacity 0.4s ease-out ${0.15 + i * 0.08}s, transform 0.4s ease-out ${0.15 + i * 0.08}s, color 0.3s`,
+                  transform: mobileOpen ? "translateX(0)" : "translateX(40px)",
+                  transition: `opacity 0.4s ease-out ${0.2 + i * 0.07}s, transform 0.4s ease-out ${0.2 + i * 0.07}s, color 0.3s`,
                 }}
               >
                 {item.label}
@@ -192,24 +182,18 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Contact info at bottom */}
+          {/* Contact info */}
           <div
-            className="mt-12 pt-6 border-t border-border/20"
+            className="mt-10 pt-5 border-t border-border/20"
             style={{
               opacity: mobileOpen ? 1 : 0,
-              transition: "opacity 0.5s ease-out 0.6s",
+              transition: "opacity 0.5s ease-out 0.55s",
             }}
           >
-            <a
-              href="tel:+74951234567"
-              className="font-body text-sm tracking-wider text-doorium-platinum/50 hover:text-primary transition-colors block mb-2"
-            >
+            <a href="tel:+74951234567" className="font-body text-sm tracking-wider text-doorium-platinum/50 hover:text-primary transition-colors block mb-2">
               +7 (495) 123-45-67
             </a>
-            <a
-              href="mailto:info@doorium.ru"
-              className="font-body text-sm tracking-wider text-doorium-platinum/50 hover:text-primary transition-colors block"
-            >
+            <a href="mailto:info@doorium.ru" className="font-body text-sm tracking-wider text-doorium-platinum/50 hover:text-primary transition-colors block">
               info@doorium.ru
             </a>
           </div>
