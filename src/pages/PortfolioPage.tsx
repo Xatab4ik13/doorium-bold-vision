@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { FeatureCarousel } from "@/components/FeatureCarousel";
 
 import work01 from "@/assets/portfolio/work-01.jpg";
@@ -170,12 +171,7 @@ const PortfolioPage = () => {
         </div>
       </section>
 
-      {/* Back */}
-      <section className="py-12 px-8 md:px-16 lg:px-24 text-center" style={{ background: "hsl(70 7% 16%)" }}>
-        <Link to="/" className="font-body text-sm tracking-[0.15em] uppercase text-primary hover:text-doorium-platinum transition-colors duration-300">
-          ← На главную
-        </Link>
-      </section>
+      <Footer />
 
       {/* Lightbox */}
       {lightboxIndex !== null && (
