@@ -6,6 +6,7 @@ import dooriumLogo from "@/assets/doorium-logo-new.png";
 const navItems = [
   { label: "Главная", href: "/" },
   { label: "Услуги", href: "/services" },
+  { label: "Портфолио", href: "/portfolio" },
   { label: "Заявка", href: "/#contacts" },
   { label: "Новости", href: "/#news" },
   { label: "Контакты", href: "/contacts" },
