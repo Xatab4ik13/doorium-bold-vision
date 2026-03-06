@@ -4,20 +4,10 @@ import dooriumLogo from "@/assets/doorium-logo-new.png";
 
 const navItems = [
   { label: "Главная", href: "/" },
-  {
-    label: "Услуги",
-    href: "/services",
-    submenu: [
-      { label: "Установка межкомнатных дверей", href: "/services#interior" },
-      { label: "Установка входных дверей", href: "/services#entrance" },
-      { label: "Рекламация", href: "/services#reclamation" },
-    ],
-  },
+  { label: "Услуги", href: "/services" },
   { label: "Заявка", href: "#contact" },
   { label: "Новости", href: "#news" },
   { label: "Контакты", href: "/contacts" },
-  { label: "Вакансии", href: "/vacancies" },
-  { label: "Стать партнёром", href: "/partners" },
 ];
 
 const MagneticLink = ({
