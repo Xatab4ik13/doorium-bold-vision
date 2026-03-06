@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import dooriumLogo from "@/assets/doorium-logo-new.png";
 
 const navItems = [
   { label: "Услуги", href: "#services" },
@@ -15,9 +16,11 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-4">
       {/* Text logo — Brigadier */}
       <a href="/" className="z-[60]">
-        <span className="font-display-stencil text-4xl md:text-5xl font-normal tracking-widest text-doorium-platinum drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-          DOORIUM
-        </span>
+        <img
+          src={dooriumLogo}
+          alt="Doorium Service"
+          className="h-10 md:h-14 w-auto brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+        />
       </a>
 
       {/* Liquid glass nav — centered */}
