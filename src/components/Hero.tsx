@@ -44,12 +44,15 @@ const Hero = () => {
             <p className="font-body text-xs md:text-base tracking-[0.3em] uppercase text-primary mb-3 md:mb-4 animate-fade-in-up">
               Doorium Service
             </p>
-            <h1 className="font-display-stencil text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-normal leading-[0.95] text-doorium-platinum mb-4 md:mb-6 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+            <h1
+              className="font-display-stencil text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-normal leading-[0.95] text-doorium-platinum mb-4 md:mb-6 animate-fade-in-up drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] md:drop-shadow-none"
+              style={{ animationDelay: "0.15s" }}
+            >
               ПРЕМИАЛЬНЫЙ
               <br />
               МОНТАЖ
             </h1>
-            <p className="font-body text-xs sm:text-sm md:text-lg text-doorium-platinum/70 mb-5 md:mb-8 max-w-[260px] sm:max-w-sm animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+            <p className="font-body text-xs sm:text-sm md:text-lg text-doorium-platinum/70 mb-5 md:mb-8 max-w-[260px] sm:max-w-sm animate-fade-in-up drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)] md:drop-shadow-none" style={{ animationDelay: "0.3s" }}>
               Установка межкомнатных и входных дверей
               с гарантией качества в&nbsp;Москве
             </p>
