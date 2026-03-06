@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import logo from "@/assets/doorium-logo.png";
 
 const navItems = [
   { label: "Услуги", href: "#services" },
@@ -13,12 +12,7 @@ const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-4 px-4">
-      {/* Logo above nav */}
-      <a href="/" className="mb-3">
-        <img src={logo} alt="Doorium Service" className="h-14 w-auto" />
-      </a>
-
+    <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 px-4">
       {/* Liquid glass nav bar — centered */}
       <nav className="hidden md:flex items-center gap-1 px-2 py-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]">
         {navItems.map((item) => (
