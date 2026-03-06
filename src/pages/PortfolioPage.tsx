@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import Header from "@/components/Header";
+import { FeatureCarousel } from "@/components/FeatureCarousel";
 
 import work01 from "@/assets/portfolio/work-01.jpg";
 import work02 from "@/assets/portfolio/work-02.jpg";
@@ -98,161 +99,12 @@ const Lightbox = ({
   );
 };
 
-/* ─── 3D Carousel ─── */
-const Carousel3D = ({
-  items,
-  activeIndex,
-  onPrev,
-  onNext,
-  onClickCenter,
-}: {
-  items: typeof portfolioItems;
-  activeIndex: number;
-  onPrev: () => void;
-  onNext: () => void;
-  onClickCenter: () => void;
-}) => {
-  // Show 5 slides: -2, -1, 0, +1, +2
-  const getSlideIndex = (offset: number) =>
-    (activeIndex + offset + items.length) % items.length;
-
-  const positions = [
-    { offset: -2, x: "-75%",  scale: 0.45, z: -200, opacity: 0.25, blur: 6 },
-    { offset: -1, x: "-38%",  scale: 0.65, z: -100, opacity: 0.55, blur: 3 },
-    { offset:  0, x: "0%",    scale: 1,    z: 0,    opacity: 1,    blur: 0 },
-    { offset:  1, x: "38%",   scale: 0.65, z: -100, opacity: 0.55, blur: 3 },
-    { offset:  2, x: "75%",   scale: 0.45, z: -200, opacity: 0.25, blur: 6 },
-  ];
-
-  // Touch/swipe support
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.touches[0].clientX);
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStart === null) return;
-    const diff = e.changedTouches[0].clientX - touchStart;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) onPrev();
-      else onNext();
-    }
-    setTouchStart(null);
-  };
-
-  // Keyboard
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") onPrev();
-      if (e.key === "ArrowRight") onNext();
-    };
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [onPrev, onNext]);
-
-  return (
-    <div
-      className="relative w-full overflow-hidden select-none"
-      style={{ height: "clamp(400px, 65vh, 700px)", perspective: "1200px" }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* Navigation arrows */}
-      <button
-        onClick={onPrev}
-        className="absolute left-4 md:left-10 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border border-primary/30 flex items-center justify-center text-primary/50 hover:text-primary hover:border-primary/60 transition-all duration-300 backdrop-blur-sm"
-      >
-        <ChevronLeft size={24} />
-      </button>
-      <button
-        onClick={onNext}
-        className="absolute right-4 md:right-10 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border border-primary/30 flex items-center justify-center text-primary/50 hover:text-primary hover:border-primary/60 transition-all duration-300 backdrop-blur-sm"
-      >
-        <ChevronRight size={24} />
-      </button>
-
-      {/* Slides */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        {positions.map(({ offset, x, scale, z, opacity, blur }) => {
-          const idx = getSlideIndex(offset);
-          const item = items[idx];
-          const isCenter = offset === 0;
-
-          return (
-            <div
-              key={`${offset}-${idx}`}
-              className="absolute transition-all duration-700 ease-out"
-              style={{
-                transform: `translateX(${x}) translateZ(${z}px) scale(${scale})`,
-                opacity,
-                filter: blur > 0 ? `blur(${blur}px)` : "none",
-                zIndex: 10 - Math.abs(offset),
-                cursor: isCenter ? "pointer" : "default",
-              }}
-              onClick={isCenter ? onClickCenter : offset < 0 ? onPrev : onNext}
-            >
-              {/* Card with frame */}
-              <div
-                className={`border transition-all duration-500 p-3 md:p-4 ${
-                  isCenter
-                    ? "border-primary/40 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)]"
-                    : "border-primary/10"
-                }`}
-                style={{
-                  width: "clamp(280px, 28vw, 420px)",
-                  background: "hsl(50 14% 10% / 0.6)",
-                }}
-              >
-                <div className="relative overflow-hidden" style={{ aspectRatio: "3/4" }}>
-                  <img
-                    src={item.src}
-                    alt={item.alt}
-                    loading="lazy"
-                    draggable={false}
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Center card hover gradient */}
-                  {isCenter && (
-                    <div className="absolute inset-0 bg-gradient-to-t from-doorium-smoky/50 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500" />
-                  )}
-                </div>
-              </div>
-
-              {/* Label for center */}
-              {isCenter && (
-                <div className="mt-4 text-center">
-                  <p className="font-body text-sm text-doorium-platinum/80 mb-1">
-                    {item.alt}
-                  </p>
-                  <p className="font-body text-[10px] tracking-[0.3em] text-primary/50">
-                    {String(idx + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}
-                  </p>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
 /* ─── Page ─── */
 const PortfolioPage = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
-  const goNext = useCallback(() => {
-    setActiveIndex((p) => (p + 1) % portfolioItems.length);
-  }, []);
-  const goPrev = useCallback(() => {
-    setActiveIndex((p) => (p - 1 + portfolioItems.length) % portfolioItems.length);
-  }, []);
-
-  const openLightbox = useCallback(() => setLightboxIndex(activeIndex), [activeIndex]);
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
   const prevLightbox = useCallback(() => {
     setLightboxIndex((prev) => prev !== null ? (prev - 1 + portfolioItems.length) % portfolioItems.length : null);
@@ -284,30 +136,9 @@ const PortfolioPage = () => {
         </p>
       </section>
 
-      {/* 3D Carousel */}
-      <section className="pb-16 md:pb-24">
-        <Carousel3D
-          items={portfolioItems}
-          activeIndex={activeIndex}
-          onPrev={goPrev}
-          onNext={goNext}
-          onClickCenter={openLightbox}
-        />
-
-        {/* Dot indicators */}
-        <div className="flex justify-center gap-1.5 mt-8">
-          {portfolioItems.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveIndex(i)}
-              className={`h-1 rounded-full transition-all duration-500 ${
-                i === activeIndex
-                  ? "w-8 bg-primary"
-                  : "w-1.5 bg-primary/20 hover:bg-primary/40"
-              }`}
-            />
-          ))}
-        </div>
+      {/* 3D Feature Carousel */}
+      <section className="pb-20 md:pb-28">
+        <FeatureCarousel images={portfolioItems} autoPlayInterval={4500} />
       </section>
 
       {/* CTA */}
