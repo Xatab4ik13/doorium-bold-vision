@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import Header from "@/components/Header";
@@ -98,125 +98,175 @@ const Lightbox = ({
   );
 };
 
-/* ─── Horizontal scroll strip ─── */
-const ScrollStrip = ({
+/* ─── 3D Carousel ─── */
+const Carousel3D = ({
   items,
-  onClickImage,
+  activeIndex,
+  onPrev,
+  onNext,
+  onClickCenter,
 }: {
   items: typeof portfolioItems;
-  onClickImage: (globalIndex: number) => void;
+  activeIndex: number;
+  onPrev: () => void;
+  onNext: () => void;
+  onClickCenter: () => void;
 }) => {
-  const stripRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const dragMoved = useRef(false);
+  // Show 5 slides: -2, -1, 0, +1, +2
+  const getSlideIndex = (offset: number) =>
+    (activeIndex + offset + items.length) % items.length;
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!stripRef.current) return;
-    setIsDragging(true);
-    dragMoved.current = false;
-    setStartX(e.pageX - stripRef.current.offsetLeft);
-    setScrollLeft(stripRef.current.scrollLeft);
+  const positions = [
+    { offset: -2, x: "-75%",  scale: 0.45, z: -200, opacity: 0.25, blur: 6 },
+    { offset: -1, x: "-38%",  scale: 0.65, z: -100, opacity: 0.55, blur: 3 },
+    { offset:  0, x: "0%",    scale: 1,    z: 0,    opacity: 1,    blur: 0 },
+    { offset:  1, x: "38%",   scale: 0.65, z: -100, opacity: 0.55, blur: 3 },
+    { offset:  2, x: "75%",   scale: 0.45, z: -200, opacity: 0.25, blur: 6 },
+  ];
+
+  // Touch/swipe support
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX);
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !stripRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - stripRef.current.offsetLeft;
-    const walk = (x - startX) * 1.5;
-    if (Math.abs(walk) > 5) dragMoved.current = true;
-    stripRef.current.scrollLeft = scrollLeft - walk;
-  };
-
-  const handleMouseUp = () => setIsDragging(false);
-
-  // Mouse wheel → horizontal scroll
-  const handleWheel = (e: React.WheelEvent) => {
-    if (!stripRef.current) return;
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-      e.preventDefault();
-      stripRef.current.scrollLeft += e.deltaY;
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const diff = e.changedTouches[0].clientX - touchStart;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) onPrev();
+      else onNext();
     }
+    setTouchStart(null);
   };
+
+  // Keyboard
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") onPrev();
+      if (e.key === "ArrowRight") onNext();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onPrev, onNext]);
 
   return (
     <div
-      ref={stripRef}
-      className="flex gap-5 md:gap-7 overflow-x-auto scroll-smooth cursor-grab active:cursor-grabbing select-none"
-      style={{
-        scrollbarWidth: "none",
-        msOverflowStyle: "none",
-        WebkitOverflowScrolling: "touch",
-      }}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onWheel={handleWheel}
+      className="relative w-full overflow-hidden select-none"
+      style={{ height: "clamp(400px, 65vh, 700px)", perspective: "1200px" }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
-      {/* Left padding spacer */}
-      <div className="shrink-0 w-8 md:w-16 lg:w-24" />
+      {/* Navigation arrows */}
+      <button
+        onClick={onPrev}
+        className="absolute left-4 md:left-10 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border border-primary/30 flex items-center justify-center text-primary/50 hover:text-primary hover:border-primary/60 transition-all duration-300 backdrop-blur-sm"
+      >
+        <ChevronLeft size={24} />
+      </button>
+      <button
+        onClick={onNext}
+        className="absolute right-4 md:right-10 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border border-primary/30 flex items-center justify-center text-primary/50 hover:text-primary hover:border-primary/60 transition-all duration-300 backdrop-blur-sm"
+      >
+        <ChevronRight size={24} />
+      </button>
 
-      {items.map((item, i) => (
-        <div
-          key={i}
-          className="group shrink-0 cursor-pointer"
-          onClick={() => {
-            if (!dragMoved.current) onClickImage(i);
-          }}
-        >
-          {/* Frame */}
-          <div className="border border-primary/20 group-hover:border-primary/50 transition-all duration-500 p-2 md:p-3">
-            <div className="relative overflow-hidden" style={{ width: "clamp(220px, 22vw, 380px)", aspectRatio: "3/4" }}>
-              <img
-                src={item.src}
-                alt={item.alt}
-                loading="lazy"
-                draggable={false}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              {/* Hover vignette */}
-              <div className="absolute inset-0 bg-gradient-to-t from-doorium-smoky/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <p className="absolute bottom-3 left-3 right-3 font-body text-[11px] text-doorium-platinum opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
-                {item.alt}
-              </p>
+      {/* Slides */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        {positions.map(({ offset, x, scale, z, opacity, blur }) => {
+          const idx = getSlideIndex(offset);
+          const item = items[idx];
+          const isCenter = offset === 0;
+
+          return (
+            <div
+              key={`${offset}-${idx}`}
+              className="absolute transition-all duration-700 ease-out"
+              style={{
+                transform: `translateX(${x}) translateZ(${z}px) scale(${scale})`,
+                opacity,
+                filter: blur > 0 ? `blur(${blur}px)` : "none",
+                zIndex: 10 - Math.abs(offset),
+                cursor: isCenter ? "pointer" : "default",
+              }}
+              onClick={isCenter ? onClickCenter : offset < 0 ? onPrev : onNext}
+            >
+              {/* Card with frame */}
+              <div
+                className={`border transition-all duration-500 p-3 md:p-4 ${
+                  isCenter
+                    ? "border-primary/40 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)]"
+                    : "border-primary/10"
+                }`}
+                style={{
+                  width: "clamp(280px, 28vw, 420px)",
+                  background: "hsl(50 14% 10% / 0.6)",
+                }}
+              >
+                <div className="relative overflow-hidden" style={{ aspectRatio: "3/4" }}>
+                  <img
+                    src={item.src}
+                    alt={item.alt}
+                    loading="lazy"
+                    draggable={false}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Center card hover gradient */}
+                  {isCenter && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-doorium-smoky/50 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500" />
+                  )}
+                </div>
+              </div>
+
+              {/* Label for center */}
+              {isCenter && (
+                <div className="mt-4 text-center">
+                  <p className="font-body text-sm text-doorium-platinum/80 mb-1">
+                    {item.alt}
+                  </p>
+                  <p className="font-body text-[10px] tracking-[0.3em] text-primary/50">
+                    {String(idx + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}
+                  </p>
+                </div>
+              )}
             </div>
-          </div>
-          {/* Number */}
-          <p className="font-body text-[10px] tracking-[0.3em] text-primary/30 group-hover:text-primary/70 transition-colors duration-500 mt-2 text-center">
-            {String(i + 1).padStart(2, "0")}
-          </p>
-        </div>
-      ))}
-
-      {/* Right padding spacer */}
-      <div className="shrink-0 w-8 md:w-16 lg:w-24" />
+          );
+        })}
+      </div>
     </div>
   );
 };
 
 /* ─── Page ─── */
 const PortfolioPage = () => {
+  const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
-  const openLightbox = useCallback((i: number) => setLightboxIndex(i), []);
+  const goNext = useCallback(() => {
+    setActiveIndex((p) => (p + 1) % portfolioItems.length);
+  }, []);
+  const goPrev = useCallback(() => {
+    setActiveIndex((p) => (p - 1 + portfolioItems.length) % portfolioItems.length);
+  }, []);
+
+  const openLightbox = useCallback(() => setLightboxIndex(activeIndex), [activeIndex]);
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
-  const prevImage = useCallback(() => {
+  const prevLightbox = useCallback(() => {
     setLightboxIndex((prev) => prev !== null ? (prev - 1 + portfolioItems.length) % portfolioItems.length : null);
   }, []);
-  const nextImage = useCallback(() => {
+  const nextLightbox = useCallback(() => {
     setLightboxIndex((prev) => prev !== null ? (prev + 1) % portfolioItems.length : null);
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "hsl(50 14% 8%)" }}>
+    <div className="min-h-screen" style={{ background: "hsl(50 14% 8%)" }}>
       <Header />
 
-      {/* Hero intro */}
-      <section className="pt-32 md:pt-40 pb-8 md:pb-12 px-8 md:px-16 lg:px-24">
+      {/* Hero */}
+      <section className="pt-32 md:pt-40 pb-6 md:pb-10 text-center px-8">
         <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3 animate-fade-in-up">
           Портфолио
         </p>
@@ -227,35 +277,36 @@ const PortfolioPage = () => {
           НАШИ РАБОТЫ
         </h1>
         <p
-          className="font-body text-base text-muted-foreground max-w-lg animate-fade-in-up"
+          className="font-body text-base text-muted-foreground max-w-md mx-auto animate-fade-in-up"
           style={{ animationDelay: "0.2s" }}
         >
-          Листайте ленту — каждый кадр, это реальный проект в Москве.
-        </p>
-        <p
-          className="font-body text-xs tracking-[0.2em] uppercase text-primary/40 mt-6 animate-fade-in-up flex items-center gap-2"
-          style={{ animationDelay: "0.35s" }}
-        >
-          <span className="inline-block w-8 h-px bg-primary/30" />
-          Тяните в сторону или скролльте
+          Каждый проект — это внимание к деталям и безупречный результат.
         </p>
       </section>
 
-      {/* Full-width horizontal scroll */}
-      <section className="py-8 md:py-12 flex-1">
-        <ScrollStrip items={portfolioItems} onClickImage={openLightbox} />
-      </section>
+      {/* 3D Carousel */}
+      <section className="pb-16 md:pb-24">
+        <Carousel3D
+          items={portfolioItems}
+          activeIndex={activeIndex}
+          onPrev={goPrev}
+          onNext={goNext}
+          onClickCenter={openLightbox}
+        />
 
-      {/* Counter */}
-      <section className="px-8 md:px-16 lg:px-24 pb-12 md:pb-16">
-        <div className="flex items-center gap-4">
-          <span className="font-display-stencil text-4xl md:text-5xl text-primary/20">
-            {String(portfolioItems.length).padStart(2, "0")}
-          </span>
-          <div className="h-px flex-1 bg-primary/10" />
-          <span className="font-body text-xs tracking-[0.2em] uppercase text-primary/40">
-            Выполненных проектов
-          </span>
+        {/* Dot indicators */}
+        <div className="flex justify-center gap-1.5 mt-8">
+          {portfolioItems.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveIndex(i)}
+              className={`h-1 rounded-full transition-all duration-500 ${
+                i === activeIndex
+                  ? "w-8 bg-primary"
+                  : "w-1.5 bg-primary/20 hover:bg-primary/40"
+              }`}
+            />
+          ))}
         </div>
       </section>
 
@@ -301,8 +352,8 @@ const PortfolioPage = () => {
           images={portfolioItems}
           index={lightboxIndex}
           onClose={closeLightbox}
-          onPrev={prevImage}
-          onNext={nextImage}
+          onPrev={prevLightbox}
+          onNext={nextLightbox}
         />
       )}
     </div>
