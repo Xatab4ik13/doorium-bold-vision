@@ -14,7 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Oswald", "sans-serif"],
+        display: ["Brigadier", "sans-serif"],
+        "display-ext": ["Brigadier Extended", "sans-serif"],
+        "display-stencil": ["Brigadier Stencil", "sans-serif"],
         body: ["Inter", "sans-serif"],
       },
       colors: {
