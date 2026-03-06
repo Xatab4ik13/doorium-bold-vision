@@ -1,17 +1,47 @@
+import { useEffect, useRef } from "react";
 import heroVideo from "@/assets/hero-video.mp4";
 import heroImage from "@/assets/hero-interior.jpg";
 
 const Hero = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Force play on mobile — some browsers need a manual trigger
+    const tryPlay = () => {
+      video.play().catch(() => {
+        // If autoplay fails, try again on first user interaction
+        const handleInteraction = () => {
+          video.play().catch(() => {});
+          document.removeEventListener("touchstart", handleInteraction);
+          document.removeEventListener("click", handleInteraction);
+        };
+        document.addEventListener("touchstart", handleInteraction, { once: true });
+        document.addEventListener("click", handleInteraction, { once: true });
+      });
+    };
+
+    if (video.readyState >= 3) {
+      tryPlay();
+    } else {
+      video.addEventListener("canplay", tryPlay, { once: true });
+    }
+  }, []);
+
   return (
     <section className="relative h-screen w-full overflow-hidden">
       {/* Bottom layer: full-width video */}
       <video
+        ref={videoRef}
         src={heroVideo}
         poster={heroImage}
         autoPlay
         muted
         loop
         playsInline
+        preload="auto"
         className="absolute inset-0 w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-doorium-smoky/20" />
