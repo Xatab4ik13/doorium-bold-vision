@@ -15,6 +15,13 @@ const Hero = () => {
         className="absolute inset-0 w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-doorium-smoky/20" />
+      {/* Bottom gradient fade into next section (Smoky Black) */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-48 z-30 pointer-events-none"
+        style={{
+          background: "linear-gradient(to bottom, transparent, hsl(50 14% 8%))",
+        }}
+      />
 
       {/* Top layer: dark overlay with zigzag cut on the right */}
       <div className="absolute inset-0 z-10">
