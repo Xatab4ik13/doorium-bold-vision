@@ -33,7 +33,7 @@ const MagneticLink = ({ href, label }: { href: string; label: string }) => {
       href={href}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="group relative font-display-stencil text-base font-normal tracking-[0.25em] text-doorium-platinum/70 uppercase px-6 py-3 transition-colors duration-300 hover:text-primary"
+      className="group relative font-display-stencil text-base font-normal tracking-[0.25em] text-doorium-platinum uppercase px-6 py-3 transition-colors duration-300 hover:text-primary drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]"
       style={{
         transform,
         transition: "transform 0.25s cubic-bezier(0.33, 1, 0.68, 1), color 0.3s",
