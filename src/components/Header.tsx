@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import dooriumLogo from "@/assets/doorium-logo-new.png";
 
 const navItems = [
   { label: "Услуги", href: "#services" },
