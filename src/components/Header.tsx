@@ -158,7 +158,6 @@ const Header = () => {
                   {item.label}
                 </a>
               ))}
-              ))}
             </nav>
           </div>
         )}
