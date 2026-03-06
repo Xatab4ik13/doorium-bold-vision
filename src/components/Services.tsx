@@ -147,11 +147,6 @@ const Services = () => {
         ))}
       </div>
 
-      {/* Gradient fade into next section */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-48 z-20 pointer-events-none"
-        style={{ background: "linear-gradient(to bottom, transparent, hsl(70 7% 16%))" }}
-      />
     </section>
   );
 };
