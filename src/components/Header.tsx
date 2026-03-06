@@ -15,7 +15,7 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-4">
       {/* Text logo — Brigadier */}
       <a href="/" className="z-[60]">
-        <span className="font-display text-4xl md:text-5xl font-bold tracking-widest text-doorium-platinum drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+        <span className="font-display-stencil text-4xl md:text-5xl font-normal tracking-widest text-doorium-platinum drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
           DOORIUM
         </span>
       </a>
@@ -26,7 +26,7 @@ const Header = () => {
           <a
             key={item.href}
             href={item.href}
-            className="font-display text-sm font-bold tracking-widest text-doorium-platinum/80 hover:text-primary hover:bg-white/10 transition-all duration-300 uppercase px-5 py-2 rounded-xl"
+            className="font-display-stencil text-sm font-normal tracking-widest text-doorium-platinum/80 hover:text-primary hover:bg-white/10 transition-all duration-300 uppercase px-5 py-2 rounded-xl"
           >
             {item.label}
           </a>
@@ -54,7 +54,7 @@ const Header = () => {
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className="font-display text-lg font-bold tracking-widest text-doorium-platinum/80 hover:text-primary hover:bg-white/10 transition-all uppercase px-4 py-3 rounded-xl"
+                className="font-display-stencil text-lg font-normal tracking-widest text-doorium-platinum/80 hover:text-primary hover:bg-white/10 transition-all uppercase px-4 py-3 rounded-xl"
               >
                 {item.label}
               </a>

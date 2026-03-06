@@ -9,7 +9,7 @@ const Hero = () => {
           <p className="font-body text-sm md:text-base tracking-[0.3em] uppercase text-primary mb-4 animate-fade-in-up">
             Doorium Service
           </p>
-          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold leading-[0.95] text-doorium-platinum mb-6 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+          <h1 className="font-display-stencil text-5xl md:text-6xl lg:text-7xl font-normal leading-[0.95] text-doorium-platinum mb-6 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
             ПРЕМИАЛЬНЫЙ
             <br />
             МОНТАЖ

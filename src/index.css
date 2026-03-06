@@ -1,12 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @font-face {
-  font-family: 'Brigadier Stencil';
-  src: url('/fonts/Brigadier_Stencil.otf') format('opentype');
+  font-family: 'Brigadier Stencil Custom';
+  src: url('/fonts/Brigadier_Stencil_Custom.otf?v=2') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -115,11 +113,12 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Brigadier Stencil', sans-serif;
+    font-family: 'Brigadier Stencil Custom', sans-serif;
+    font-synthesis-weight: none;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Brigadier Stencil', sans-serif;
+    font-family: 'Brigadier Stencil Custom', sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
