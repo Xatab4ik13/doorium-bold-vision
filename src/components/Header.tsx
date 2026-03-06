@@ -19,7 +19,7 @@ const Header = () => {
         <img
           src={dooriumLogo}
           alt="Doorium Service"
-          className="h-28 md:h-36 w-auto brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+          className="h-80 md:h-[28rem] w-auto brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
         />
       </a>
 
