@@ -6,7 +6,7 @@ const navItems = [
   { label: "Услуги", href: "/services" },
   { label: "Наши работы", href: "/portfolio" },
   { label: "Новости", href: "#news" },
-  { label: "Контакты", href: "#contacts" },
+  { label: "Контакты", href: "/contacts" },
 ];
 
 const MagneticLink = ({ href, label }: { href: string; label: string }) => {
