@@ -1,18 +1,25 @@
+import serviceInterior from "@/assets/service-interior-doors.jpg";
+import serviceEntrance from "@/assets/service-entrance-doors.jpg";
+import serviceRepair from "@/assets/service-repair.jpg";
+
 const services = [
   {
     num: "01",
     title: "УСТАНОВКА\nМЕЖКОМНАТНЫХ\nДВЕРЕЙ",
     desc: "Профессиональный монтаж любой сложности с гарантией идеальной геометрии и бесшумной работы механизмов.",
+    image: serviceInterior,
   },
   {
     num: "02",
     title: "УСТАНОВКА\nВХОДНЫХ\nДВЕРЕЙ",
     desc: "Надёжная установка входных дверей с полной герметизацией, утеплением и регулировкой фурнитуры.",
+    image: serviceEntrance,
   },
   {
     num: "03",
     title: "РЕКЛАМАЦИЯ",
     desc: "Устранение дефектов, регулировка и восстановление дверных конструкций любых производителей.",
+    image: serviceRepair,
   },
 ];
 
@@ -48,7 +55,7 @@ const Services = () => {
             >
               {/* Diagonal strip */}
               <div
-                className="relative py-12 md:py-16 transition-colors duration-500 group-hover:bg-primary/10"
+                className="relative py-10 md:py-16 transition-colors duration-500 group-hover:bg-primary/10"
                 style={{
                   clipPath: isEven
                     ? "polygon(0 0, 100% 8%, 100% 100%, 0 92%)"
@@ -64,10 +71,10 @@ const Services = () => {
                   }}
                 />
 
-                <div className="px-8 md:px-16 lg:px-24 flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-16">
+                <div className="px-8 md:px-16 lg:px-24 flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-12">
                   {/* Large number */}
                   <span
-                    className="font-display-stencil text-[6rem] md:text-[8rem] lg:text-[10rem] leading-none text-primary/20 group-hover:text-primary/40 transition-colors duration-500 select-none"
+                    className="font-display-stencil text-[5rem] md:text-[7rem] lg:text-[9rem] leading-none text-primary/20 group-hover:text-primary/40 transition-colors duration-500 select-none shrink-0"
                     style={{
                       transform: isEven ? "rotate(-3deg)" : "rotate(3deg)",
                     }}
@@ -75,11 +82,26 @@ const Services = () => {
                     {service.num}
                   </span>
 
+                  {/* Image */}
+                  <div
+                    className="w-full md:w-40 lg:w-52 aspect-square rounded-xl overflow-hidden shrink-0 relative"
+                    style={{
+                      clipPath: isEven
+                        ? "polygon(8% 0, 100% 0, 92% 100%, 0 100%)"
+                        : "polygon(0 0, 92% 0, 100% 100%, 8% 100%)",
+                    }}
+                  >
+                    <img
+                      src={service.image}
+                      alt={service.title.replace(/\n/g, " ")}
+                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700"
+                    />
+                    <div className="absolute inset-0 bg-secondary/40 group-hover:bg-transparent transition-colors duration-500" />
+                  </div>
+
                   {/* Title */}
                   <div className="flex-1">
-                    <h3
-                      className="font-display-stencil text-2xl md:text-3xl lg:text-4xl text-doorium-platinum leading-[1.1] whitespace-pre-line group-hover:text-primary transition-colors duration-500"
-                    >
+                    <h3 className="font-display-stencil text-2xl md:text-3xl lg:text-4xl text-doorium-platinum leading-[1.1] whitespace-pre-line group-hover:text-primary transition-colors duration-500">
                       {service.title}
                     </h3>
                   </div>
