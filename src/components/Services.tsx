@@ -5,13 +5,13 @@ import serviceRepair from "@/assets/service-repair.jpg";
 const services = [
   {
     num: "01",
-    title: "УСТАНОВКА\nМЕЖКОМНАТНЫХ\nДВЕРЕЙ",
+    title: "УСТАНОВКА\nМЕЖКОМНАТНЫХ ДВЕРЕЙ",
     desc: "Профессиональный монтаж любой сложности с гарантией идеальной геометрии и бесшумной работы механизмов.",
     image: serviceInterior,
   },
   {
     num: "02",
-    title: "УСТАНОВКА\nВХОДНЫХ\nДВЕРЕЙ",
+    title: "УСТАНОВКА\nВХОДНЫХ ДВЕРЕЙ",
     desc: "Надёжная установка входных дверей с полной герметизацией, утеплением и регулировкой фурнитуры.",
     image: serviceEntrance,
   },
@@ -25,16 +25,14 @@ const services = [
 
 const Services = () => {
   return (
-    <section
-      id="services"
-      className="relative py-24 md:py-32 overflow-hidden"
-      style={{
-        background:
-          "linear-gradient(180deg, hsl(70 7% 16%) 0%, hsl(50 14% 12%) 100%)",
-      }}
-    >
+    <section id="services" className="relative overflow-hidden">
       {/* Section heading */}
-      <div className="relative z-10 px-8 md:px-16 lg:px-24 mb-16 md:mb-24">
+      <div
+        className="relative z-10 px-8 md:px-16 lg:px-24 py-16 md:py-24"
+        style={{
+          background: "hsl(70 7% 16%)",
+        }}
+      >
         <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">
           Что мы делаем
         </p>
@@ -43,84 +41,57 @@ const Services = () => {
         </h2>
       </div>
 
-      {/* Diagonal service strips */}
-      <div className="relative z-10 space-y-0">
-        {services.map((service, i) => {
-          const isEven = i % 2 === 0;
-          return (
-            <a
-              key={service.num}
-              href="#contacts"
-              className="group block relative cursor-pointer"
-            >
-              {/* Diagonal strip */}
-              <div
-                className="relative py-10 md:py-16 transition-colors duration-500 group-hover:bg-primary/10"
-                style={{
-                  clipPath: isEven
-                    ? "polygon(0 0, 100% 8%, 100% 100%, 0 92%)"
-                    : "polygon(0 8%, 100% 0, 100% 92%, 0 100%)",
-                }}
+      {/* Full-bleed image service blocks */}
+      {services.map((service, i) => {
+        const isEven = i % 2 === 0;
+        return (
+          <a
+            key={service.num}
+            href="#contacts"
+            className="group block relative h-[50vh] md:h-[70vh] overflow-hidden cursor-pointer"
+          >
+            {/* Background image */}
+            <img
+              src={service.image}
+              alt={service.title.replace(/\n/g, " ")}
+              className="absolute inset-0 w-full h-full object-cover scale-105 group-hover:scale-100 transition-transform duration-[1.2s] ease-out"
+            />
+
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-secondary/70 group-hover:bg-secondary/50 transition-colors duration-700" />
+
+            {/* Diagonal chamoisee accent line */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                borderBottom: "1px solid hsl(34 24% 48% / 0.4)",
+              }}
+            />
+
+            {/* Content */}
+            <div className={`absolute inset-0 z-10 flex flex-col justify-end px-8 md:px-16 lg:px-24 pb-12 md:pb-16 ${isEven ? "items-start" : "md:items-end"}`}>
+              {/* Number — large, positioned at top */}
+              <span
+                className={`absolute top-6 md:top-10 font-display-stencil text-[7rem] md:text-[10rem] lg:text-[14rem] leading-none text-primary/10 group-hover:text-primary/20 transition-colors duration-700 select-none ${isEven ? "right-8 md:right-16 lg:right-24" : "left-8 md:left-16 lg:left-24"}`}
               >
-                {/* Diagonal border line */}
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    borderTop: "1px solid hsl(34 24% 48% / 0.3)",
-                    borderBottom: "1px solid hsl(34 24% 48% / 0.3)",
-                  }}
-                />
+                {service.num}
+              </span>
 
-                <div className="px-8 md:px-16 lg:px-24 flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-12">
-                  {/* Large number */}
-                  <span
-                    className="font-display-stencil text-[5rem] md:text-[7rem] lg:text-[9rem] leading-none text-primary/20 group-hover:text-primary/40 transition-colors duration-500 select-none shrink-0"
-                    style={{
-                      transform: isEven ? "rotate(-3deg)" : "rotate(3deg)",
-                    }}
-                  >
-                    {service.num}
-                  </span>
+              <h3
+                className={`font-display-stencil text-3xl md:text-4xl lg:text-5xl text-doorium-platinum leading-[1.05] whitespace-pre-line group-hover:text-primary transition-colors duration-500 mb-4 ${isEven ? "text-left" : "md:text-right"}`}
+              >
+                {service.title}
+              </h3>
 
-                  {/* Image */}
-                  <div
-                    className="w-full md:w-40 lg:w-52 aspect-square rounded-xl overflow-hidden shrink-0 relative"
-                    style={{
-                      clipPath: isEven
-                        ? "polygon(8% 0, 100% 0, 92% 100%, 0 100%)"
-                        : "polygon(0 0, 92% 0, 100% 100%, 8% 100%)",
-                    }}
-                  >
-                    <img
-                      src={service.image}
-                      alt={service.title.replace(/\n/g, " ")}
-                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700"
-                    />
-                    <div className="absolute inset-0 bg-secondary/40 group-hover:bg-transparent transition-colors duration-500" />
-                  </div>
-
-                  {/* Title */}
-                  <div className="flex-1">
-                    <h3 className="font-display-stencil text-2xl md:text-3xl lg:text-4xl text-doorium-platinum leading-[1.1] whitespace-pre-line group-hover:text-primary transition-colors duration-500">
-                      {service.title}
-                    </h3>
-                  </div>
-
-                  {/* Description — hidden on mobile, shown on md+ */}
-                  <p className="hidden md:block max-w-xs font-body text-sm text-doorium-platinum/50 group-hover:text-doorium-platinum/80 transition-colors duration-500 leading-relaxed">
-                    {service.desc}
-                  </p>
-
-                  {/* Arrow */}
-                  <span className="font-display-stencil text-3xl md:text-4xl text-primary/30 group-hover:text-primary group-hover:translate-x-3 transition-all duration-500">
-                    →
-                  </span>
-                </div>
-              </div>
-            </a>
-          );
-        })}
-      </div>
+              <p
+                className={`font-body text-sm md:text-base text-doorium-platinum/50 group-hover:text-doorium-platinum/80 transition-colors duration-500 max-w-md leading-relaxed ${isEven ? "text-left" : "md:text-right"}`}
+              >
+                {service.desc}
+              </p>
+            </div>
+          </a>
+        );
+      })}
     </section>
   );
 };
