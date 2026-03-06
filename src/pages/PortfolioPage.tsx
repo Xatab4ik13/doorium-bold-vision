@@ -45,8 +45,6 @@ const portfolioItems = [
   { src: work19, alt: "Белая входная дверь с зеркалом" },
 ];
 
-// No masonry heights needed — uniform grid
-
 /* ─── Lightbox ─── */
 const Lightbox = ({
   images,
@@ -76,27 +74,15 @@ const Lightbox = ({
   }, [onClose, onPrev, onNext]);
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-[100] flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-doorium-smoky/95 backdrop-blur-sm" />
-      <button
-        onClick={onClose}
-        className="absolute top-6 right-6 z-10 text-doorium-platinum/70 hover:text-doorium-platinum transition-colors"
-      >
+      <button onClick={onClose} className="absolute top-6 right-6 z-10 text-doorium-platinum/70 hover:text-doorium-platinum transition-colors">
         <X size={32} />
       </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); onPrev(); }}
-        className="absolute left-4 md:left-8 z-10 text-doorium-platinum/50 hover:text-doorium-platinum transition-colors"
-      >
+      <button onClick={(e) => { e.stopPropagation(); onPrev(); }} className="absolute left-4 md:left-8 z-10 text-doorium-platinum/50 hover:text-doorium-platinum transition-colors">
         <ChevronLeft size={40} />
       </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); onNext(); }}
-        className="absolute right-4 md:right-8 z-10 text-doorium-platinum/50 hover:text-doorium-platinum transition-colors"
-      >
+      <button onClick={(e) => { e.stopPropagation(); onNext(); }} className="absolute right-4 md:right-8 z-10 text-doorium-platinum/50 hover:text-doorium-platinum transition-colors">
         <ChevronRight size={40} />
       </button>
       <img
@@ -104,9 +90,6 @@ const Lightbox = ({
         alt={images[index].alt}
         onClick={(e) => e.stopPropagation()}
         className="relative z-10 max-h-[85vh] max-w-[90vw] object-contain"
-        style={{
-          animation: "fade-in 0.3s ease-out",
-        }}
       />
       <p className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 font-body text-sm text-doorium-platinum/60">
         {index + 1} / {images.length}
@@ -115,63 +98,100 @@ const Lightbox = ({
   );
 };
 
-/* ─── Portfolio card with frame ─── */
-const PortfolioCard = ({
-  item,
-  index,
-  onClick,
+/* ─── Horizontal scroll strip ─── */
+const ScrollStrip = ({
+  items,
+  onClickImage,
 }: {
-  item: (typeof portfolioItems)[0];
-  index: number;
-  onClick: () => void;
+  items: typeof portfolioItems;
+  onClickImage: (globalIndex: number) => void;
 }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const dragMoved = useRef(false);
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.unobserve(el); } },
-      { threshold: 0.1 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!stripRef.current) return;
+    setIsDragging(true);
+    dragMoved.current = false;
+    setStartX(e.pageX - stripRef.current.offsetLeft);
+    setScrollLeft(stripRef.current.scrollLeft);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !stripRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - stripRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    if (Math.abs(walk) > 5) dragMoved.current = true;
+    stripRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleMouseUp = () => setIsDragging(false);
+
+  // Mouse wheel → horizontal scroll
+  const handleWheel = (e: React.WheelEvent) => {
+    if (!stripRef.current) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      e.preventDefault();
+      stripRef.current.scrollLeft += e.deltaY;
+    }
+  };
 
   return (
     <div
-      ref={ref}
-      className="group cursor-pointer"
-      onClick={onClick}
+      ref={stripRef}
+      className="flex gap-5 md:gap-7 overflow-x-auto scroll-smooth cursor-grab active:cursor-grabbing select-none"
       style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(30px)",
-        transition: `opacity 0.6s ease-out ${index * 0.06}s, transform 0.6s ease-out ${index * 0.06}s`,
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
+        WebkitOverflowScrolling: "touch",
       }}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onWheel={handleWheel}
     >
-      {/* Outer frame */}
-      <div className="border border-primary/20 group-hover:border-primary/50 transition-all duration-500 p-3 md:p-4">
-        {/* Inner image container */}
-        <div className="relative aspect-[3/4] overflow-hidden">
-          <img
-            src={item.src}
-            alt={item.alt}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-          {/* Hover overlay */}
-          <div className="absolute inset-0 bg-doorium-smoky/0 group-hover:bg-doorium-smoky/50 transition-all duration-500 flex items-end justify-center pb-6">
-            <p className="font-body text-xs md:text-sm text-doorium-platinum text-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-3 group-hover:translate-y-0 px-4 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
-              {item.alt}
-            </p>
+      {/* Left padding spacer */}
+      <div className="shrink-0 w-8 md:w-16 lg:w-24" />
+
+      {items.map((item, i) => (
+        <div
+          key={i}
+          className="group shrink-0 cursor-pointer"
+          onClick={() => {
+            if (!dragMoved.current) onClickImage(i);
+          }}
+        >
+          {/* Frame */}
+          <div className="border border-primary/20 group-hover:border-primary/50 transition-all duration-500 p-2 md:p-3">
+            <div className="relative overflow-hidden" style={{ width: "clamp(220px, 22vw, 380px)", aspectRatio: "3/4" }}>
+              <img
+                src={item.src}
+                alt={item.alt}
+                loading="lazy"
+                draggable={false}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              {/* Hover vignette */}
+              <div className="absolute inset-0 bg-gradient-to-t from-doorium-smoky/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <p className="absolute bottom-3 left-3 right-3 font-body text-[11px] text-doorium-platinum opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
+                {item.alt}
+              </p>
+            </div>
           </div>
+          {/* Number */}
+          <p className="font-body text-[10px] tracking-[0.3em] text-primary/30 group-hover:text-primary/70 transition-colors duration-500 mt-2 text-center">
+            {String(i + 1).padStart(2, "0")}
+          </p>
         </div>
-      </div>
-      {/* Number below frame */}
-      <p className="font-body text-[10px] tracking-[0.3em] text-primary/40 group-hover:text-primary/70 transition-colors duration-500 mt-3 text-center uppercase">
-        {String(index + 1).padStart(2, "0")}
-      </p>
+      ))}
+
+      {/* Right padding spacer */}
+      <div className="shrink-0 w-8 md:w-16 lg:w-24" />
     </div>
   );
 };
@@ -192,36 +212,50 @@ const PortfolioPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ background: "hsl(50 14% 8%)" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: "hsl(50 14% 8%)" }}>
       <Header />
 
-      {/* Hero */}
-      <section className="pt-32 md:pt-40 pb-12 md:pb-20 px-8 md:px-16 lg:px-24">
+      {/* Hero intro */}
+      <section className="pt-32 md:pt-40 pb-8 md:pb-12 px-8 md:px-16 lg:px-24">
         <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3 animate-fade-in-up">
           Портфолио
         </p>
-        <h1 className="font-display-stencil text-5xl md:text-6xl lg:text-7xl text-doorium-platinum leading-[0.95] mb-4 animate-fade-in-up"
-            style={{ animationDelay: "0.1s" }}>
+        <h1
+          className="font-display-stencil text-5xl md:text-6xl lg:text-7xl text-doorium-platinum leading-[0.95] mb-4 animate-fade-in-up"
+          style={{ animationDelay: "0.1s" }}
+        >
           НАШИ РАБОТЫ
         </h1>
-        <p className="font-body text-base text-muted-foreground max-w-lg animate-fade-in-up"
-           style={{ animationDelay: "0.2s" }}>
-          Каждый проект — это внимание к деталям, точность монтажа и безупречный результат.
-          Вот некоторые из наших недавних работ в Москве.
+        <p
+          className="font-body text-base text-muted-foreground max-w-lg animate-fade-in-up"
+          style={{ animationDelay: "0.2s" }}
+        >
+          Листайте ленту — каждый кадр, это реальный проект в Москве.
+        </p>
+        <p
+          className="font-body text-xs tracking-[0.2em] uppercase text-primary/40 mt-6 animate-fade-in-up flex items-center gap-2"
+          style={{ animationDelay: "0.35s" }}
+        >
+          <span className="inline-block w-8 h-px bg-primary/30" />
+          Тяните в сторону или скролльте
         </p>
       </section>
 
-      {/* Grid */}
-      <section className="px-6 md:px-12 lg:px-20 pb-24 md:pb-32">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-          {portfolioItems.map((item, i) => (
-            <PortfolioCard
-              key={i}
-              item={item}
-              index={i}
-              onClick={() => openLightbox(i)}
-            />
-          ))}
+      {/* Full-width horizontal scroll */}
+      <section className="py-8 md:py-12 flex-1">
+        <ScrollStrip items={portfolioItems} onClickImage={openLightbox} />
+      </section>
+
+      {/* Counter */}
+      <section className="px-8 md:px-16 lg:px-24 pb-12 md:pb-16">
+        <div className="flex items-center gap-4">
+          <span className="font-display-stencil text-4xl md:text-5xl text-primary/20">
+            {String(portfolioItems.length).padStart(2, "0")}
+          </span>
+          <div className="h-px flex-1 bg-primary/10" />
+          <span className="font-body text-xs tracking-[0.2em] uppercase text-primary/40">
+            Выполненных проектов
+          </span>
         </div>
       </section>
 
