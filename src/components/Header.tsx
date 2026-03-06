@@ -10,89 +10,27 @@ const navItems = [
   { label: "Контакты", href: "/contacts" },
 ];
 
-const MagneticLink = ({
-  href,
-  label,
-  submenu,
-}: {
-  href: string;
-  label: string;
-  submenu?: { label: string; href: string }[];
-}) => {
-  const divRef = useRef<HTMLDivElement>(null);
-  const anchorRef = useRef<HTMLAnchorElement>(null);
+const MagneticLink = ({ href, label }: { href: string; label: string }) => {
+  const ref = useRef<HTMLAnchorElement>(null);
   const [transform, setTransform] = useState("translate(0px, 0px)");
-  const [submenuOpen, setSubmenuOpen] = useState(false);
-
-  const getRect = () => {
-    const el = submenu ? divRef.current : anchorRef.current;
-    return el?.getBoundingClientRect();
-  };
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    const rect = getRect();
-    if (!rect) return;
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     const deltaX = (e.clientX - centerX) * 0.35;
     const deltaY = (e.clientY - centerY) * 0.35;
     setTransform(`translate(${deltaX}px, ${deltaY}px)`);
-  }, [submenu]);
+  }, []);
 
   const handleMouseLeave = useCallback(() => {
     setTransform("translate(0px, 0px)");
-    setSubmenuOpen(false);
   }, []);
-
-  if (submenu) {
-    return (
-      <div
-        ref={divRef}
-        className="relative"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        onMouseEnter={() => setSubmenuOpen(true)}
-        style={{
-          transform,
-          transition: "transform 0.25s cubic-bezier(0.33, 1, 0.68, 1)",
-        }}
-      >
-        <a
-          href={href}
-          className="group relative font-display-stencil text-base font-normal tracking-[0.25em] text-doorium-platinum uppercase px-6 py-3 transition-colors duration-300 hover:text-primary drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)] flex items-center gap-1"
-        >
-          {label}
-          <ChevronDown
-            size={14}
-            className={`transition-transform duration-300 ${submenuOpen ? "rotate-180" : ""}`}
-          />
-          <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-[1px] w-0 bg-primary transition-all duration-500 group-hover:w-3/4" />
-        </a>
-
-        <div
-          className={`absolute top-full left-1/2 -translate-x-1/2 pt-2 transition-all duration-300 ${
-            submenuOpen ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-2 pointer-events-none"
-          }`}
-        >
-          <div className="bg-doorium-jet/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] py-2 min-w-[280px]">
-            {submenu.map((sub) => (
-              <a
-                key={sub.href}
-                href={sub.href}
-                className="block px-5 py-2.5 font-body text-sm text-doorium-platinum/70 hover:text-primary hover:bg-white/5 transition-all"
-              >
-                {sub.label}
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <a
-      ref={anchorRef}
+      ref={ref}
       href={href}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
