@@ -1,38 +1,9 @@
-@font-face {
-  font-family: 'Brigadier';
-  src: url('/fonts/Brigadier_Regular.otf') format('opentype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Brigadier';
-  src: url('/fonts/Brigadier_Italic.otf') format('opentype');
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Brigadier';
-  src: url('/fonts/Brigadier_Bold.otf') format('opentype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Brigadier Extended';
-  src: url('/fonts/Brigadier_Extended_Bold.otf') format('opentype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Brigadier Extended';
-  src: url('/fonts/Brigadier_Extended_Bold_Italic.otf') format('opentype');
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @font-face {
   font-family: 'Brigadier Stencil';
   src: url('/fonts/Brigadier_Stencil.otf') format('opentype');
@@ -41,17 +12,27 @@
   font-display: swap;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+@font-face {
+  font-family: 'Brigadier';
+  src: url('/fonts/Brigadier_Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@font-face {
+  font-family: 'Brigadier';
+  src: url('/fonts/Brigadier_Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 @layer base {
   :root {
     /* Doorium palette: Platinum / Chamoisee / Smoky Black / Jet */
-    --background: 0 0% 89%;          /* #E4E4E5 Platinum */
-    --foreground: 40 10% 8%;         /* #181712 Smoky Black */
+    --background: 0 0% 89%;
+    --foreground: 40 10% 8%;
 
     --card: 0 0% 89%;
     --card-foreground: 40 10% 8%;
@@ -59,10 +40,10 @@
     --popover: 0 0% 89%;
     --popover-foreground: 40 10% 8%;
 
-    --primary: 30 24% 48%;           /* #987E5D Chamoisee */
+    --primary: 30 24% 48%;
     --primary-foreground: 0 0% 89%;
 
-    --secondary: 72 4% 16%;          /* #2B2C26 Jet */
+    --secondary: 72 4% 16%;
     --secondary-foreground: 0 0% 89%;
 
     --muted: 72 4% 16%;
@@ -80,12 +61,11 @@
 
     --radius: 1rem;
 
-    /* Custom Doorium tokens */
-    --doorium-platinum: 0 0% 89%;       /* #E4E4E5 */
-    --doorium-chamoisee: 30 24% 48%;    /* #987E5D */
-    --doorium-smoky: 40 10% 8%;         /* #181712 */
-    --doorium-jet: 72 4% 16%;           /* #2B2C26 */
-    --doorium-text-light: 0 0% 89%;     /* #E4E4E5 */
+    --doorium-platinum: 0 0% 89%;
+    --doorium-chamoisee: 30 24% 48%;
+    --doorium-smoky: 40 10% 8%;
+    --doorium-jet: 72 4% 16%;
+    --doorium-text-light: 0 0% 89%;
 
     --sidebar-background: 40 10% 8%;
     --sidebar-foreground: 0 0% 89%;
