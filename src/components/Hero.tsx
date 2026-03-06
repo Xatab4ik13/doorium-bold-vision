@@ -13,9 +13,9 @@ const Hero = () => {
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-doorium-dark/40" />
 
-      {/* Logo — top left, large */}
-      <div className="absolute top-6 left-6 md:top-10 md:left-10 z-10">
-        <img src={logo} alt="Doorium Service" className="h-20 md:h-28 w-auto" />
+      {/* Logo — fixed top left, large */}
+      <div className="fixed top-6 left-6 md:top-8 md:left-8 z-50">
+        <img src={logo} alt="Doorium Service" className="h-36 md:h-56 w-auto drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]" />
       </div>
 
       {/* Bottom gradient fade */}
