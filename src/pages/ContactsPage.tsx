@@ -1,6 +1,7 @@
+import { useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
 import ContactForm from "@/components/ContactForm";
-import { Phone, Mail, MapPin } from "lucide-react";
+import { Phone, Mail } from "lucide-react";
 
 const contactInfo = [
   {
@@ -15,7 +16,30 @@ const contactInfo = [
   },
 ];
 
+const useFadeIn = (threshold = 0.2) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.unobserve(el); } },
+      { threshold }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, style: {
+    opacity: visible ? 1 : 0,
+    transform: visible ? "translateY(0)" : "translateY(40px)",
+    transition: "opacity 0.8s ease-out, transform 0.8s ease-out",
+  }};
+};
+
 const ContactsPage = () => {
+  const hero = useFadeIn(0.15);
+  const cards = useFadeIn(0.2);
+
   return (
     <div
       className="min-h-screen"
@@ -28,7 +52,7 @@ const ContactsPage = () => {
 
       {/* Hero */}
       <section className="pt-40 pb-16 md:pt-48 md:pb-24 px-8 md:px-16 lg:px-24">
-        <div className="max-w-5xl mx-auto">
+        <div ref={hero.ref} style={hero.style} className="max-w-5xl mx-auto">
           <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">
             Doorium Service
           </p>
@@ -41,11 +65,18 @@ const ContactsPage = () => {
 
       {/* Contact cards */}
       <section className="px-8 md:px-16 lg:px-24 pb-20 md:pb-28">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-lg sm:max-w-2xl">
-          {contactInfo.map((item) => (
+        <div
+          ref={cards.ref}
+          style={cards.style}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-lg sm:max-w-2xl mx-auto"
+        >
+          {contactInfo.map((item, i) => (
             <div
               key={item.title}
               className="border border-border/20 p-8 group hover:border-primary/40 transition-colors duration-500"
+              style={{
+                transitionDelay: `${i * 150}ms`,
+              }}
             >
               <item.icon
                 className="w-6 h-6 text-primary mb-5"
