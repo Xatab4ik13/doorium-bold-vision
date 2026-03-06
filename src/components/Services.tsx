@@ -23,7 +23,7 @@ const Services = () => {
       className="relative py-24 md:py-32 overflow-hidden"
       style={{
         background:
-          "linear-gradient(180deg, hsl(70 7% 16%) 0%, hsl(240 2% 90%) 100%)",
+          "linear-gradient(180deg, hsl(70 7% 16%) 0%, hsl(50 14% 12%) 100%)",
       }}
     >
       {/* Section heading */}
