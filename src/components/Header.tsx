@@ -115,16 +115,11 @@ const Header = () => {
 
         {/* Nav links */}
         <div className="flex-1 flex flex-col justify-center px-6">
-          {navItems.map((item, i) => (
+          {navItems.map((item) => (
             <button
               key={item.href}
               onClick={() => handleNav(item.href)}
-              className="font-display text-xl font-light tracking-[0.1em] text-doorium-platinum/70 hover:text-primary hover:pl-2 transition-all duration-300 uppercase py-3 text-left bg-transparent border-none cursor-pointer"
-              style={{
-                opacity: menuOpen ? 1 : 0,
-                transform: menuOpen ? "translateX(0)" : "translateX(20px)",
-                transition: `opacity 0.35s ease-out ${0.15 + i * 0.04}s, transform 0.35s ease-out ${0.15 + i * 0.04}s, color 0.3s, padding 0.3s`,
-              }}
+              className="font-display text-xl font-light tracking-[0.1em] text-doorium-platinum/70 hover:text-primary hover:pl-2 transition-all duration-200 uppercase py-3 text-left bg-transparent border-none cursor-pointer"
             >
               {item.label}
             </button>
