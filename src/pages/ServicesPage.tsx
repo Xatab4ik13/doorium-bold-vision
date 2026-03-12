@@ -390,7 +390,7 @@ const ServicesPage = () => {
         <FadeIn>
           <div className="max-w-2xl mx-auto">
             <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">Связаться</p>
-            <h2 className="font-display-stencil text-4xl md:text-5xl text-doorium-platinum leading-[0.95] mb-12">ОСТАВИТЬ ЗАЯВКУ</h2>
+            <h2 className="font-display text-4xl md:text-5xl font-light text-doorium-platinum leading-[0.95] mb-12 tracking-wide">ОСТАВИТЬ ЗАЯВКУ</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block font-body text-sm tracking-[0.15em] uppercase text-primary mb-4">Тип услуги</label>
