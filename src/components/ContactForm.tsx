@@ -218,7 +218,7 @@ const ContactForm = () => {
       {/* Floating phone button */}
       <a
         href="tel:+74951234567"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center text-primary-foreground hover:bg-primary transition-colors duration-300 shadow-lg"
+        className="fixed bottom-6 right-6 z-50 w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/90 flex items-center justify-center text-primary-foreground hover:bg-primary transition-colors duration-300 shadow-lg"
         aria-label="Позвонить"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
