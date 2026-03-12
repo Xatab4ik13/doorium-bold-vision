@@ -2,17 +2,23 @@ import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 
-const serviceTypes = [
-  { id: "interior", label: "Установка межкомнатных дверей" },
-  { id: "entrance", label: "Установка входных дверей" },
-  { id: "repair", label: "Рекламация" },
+const cities = ["Москва", "Санкт-Петербург"] as const;
+
+const requestTypes = [
+  { id: "measure", label: "Заявка на замер" },
+  { id: "install", label: "Заявка на монтаж" },
+  { id: "claim", label: "Рекламация" },
 ] as const;
 
 const contactSchema = z.object({
-  name: z.string().trim().min(1, "Введите имя").max(100, "Имя слишком длинное"),
-  phone: z.string().trim().min(6, "Введите номер телефона").max(20, "Номер слишком длинный"),
-  service: z.enum(["interior", "entrance", "repair"], { required_error: "Выберите услугу" }),
-  message: z.string().trim().max(1000, "Сообщение слишком длинное").optional(),
+  city: z.string().min(1, "Выберите город"),
+  requestType: z.string().min(1, "Выберите тип заявки"),
+  name: z.string().trim().min(1, "Введите ФИО").max(100),
+  phone: z.string().trim().min(6, "Введите номер телефона").max(20),
+  extraName: z.string().trim().max(100).optional(),
+  extraPhone: z.string().trim().max(20).optional(),
+  address: z.string().trim().max(200).optional(),
+  details: z.string().trim().max(1000).optional(),
 });
 
 type ContactData = z.infer<typeof contactSchema>;
@@ -20,7 +26,7 @@ type ContactData = z.infer<typeof contactSchema>;
 const ContactForm = () => {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
-  const [form, setForm] = useState<Partial<ContactData>>({ service: undefined });
+  const [form, setForm] = useState<Partial<ContactData>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sending, setSending] = useState(false);
 
@@ -29,16 +35,17 @@ const ContactForm = () => {
     if (!el) return;
     const obs = new IntersectionObserver(
       ([e]) => { if (e.isIntersecting) { setVisible(true); obs.unobserve(el); } },
-      { threshold: 0.2 }
+      { threshold: 0.15 }
     );
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
 
+  const update = (key: keyof ContactData, value: string) => setForm({ ...form, [key]: value });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-
     const result = contactSchema.safeParse(form);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
@@ -48,116 +55,152 @@ const ContactForm = () => {
       setErrors(fieldErrors);
       return;
     }
-
     setSending(true);
-    // Simulate sending
     setTimeout(() => {
       setSending(false);
       toast.success("Заявка отправлена! Мы свяжемся с вами в ближайшее время.");
-      setForm({ service: undefined });
+      setForm({});
     }, 1500);
   };
+
+  const inputClass =
+    "w-full bg-doorium-smoky/50 border border-border/20 rounded-lg px-4 py-3 text-doorium-platinum font-body text-sm focus:outline-none focus:border-primary/50 transition-colors duration-300 placeholder:text-muted-foreground";
 
   return (
     <section
       id="contacts"
-      className="relative py-24 md:py-32"
-      style={{
-        background: "linear-gradient(to bottom, hsl(50 14% 8%) 0%, hsl(60 8% 13%) 50%, hsl(70 7% 16%) 100%)",
-      }}
+      className="relative py-20 md:py-28"
+      style={{ background: "hsl(50 14% 5%)" }}
     >
       <div
         ref={ref}
-        className="relative z-10 px-8 md:px-16 lg:px-24 max-w-3xl mx-auto"
+        className="relative z-10 px-6 md:px-16 lg:px-24 max-w-4xl mx-auto"
         style={{
           opacity: visible ? 1 : 0,
           transform: visible ? "translateY(0)" : "translateY(40px)",
           transition: "opacity 0.8s ease-out, transform 0.8s ease-out",
         }}
       >
-        <div className="mb-12 md:mb-16">
+        <div className="mb-10 md:mb-14">
           <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">
             Связаться
           </p>
-          <h2 className="font-display-stencil text-4xl md:text-5xl lg:text-6xl text-doorium-platinum leading-[0.95]">
+          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-light text-doorium-platinum leading-[0.95] tracking-wide">
             ОСТАВИТЬ ЗАЯВКУ
           </h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Service type selection */}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* City selector */}
           <div>
-            <label className="block font-body text-sm tracking-[0.15em] uppercase text-primary mb-4">
-              Тип услуги
+            <label className="block font-body text-sm tracking-[0.15em] uppercase text-doorium-platinum/60 mb-4">
+              Выберите город
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {serviceTypes.map((s) => (
+            <div className="flex flex-wrap gap-3">
+              {cities.map((city) => (
                 <button
-                  key={s.id}
+                  key={city}
                   type="button"
-                  onClick={() => setForm({ ...form, service: s.id })}
-                  className={`py-4 px-4 border text-sm font-body tracking-wide transition-all duration-300 text-left ${
-                    form.service === s.id
+                  onClick={() => update("city", city)}
+                  className={`px-6 py-3 border rounded-sm font-body text-sm tracking-wide uppercase transition-all duration-300 ${
+                    form.city === city
                       ? "border-primary bg-primary/10 text-doorium-platinum"
                       : "border-border/30 text-muted-foreground hover:border-primary/50 hover:text-doorium-platinum"
                   }`}
                 >
-                  {s.label}
+                  {city}
                 </button>
               ))}
             </div>
-            {errors.service && (
-              <p className="text-destructive text-xs mt-2 font-body">{errors.service}</p>
-            )}
+            {errors.city && <p className="text-destructive text-xs mt-2 font-body">{errors.city}</p>}
           </div>
 
-          {/* Name */}
+          {/* Request type */}
           <div>
-            <label className="block font-body text-sm tracking-[0.15em] uppercase text-primary mb-2">
-              Имя
+            <label className="block font-body text-sm tracking-[0.15em] uppercase text-doorium-platinum/60 mb-4">
+              Тип заявки
             </label>
-            <input
-              type="text"
-              value={form.name || ""}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full bg-transparent border-b border-border/30 py-3 text-doorium-platinum font-body text-sm focus:outline-none focus:border-primary transition-colors duration-300 placeholder:text-muted-foreground"
-              placeholder="Ваше имя"
-              maxLength={100}
-            />
-            {errors.name && (
-              <p className="text-destructive text-xs mt-2 font-body">{errors.name}</p>
-            )}
+            <div className="flex flex-wrap gap-3">
+              {requestTypes.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => update("requestType", t.id)}
+                  className={`px-6 py-3 border rounded-sm font-body text-sm tracking-wide uppercase transition-all duration-300 ${
+                    form.requestType === t.id
+                      ? "border-primary bg-primary/10 text-doorium-platinum"
+                      : "border-border/30 text-muted-foreground hover:border-primary/50 hover:text-doorium-platinum"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            {errors.requestType && <p className="text-destructive text-xs mt-2 font-body">{errors.requestType}</p>}
           </div>
 
-          {/* Phone */}
-          <div>
-            <label className="block font-body text-sm tracking-[0.15em] uppercase text-primary mb-2">
-              Телефон
-            </label>
-            <input
-              type="tel"
-              value={form.phone || ""}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full bg-transparent border-b border-border/30 py-3 text-doorium-platinum font-body text-sm focus:outline-none focus:border-primary transition-colors duration-300 placeholder:text-muted-foreground"
-              placeholder="+7 (___) ___-__-__"
-              maxLength={20}
-            />
-            {errors.phone && (
-              <p className="text-destructive text-xs mt-2 font-body">{errors.phone}</p>
-            )}
+          {/* 3 short fields row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <input
+                type="text"
+                value={form.name || ""}
+                onChange={(e) => update("name", e.target.value)}
+                className={inputClass}
+                placeholder="ФИО"
+                maxLength={100}
+              />
+              <input
+                type="tel"
+                value={form.phone || ""}
+                onChange={(e) => update("phone", e.target.value)}
+                className={`${inputClass} mt-3`}
+                placeholder="+7"
+                maxLength={20}
+              />
+              {errors.name && <p className="text-destructive text-xs mt-1 font-body">{errors.name}</p>}
+              {errors.phone && <p className="text-destructive text-xs mt-1 font-body">{errors.phone}</p>}
+            </div>
+
+            <div>
+              <input
+                type="text"
+                value={form.extraName || ""}
+                onChange={(e) => update("extraName", e.target.value)}
+                className={inputClass}
+                placeholder="ФИО доп. контакта"
+                maxLength={100}
+              />
+              <input
+                type="tel"
+                value={form.extraPhone || ""}
+                onChange={(e) => update("extraPhone", e.target.value)}
+                className={`${inputClass} mt-3`}
+                placeholder="+7"
+                maxLength={20}
+              />
+            </div>
+
+            <div>
+              <input
+                type="text"
+                value={form.address || ""}
+                onChange={(e) => update("address", e.target.value)}
+                className={inputClass}
+                placeholder="Адрес"
+                maxLength={200}
+              />
+            </div>
           </div>
 
-          {/* Message */}
+          {/* Long textarea */}
           <div>
-            <label className="block font-body text-sm tracking-[0.15em] uppercase text-primary mb-2">
-              Сообщение <span className="text-muted-foreground">(необязательно)</span>
-            </label>
             <textarea
-              value={form.message || ""}
-              onChange={(e) => setForm({ ...form, message: e.target.value })}
-              rows={3}
-              className="w-full bg-transparent border-b border-border/30 py-3 text-doorium-platinum font-body text-sm focus:outline-none focus:border-primary transition-colors duration-300 placeholder:text-muted-foreground resize-none"
-              placeholder="Дополнительная информация"
+              value={form.details || ""}
+              onChange={(e) => update("details", e.target.value)}
+              rows={4}
+              className={`${inputClass} resize-none`}
+              placeholder="Что замеряем"
               maxLength={1000}
             />
           </div>
@@ -165,12 +208,23 @@ const ContactForm = () => {
           <button
             type="submit"
             disabled={sending}
-            className="w-full sm:w-auto px-12 py-4 bg-primary text-primary-foreground font-display text-sm tracking-[0.2em] uppercase hover:bg-primary/80 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto px-12 py-4 bg-primary text-primary-foreground font-body text-sm font-medium tracking-[0.15em] uppercase hover:bg-primary/80 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
           >
             {sending ? "ОТПРАВКА..." : "ОТПРАВИТЬ"}
           </button>
         </form>
       </div>
+
+      {/* Floating phone button */}
+      <a
+        href="tel:+74951234567"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center text-primary-foreground hover:bg-primary transition-colors duration-300 shadow-lg"
+        aria-label="Позвонить"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+      </a>
     </section>
   );
 };

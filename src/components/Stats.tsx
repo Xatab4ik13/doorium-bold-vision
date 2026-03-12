@@ -108,14 +108,14 @@ const Stats = () => {
       id="stats"
       className="relative py-24 md:py-32"
       style={{
-        background: "linear-gradient(to bottom, hsl(50 14% 8%) 0%, hsl(50 14% 8%) 20%, hsl(53 10% 11%) 35%, hsl(60 8% 13%) 50%, hsl(70 7% 16%) 65%, hsl(70 7% 16%) 100%)",
+        background: "hsl(50 14% 5%)",
       }}
     >
       <div className="relative z-10 px-8 md:px-16 lg:px-24 mb-16 md:mb-20">
         <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">
           Почему мы
         </p>
-        <h2 className="font-display-stencil text-4xl md:text-5xl lg:text-6xl text-doorium-platinum leading-[0.95]">
+        <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-light text-doorium-platinum leading-[0.95] tracking-wide">
           НАШИ ПОКАЗАТЕЛИ
         </h2>
       </div>
