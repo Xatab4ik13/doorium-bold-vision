@@ -147,7 +147,6 @@ const PortfolioPage = () => {
         className="py-20 md:py-28 px-8 md:px-16 lg:px-24 text-center"
         style={{ background: "hsl(50 14% 5%)" }}
       >
-      >
         <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-4">
           Хотите так же?
         </p>
