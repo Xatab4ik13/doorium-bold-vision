@@ -65,7 +65,7 @@ const Header = () => {
         </button>
 
         <button
-          className="absolute right-6 top-1/2 -translate-y-1/2 text-doorium-platinum z-[80]"
+          className="absolute right-6 top-5 text-doorium-platinum z-[80]"
           onClick={() => setMenuOpen(true)}
           aria-label="Меню"
         >
