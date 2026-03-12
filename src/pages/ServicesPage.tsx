@@ -359,7 +359,7 @@ const ServicesPage = () => {
       </section>
 
       {/* Requirements */}
-      <section className="py-24 md:py-32 px-8 md:px-16 lg:px-24" style={{ background: "linear-gradient(to bottom, hsl(50 14% 8%) 0%, hsl(60 8% 13%) 50%, hsl(70 7% 16%) 100%)" }}>
+      <section className="py-24 md:py-32 px-8 md:px-16 lg:px-24" style={{ background: "hsl(50 14% 5%)" }}>
         <FadeIn>
           <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">Подготовка к монтажу</p>
           <h2 className="font-display-stencil text-3xl md:text-4xl lg:text-5xl text-doorium-platinum leading-[0.95] mb-16">ТРЕБОВАНИЯ К ОБЪЕКТУ</h2>
