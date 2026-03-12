@@ -111,8 +111,8 @@ const Hero = () => {
       </div>
 
       {/* Feature cards at bottom */}
-      <div className="absolute bottom-8 left-0 right-0 z-30 px-4 md:px-16 lg:px-24">
-        <div className="grid grid-cols-3 gap-3 md:gap-5 max-w-5xl">
+      <div className="absolute bottom-6 left-0 right-0 z-30 px-3 md:px-16 lg:px-24">
+        <div className="grid grid-cols-3 gap-2 md:gap-5 max-w-5xl">
           {features.map((feature, i) => (
             <div
               key={i}
