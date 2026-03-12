@@ -266,7 +266,7 @@ const ServicesPage = () => {
       <section className="pt-32 md:pt-40 pb-16 md:pb-24 px-8 md:px-16 lg:px-24">
         <FadeIn>
           <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">Услуги и цены</p>
-          <h1 className="font-display-stencil text-5xl md:text-6xl lg:text-7xl text-doorium-platinum leading-[0.95] mb-4">ПРАЙС-ЛИСТ</h1>
+          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-light text-doorium-platinum leading-[0.95] mb-4 tracking-wide">ПРАЙС-ЛИСТ</h1>
           <p className="font-body text-base text-muted-foreground max-w-md">Работаем только в Москве и Московской области</p>
         </FadeIn>
 
