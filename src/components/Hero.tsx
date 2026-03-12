@@ -1,6 +1,22 @@
 import { useEffect, useRef } from "react";
+import { Home, Target, Shield } from "lucide-react";
 import heroVideo from "@/assets/hero-video.mp4";
 import heroImage from "@/assets/hero-interior.jpg";
+
+const features = [
+  {
+    icon: Home,
+    title: "СОВРЕМЕННОЕ\nОБОРУДОВАНИЕ",
+  },
+  {
+    icon: Target,
+    title: "ТОЧНОСТЬ\nИ АККУРАТНОСТЬ",
+  },
+  {
+    icon: Shield,
+    title: "ГАРАНТИЯ\nКАЧЕСТВА",
+  },
+];
 
 const Hero = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -9,10 +25,8 @@ const Hero = () => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Force play on mobile — some browsers need a manual trigger
     const tryPlay = () => {
       video.play().catch(() => {
-        // If autoplay fails, try again on first user interaction
         const handleInteraction = () => {
           video.play().catch(() => {});
           document.removeEventListener("touchstart", handleInteraction);
@@ -32,7 +46,7 @@ const Hero = () => {
 
   return (
     <section className="relative h-screen w-full overflow-hidden">
-      {/* Bottom layer: full-width video */}
+      {/* Full-width video background */}
       <video
         ref={videoRef}
         src={heroVideo}
@@ -44,57 +58,83 @@ const Hero = () => {
         preload="auto"
         className="absolute inset-0 w-full h-full object-cover"
       />
-      <div className="absolute inset-0 bg-doorium-smoky/20" />
-      {/* Bottom gradient fade into next section (Smoky Black) */}
+
+      {/* Left-side gradient overlay for text readability */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-72 z-30 pointer-events-none"
+        className="absolute inset-0 z-10"
         style={{
-          background: "linear-gradient(to bottom, transparent 0%, hsl(50 14% 8% / 0.1) 20%, hsl(50 14% 8% / 0.4) 50%, hsl(50 14% 8% / 0.8) 75%, hsl(50 14% 8%) 100%)",
+          background:
+            "linear-gradient(to right, hsl(50 14% 5% / 0.85) 0%, hsl(50 14% 5% / 0.7) 35%, hsl(50 14% 5% / 0.3) 60%, transparent 80%)",
         }}
       />
 
-      {/* Top layer: dark overlay with zigzag cut — both mobile & desktop */}
-      <div className="absolute inset-0 z-10">
-        <svg
-          viewBox="0 0 1440 900"
-          preserveAspectRatio="none"
-          className="w-full h-full"
-        >
-          <path
-            d="M0,0 L700,0 C720,75 620,150 660,225 C700,300 600,375 640,450 C680,525 580,600 620,675 C660,750 600,825 640,900 L0,900 Z"
-            className="fill-secondary"
-          />
-        </svg>
-      </div>
+      {/* Bottom fade to next section */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-48 z-20 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(to bottom, transparent 0%, hsl(50 14% 5%) 100%)",
+        }}
+      />
 
-      {/* Content on top of the dark mask */}
+      {/* Content */}
       <div className="absolute inset-0 z-20 flex items-center">
-        <div className="w-full md:w-1/2 px-6 md:px-16 lg:px-24">
-          <div className="max-w-lg">
-            <p className="font-body text-xs md:text-base tracking-[0.3em] uppercase text-primary mb-3 md:mb-4 animate-fade-in-up">
-              Doorium Service
-            </p>
+        <div className="w-full md:w-3/5 px-8 md:px-16 lg:px-24">
+          <div className="max-w-xl">
             <h1
-              className="font-display-stencil text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-normal leading-[0.95] text-doorium-platinum mb-4 md:mb-6 animate-fade-in-up drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] md:drop-shadow-none"
-              style={{ animationDelay: "0.15s" }}
+              className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-light leading-[1] text-doorium-platinum mb-6 md:mb-8 animate-fade-in-up tracking-wide"
             >
-              ПРЕМИАЛЬНЫЙ
+              ПРОФЕССИОНАЛЬНЫЙ
               <br />
-              МОНТАЖ
+              МОНТАЖ ДВЕРЕЙ
             </h1>
-            <p className="font-body text-xs sm:text-sm md:text-lg text-doorium-platinum/70 mb-5 md:mb-8 max-w-[260px] sm:max-w-sm animate-fade-in-up drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)] md:drop-shadow-none" style={{ animationDelay: "0.3s" }}>
-              Установка межкомнатных и входных дверей
-              с гарантией качества в&nbsp;Москве
+            <p
+              className="font-body text-sm sm:text-base md:text-lg font-light text-doorium-platinum/70 mb-8 md:mb-10 max-w-md animate-fade-in-up tracking-wide uppercase"
+              style={{ animationDelay: "0.2s" }}
+            >
+              Услуги по установке{" "}
+              <span className="font-medium text-doorium-platinum">межкомнатных</span>
+              {" "}и{" "}
+              <span className="font-medium text-doorium-platinum">входных дверей</span>
+              {" "}с гарантией
             </p>
-            <div className="animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
+            <div className="animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
               <a
                 href="#contacts"
-                className="inline-block font-display-stencil text-xs md:text-sm font-normal tracking-widest uppercase px-5 md:px-8 py-3 md:py-4 rounded-2xl bg-primary text-primary-foreground hover:bg-doorium-chamoisee/80 transition-all duration-300"
+                className="inline-block font-body text-sm font-medium tracking-[0.15em] uppercase px-8 py-4 bg-primary text-primary-foreground hover:bg-primary/80 transition-all duration-300 rounded-sm"
               >
                 Оставить заявку
               </a>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Feature cards at bottom */}
+      <div className="absolute bottom-8 left-0 right-0 z-30 px-4 md:px-16 lg:px-24">
+        <div className="grid grid-cols-3 gap-3 md:gap-5 max-w-5xl mx-auto">
+          {features.map((feature, i) => (
+            <div
+              key={i}
+              className="relative rounded-lg overflow-hidden animate-fade-in-up"
+              style={{
+                animationDelay: `${0.5 + i * 0.1}s`,
+                background: "linear-gradient(135deg, hsl(50 14% 12% / 0.9) 0%, hsl(50 14% 8% / 0.95) 100%)",
+                boxShadow: "0 8px 32px -8px rgba(0,0,0,0.6), 0 0 0 1px hsl(34 24% 48% / 0.15)",
+              }}
+            >
+              <div className="px-4 md:px-6 py-5 md:py-7 flex flex-col items-start gap-3">
+                <feature.icon
+                  size={28}
+                  className="text-primary"
+                  strokeWidth={1.5}
+                />
+                <p className="font-body text-xs md:text-sm font-medium tracking-[0.15em] uppercase text-doorium-platinum leading-relaxed whitespace-pre-line">
+                  {feature.title}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
