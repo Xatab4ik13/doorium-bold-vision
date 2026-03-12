@@ -31,7 +31,7 @@ const Footer = () => {
             <img
               src={dooriumLogo}
               alt="Doorium Service"
-              className="h-[10rem] w-auto brightness-0 invert opacity-70 -my-12"
+              className="h-[6rem] md:h-[10rem] w-auto brightness-0 invert opacity-70 -my-6 md:-my-12"
             />
           </button>
 
