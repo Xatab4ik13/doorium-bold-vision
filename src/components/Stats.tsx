@@ -115,7 +115,7 @@ const Stats = () => {
         <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">
           Почему мы
         </p>
-        <h2 className="font-display-stencil text-4xl md:text-5xl lg:text-6xl text-doorium-platinum leading-[0.95]">
+        <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-light text-doorium-platinum leading-[0.95] tracking-wide">
           НАШИ ПОКАЗАТЕЛИ
         </h2>
       </div>

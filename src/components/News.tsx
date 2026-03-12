@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import newsImg1 from "@/assets/news-placeholder-1.jpg";
 import newsImg2 from "@/assets/news-placeholder-2.jpg";
 import newsImg3 from "@/assets/news-placeholder-3.jpg";
@@ -24,80 +25,122 @@ const news = [
   },
 ];
 
-const NewsCard = ({ item, index }: { item: typeof news[0]; index: number }) => {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          el.style.opacity = "1";
-          el.style.transform = "translateY(0)";
-          obs.unobserve(el);
-        }
-      },
-      { threshold: 0.2 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className="group cursor-pointer"
-      style={{
-        opacity: 0,
-        transform: "translateY(40px)",
-        transition: `opacity 0.8s ease-out ${index * 0.15}s, transform 0.8s ease-out ${index * 0.15}s`,
-      }}
-    >
-      <div className="relative overflow-hidden mb-5">
-        <img
-          src={item.image}
-          alt={item.title}
-          className="w-full aspect-[3/2] object-cover transition-transform duration-700 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-doorium-smoky/20 group-hover:bg-doorium-smoky/0 transition-colors duration-500" />
-      </div>
-
-      <p className="font-body text-xs tracking-[0.15em] uppercase text-primary mb-2">
-        {item.date}
-      </p>
-      <h3 className="font-display text-lg md:text-xl text-doorium-platinum leading-tight mb-2 group-hover:text-primary transition-colors duration-500">
-        {item.title}
-      </h3>
-      <p className="font-body text-sm text-muted-foreground leading-relaxed">
-        {item.excerpt}
-      </p>
-    </div>
-  );
-};
-
 const News = () => {
+  const [current, setCurrent] = useState(0);
+
+  const next = useCallback(() => setCurrent((p) => (p + 1) % news.length), []);
+  const prev = useCallback(() => setCurrent((p) => (p - 1 + news.length) % news.length), []);
+
+  // Touch swipe
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const diff = e.changedTouches[0].clientX - touchStart;
+    if (Math.abs(diff) > 50) diff > 0 ? prev() : next();
+    setTouchStart(null);
+  };
+
+  const item = news[current];
+
   return (
     <section
       id="news"
-      className="relative py-24 md:py-32"
-      style={{
-        background: "linear-gradient(to bottom, hsl(70 7% 16%) 0%, hsl(60 8% 13%) 30%, hsl(50 14% 8%) 60%, hsl(50 14% 8%) 100%)",
-      }}
+      className="relative py-20 md:py-28"
+      style={{ background: "hsl(50 14% 5%)" }}
     >
-      <div className="relative z-10 px-8 md:px-16 lg:px-24 mb-16 md:mb-20">
+      <div className="px-8 md:px-16 lg:px-24 mb-10 md:mb-14">
         <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">
           Последнее
         </p>
-        <h2 className="font-display-stencil text-4xl md:text-5xl lg:text-6xl text-doorium-platinum leading-[0.95]">
+        <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-light text-doorium-platinum leading-[0.95] tracking-wide">
           НОВОСТИ
         </h2>
       </div>
 
-      <div className="relative z-10 px-8 md:px-16 lg:px-24 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-        {news.map((item, i) => (
-          <NewsCard key={item.title} item={item} index={i} />
-        ))}
+      {/* Full-width slider */}
+      <div
+        className="relative w-full overflow-hidden"
+        onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="relative w-full" style={{ aspectRatio: "21/9" }}>
+          {news.map((n, i) => (
+            <div
+              key={i}
+              className="absolute inset-0 transition-all duration-700 ease-out"
+              style={{
+                opacity: i === current ? 1 : 0,
+                transform: i === current ? "scale(1)" : "scale(1.03)",
+              }}
+            >
+              <img
+                src={n.image}
+                alt={n.title}
+                className="w-full h-full object-cover"
+              />
+              {/* Gradient overlay */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: "linear-gradient(to right, hsl(50 14% 5% / 0.8) 0%, hsl(50 14% 5% / 0.4) 40%, transparent 70%)",
+                }}
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: "linear-gradient(to top, hsl(50 14% 5% / 0.6) 0%, transparent 40%)",
+                }}
+              />
+            </div>
+          ))}
+
+          {/* Text overlay */}
+          <div className="absolute inset-0 z-10 flex items-end md:items-center px-8 md:px-16 lg:px-24 pb-16 md:pb-0">
+            <div className="max-w-lg">
+              <p className="font-body text-xs tracking-[0.15em] uppercase text-primary mb-2">
+                {item.date}
+              </p>
+              <h3 className="font-display text-2xl md:text-3xl lg:text-4xl font-light text-doorium-platinum leading-tight mb-3 tracking-wide">
+                {item.title}
+              </h3>
+              <p className="font-body text-sm text-doorium-platinum/60 leading-relaxed max-w-sm">
+                {item.excerpt}
+              </p>
+            </div>
+          </div>
+
+          {/* Nav arrows */}
+          <button
+            onClick={prev}
+            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full border border-doorium-platinum/20 flex items-center justify-center text-doorium-platinum/50 hover:text-primary hover:border-primary/50 transition-all duration-300"
+            aria-label="Предыдущая"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button
+            onClick={next}
+            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full border border-doorium-platinum/20 flex items-center justify-center text-doorium-platinum/50 hover:text-primary hover:border-primary/50 transition-all duration-300"
+            aria-label="Следующая"
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+
+        {/* Dot indicators */}
+        <div className="flex justify-center gap-2 mt-6">
+          {news.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`h-1.5 rounded-full transition-all duration-500 ${
+                i === current
+                  ? "w-8 bg-primary"
+                  : "w-1.5 bg-doorium-platinum/20 hover:bg-doorium-platinum/40"
+              }`}
+              aria-label={`Новость ${i + 1}`}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
