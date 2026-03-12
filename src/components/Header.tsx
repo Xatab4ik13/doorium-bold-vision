@@ -96,15 +96,15 @@ const Header = () => {
         }}
       >
         {/* Close + logo */}
-        <div className="flex items-center justify-between px-6 py-5">
+        <div className="flex items-center justify-between px-6 py-3 overflow-hidden">
           <img
             src={dooriumLogo}
             alt="Doorium"
-            className="h-24 w-auto brightness-0 invert opacity-70"
+            className="h-[10rem] w-auto brightness-0 invert opacity-70 -mt-8 -mb-8"
           />
           <button
             onClick={() => setMenuOpen(false)}
-            className="text-doorium-platinum/60 hover:text-primary transition-colors duration-300"
+            className="text-doorium-platinum/60 hover:text-primary transition-colors duration-300 shrink-0"
             aria-label="Закрыть"
           >
             <X size={24} />
