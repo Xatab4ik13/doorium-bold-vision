@@ -14,11 +14,11 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Brigadier Stencil Custom", "sans-serif"],
-        "display-stencil": ["Brigadier Stencil Custom", "sans-serif"],
-        "display-ext": ["Brigadier Extended", "sans-serif"],
-        "display-regular": ["Brigadier", "sans-serif"],
-        body: ["Brigadier Stencil Custom", "sans-serif"],
+        display: ["Cormorant Garamond", "serif"],
+        "display-stencil": ["Cormorant Garamond", "serif"],
+        "display-ext": ["Cormorant Garamond", "serif"],
+        "display-regular": ["Cormorant Garamond", "serif"],
+        body: ["Raleway", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
