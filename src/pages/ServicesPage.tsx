@@ -307,7 +307,7 @@ const ServicesPage = () => {
             </div>
             {measurement.extra && (
               <div>
-                <h3 className="font-display-stencil text-xl md:text-2xl text-doorium-platinum mb-6">{measurement.extra.title}</h3>
+                <h3 className="font-display text-xl md:text-2xl font-light text-doorium-platinum mb-6 tracking-wide">{measurement.extra.title}</h3>
                 {measurement.extra.rows.map((row, i) => (
                   <div key={i} className="flex justify-between items-baseline py-4 border-b border-border/20">
                     <span className="font-body text-sm text-doorium-platinum/80">{row.name}</span>
