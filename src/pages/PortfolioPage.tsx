@@ -157,7 +157,7 @@ const PortfolioPage = () => {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             to="/services"
-            className="inline-block font-display-stencil text-sm tracking-[0.2em] uppercase px-10 py-4 border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+            className="inline-block font-body text-sm font-medium tracking-[0.15em] uppercase px-10 py-4 border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 rounded-sm"
           >
             Услуги и цены
           </Link>
