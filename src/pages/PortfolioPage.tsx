@@ -163,7 +163,7 @@ const PortfolioPage = () => {
           </Link>
           <Link
             to="/#contacts"
-            className="inline-block font-display-stencil text-sm tracking-[0.2em] uppercase px-10 py-4 bg-primary text-primary-foreground hover:bg-primary/80 transition-colors duration-300"
+            className="inline-block font-body text-sm font-medium tracking-[0.15em] uppercase px-10 py-4 bg-primary text-primary-foreground hover:bg-primary/80 transition-colors duration-300 rounded-sm"
           >
             Оставить заявку
           </Link>
