@@ -324,21 +324,21 @@ const ServicesPage = () => {
       {prices.map((section, sIdx) => (
         <section key={`${activeType}-${sIdx}`} className="px-8 md:px-16 lg:px-24 pb-16 md:pb-24">
           <FadeIn delay={sIdx * 0.1}>
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div>
+              <table className="w-full table-fixed">
                 <thead>
                   <tr className="border-b border-primary/30">
-                    <th className="text-left font-body text-xs tracking-[0.2em] uppercase text-primary py-4 pr-4">{section.title}</th>
-                    <th className="text-left font-body text-xs tracking-[0.2em] uppercase text-primary py-4 px-4 w-16">Ед.</th>
-                    <th className="text-right font-body text-xs tracking-[0.2em] uppercase text-primary py-4 pl-4 w-40">Цена</th>
+                    <th className="text-left font-body text-xs tracking-[0.2em] uppercase text-primary py-4 pr-2 w-[55%]">{section.title}</th>
+                    <th className="text-left font-body text-xs tracking-[0.2em] uppercase text-primary py-4 px-2 w-[15%] hidden md:table-cell">Ед.</th>
+                    <th className="text-right font-body text-xs tracking-[0.2em] uppercase text-primary py-4 pl-2 w-[30%] md:w-[30%]">Цена</th>
                   </tr>
                 </thead>
                 <tbody>
                   {section.rows.map((row, i) => (
                     <tr key={i} className="border-b border-border/15 hover:bg-primary/5 transition-colors duration-200">
-                      <td className="font-body text-sm text-doorium-platinum/80 py-4 pr-4">{row.name}</td>
-                      <td className="font-body text-sm text-muted-foreground py-4 px-4">{row.unit}</td>
-                      <td className="font-body text-sm text-doorium-platinum py-4 pl-4 text-right whitespace-nowrap">{row.price}</td>
+                      <td className="font-body text-sm text-doorium-platinum/80 py-4 pr-2 break-words">{row.name}</td>
+                      <td className="font-body text-sm text-muted-foreground py-4 px-2 hidden md:table-cell">{row.unit}</td>
+                      <td className="font-body text-sm text-doorium-platinum py-4 pl-2 text-right">{row.price}</td>
                     </tr>
                   ))}
                 </tbody>
