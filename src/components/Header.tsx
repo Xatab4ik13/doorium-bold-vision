@@ -75,23 +75,23 @@ const Header = () => {
 
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-[70] bg-black/40"
         onClick={() => setMenuOpen(false)}
         style={{
           opacity: menuOpen ? 1 : 0,
           pointerEvents: menuOpen ? "auto" : "none",
-          transition: "opacity 0.35s ease-out",
+          transition: "opacity 0.3s ease",
         }}
       />
 
-      {/* Side drawer from right */}
+      {/* Side drawer from right — rounded left corners */}
       <nav
-        className="fixed top-0 right-0 bottom-0 z-[80] w-[300px] md:w-[360px] flex flex-col"
+        className="fixed top-3 right-3 bottom-3 z-[80] w-[280px] md:w-[340px] flex flex-col rounded-2xl overflow-hidden"
         style={{
-          background: "hsl(50 14% 5%)",
-          borderLeft: "1px solid hsl(34 24% 48% / 0.15)",
-          transform: menuOpen ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)",
+          background: "hsl(50 14% 7%)",
+          boxShadow: menuOpen ? "-8px 0 40px rgba(0,0,0,0.5)" : "none",
+          transform: menuOpen ? "translateX(0)" : "translateX(calc(100% + 12px))",
+          transition: "transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)",
           willChange: "transform",
         }}
       >
@@ -115,16 +115,11 @@ const Header = () => {
 
         {/* Nav links */}
         <div className="flex-1 flex flex-col justify-center px-6">
-          {navItems.map((item, i) => (
+          {navItems.map((item) => (
             <button
               key={item.href}
               onClick={() => handleNav(item.href)}
-              className="font-display text-xl font-light tracking-[0.1em] text-doorium-platinum/70 hover:text-primary hover:pl-2 transition-all duration-300 uppercase py-3 text-left bg-transparent border-none cursor-pointer"
-              style={{
-                opacity: menuOpen ? 1 : 0,
-                transform: menuOpen ? "translateX(0)" : "translateX(20px)",
-                transition: `opacity 0.35s ease-out ${0.15 + i * 0.04}s, transform 0.35s ease-out ${0.15 + i * 0.04}s, color 0.3s, padding 0.3s`,
-              }}
+              className="font-display text-xl font-light tracking-[0.1em] text-doorium-platinum/70 hover:text-primary hover:pl-2 transition-all duration-200 uppercase py-3 text-left bg-transparent border-none cursor-pointer"
             >
               {item.label}
             </button>
