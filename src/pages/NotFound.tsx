@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const NotFound = () => {
   const location = useLocation();
@@ -12,12 +13,12 @@ const NotFound = () => {
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: "hsl(50 14% 8%)" }}
+      style={{ background: "hsl(50 14% 5%)" }}
     >
       <Header />
       <div className="flex-1 flex items-center justify-center px-8">
         <div className="text-center">
-          <h1 className="font-display-stencil text-8xl md:text-9xl text-primary mb-4">
+          <h1 className="font-display text-8xl md:text-9xl font-light text-primary mb-4 tracking-wide">
             404
           </h1>
           <p className="font-body text-lg text-doorium-platinum/60 mb-8">
@@ -25,12 +26,13 @@ const NotFound = () => {
           </p>
           <a
             href="/"
-            className="inline-block font-display-stencil text-sm tracking-[0.2em] uppercase px-8 py-4 bg-primary text-primary-foreground hover:bg-primary/80 transition-colors duration-300"
+            className="inline-block font-body text-sm font-medium tracking-[0.15em] uppercase px-8 py-4 bg-primary text-primary-foreground hover:bg-primary/80 transition-colors duration-300 rounded-sm"
           >
             На главную
           </a>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

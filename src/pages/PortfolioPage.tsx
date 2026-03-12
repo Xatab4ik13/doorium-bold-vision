@@ -115,7 +115,7 @@ const PortfolioPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ background: "hsl(50 14% 8%)" }}>
+    <div className="min-h-screen" style={{ background: "hsl(50 14% 5%)" }}>
       <Header />
 
       {/* Hero */}
@@ -124,7 +124,7 @@ const PortfolioPage = () => {
           Портфолио
         </p>
         <h1
-          className="font-display-stencil text-5xl md:text-6xl lg:text-7xl text-doorium-platinum leading-[0.95] mb-4 animate-fade-in-up"
+          className="font-display text-5xl md:text-6xl lg:text-7xl font-light text-doorium-platinum leading-[0.95] mb-4 animate-fade-in-up tracking-wide"
           style={{ animationDelay: "0.1s" }}
         >
           НАШИ РАБОТЫ
@@ -145,26 +145,24 @@ const PortfolioPage = () => {
       {/* CTA */}
       <section
         className="py-20 md:py-28 px-8 md:px-16 lg:px-24 text-center"
-        style={{
-          background: "linear-gradient(to bottom, hsl(50 14% 8%) 0%, hsl(60 8% 13%) 50%, hsl(70 7% 16%) 100%)",
-        }}
+        style={{ background: "hsl(50 14% 5%)" }}
       >
         <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-4">
           Хотите так же?
         </p>
-        <h2 className="font-display-stencil text-3xl md:text-4xl text-doorium-platinum leading-[0.95] mb-8">
+        <h2 className="font-display text-3xl md:text-4xl font-light text-doorium-platinum leading-[0.95] mb-8 tracking-wide">
           ЗАКАЖИТЕ МОНТАЖ
         </h2>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             to="/services"
-            className="inline-block font-display-stencil text-sm tracking-[0.2em] uppercase px-10 py-4 border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+            className="inline-block font-body text-sm font-medium tracking-[0.15em] uppercase px-10 py-4 border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 rounded-sm"
           >
             Услуги и цены
           </Link>
           <Link
             to="/#contacts"
-            className="inline-block font-display-stencil text-sm tracking-[0.2em] uppercase px-10 py-4 bg-primary text-primary-foreground hover:bg-primary/80 transition-colors duration-300"
+            className="inline-block font-body text-sm font-medium tracking-[0.15em] uppercase px-10 py-4 bg-primary text-primary-foreground hover:bg-primary/80 transition-colors duration-300 rounded-sm"
           >
             Оставить заявку
           </Link>

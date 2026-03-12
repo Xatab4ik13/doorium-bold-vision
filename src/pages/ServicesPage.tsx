@@ -259,14 +259,14 @@ const ServicesPage = () => {
   const prices = priceData[activeType];
 
   return (
-    <div className="min-h-screen overflow-x-hidden" style={{ background: "hsl(50 14% 8%)" }}>
+    <div className="min-h-screen overflow-x-hidden" style={{ background: "hsl(50 14% 5%)" }}>
       <Header />
 
       {/* Hero */}
       <section className="pt-32 md:pt-40 pb-16 md:pb-24 px-8 md:px-16 lg:px-24">
         <FadeIn>
           <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">Услуги и цены</p>
-          <h1 className="font-display-stencil text-5xl md:text-6xl lg:text-7xl text-doorium-platinum leading-[0.95] mb-4">ПРАЙС-ЛИСТ</h1>
+          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-light text-doorium-platinum leading-[0.95] mb-4 tracking-wide">ПРАЙС-ЛИСТ</h1>
           <p className="font-body text-base text-muted-foreground max-w-md">Работаем только в Москве и Московской области</p>
         </FadeIn>
 
@@ -296,7 +296,7 @@ const ServicesPage = () => {
           <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-8">Стоимость замера</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
             <div>
-              <h3 className="font-display-stencil text-xl md:text-2xl text-doorium-platinum mb-6">{measurement.main.title}</h3>
+              <h3 className="font-display text-xl md:text-2xl font-light text-doorium-platinum mb-6 tracking-wide">{measurement.main.title}</h3>
               {measurement.main.rows.map((row, i) => (
                 <div key={i} className="flex justify-between items-baseline py-4 border-b border-border/20">
                   <span className="font-body text-sm text-doorium-platinum/80">{row.name}</span>
@@ -307,7 +307,7 @@ const ServicesPage = () => {
             </div>
             {measurement.extra && (
               <div>
-                <h3 className="font-display-stencil text-xl md:text-2xl text-doorium-platinum mb-6">{measurement.extra.title}</h3>
+                <h3 className="font-display text-xl md:text-2xl font-light text-doorium-platinum mb-6 tracking-wide">{measurement.extra.title}</h3>
                 {measurement.extra.rows.map((row, i) => (
                   <div key={i} className="flex justify-between items-baseline py-4 border-b border-border/20">
                     <span className="font-body text-sm text-doorium-platinum/80">{row.name}</span>
@@ -352,17 +352,17 @@ const ServicesPage = () => {
       {/* CTA */}
       <section className="px-8 md:px-16 lg:px-24 pb-24">
         <FadeIn>
-          <a href="#services-contact" className="inline-block font-display-stencil text-sm tracking-[0.2em] uppercase px-10 py-4 bg-primary text-primary-foreground hover:bg-primary/80 transition-colors duration-300">
+          <a href="#services-contact" className="inline-block font-body text-sm font-medium tracking-[0.15em] uppercase px-10 py-4 bg-primary text-primary-foreground hover:bg-primary/80 transition-colors duration-300 rounded-sm">
             Оставить заявку
           </a>
         </FadeIn>
       </section>
 
       {/* Requirements */}
-      <section className="py-24 md:py-32 px-8 md:px-16 lg:px-24" style={{ background: "linear-gradient(to bottom, hsl(50 14% 8%) 0%, hsl(60 8% 13%) 50%, hsl(70 7% 16%) 100%)" }}>
+      <section className="py-24 md:py-32 px-8 md:px-16 lg:px-24" style={{ background: "hsl(50 14% 5%)" }}>
         <FadeIn>
           <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">Подготовка к монтажу</p>
-          <h2 className="font-display-stencil text-3xl md:text-4xl lg:text-5xl text-doorium-platinum leading-[0.95] mb-16">ТРЕБОВАНИЯ К ОБЪЕКТУ</h2>
+          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-light text-doorium-platinum leading-[0.95] mb-16 tracking-wide">ТРЕБОВАНИЯ К ОБЪЕКТУ</h2>
         </FadeIn>
         <p className="font-body text-sm text-doorium-platinum/70 max-w-2xl mb-12 leading-relaxed">
           Чтобы установка дверей прошла в назначенный день без задержек и дополнительных расходов, объект должен быть полностью подготовлен.
@@ -371,7 +371,7 @@ const ServicesPage = () => {
           {requirementsData.map((req, i) => (
             <FadeIn key={i} delay={i * 0.08}>
               <div className="border-l-2 border-primary/40 pl-6">
-                <h3 className="font-display-stencil text-lg text-doorium-platinum mb-4">{req.title}</h3>
+                <h3 className="font-display text-lg font-light text-doorium-platinum mb-4 tracking-wide">{req.title}</h3>
                 <ul className="space-y-2">
                   {req.items.map((item, j) => (
                     <li key={j} className="font-body text-sm text-doorium-platinum/60 leading-relaxed flex gap-2">
@@ -386,11 +386,11 @@ const ServicesPage = () => {
       </section>
 
       {/* Contact form */}
-      <section id="services-contact" className="py-24 md:py-32 px-8 md:px-16 lg:px-24" style={{ background: "hsl(70 7% 16%)" }}>
+      <section id="services-contact" className="py-24 md:py-32 px-8 md:px-16 lg:px-24" style={{ background: "hsl(50 14% 5%)" }}>
         <FadeIn>
           <div className="max-w-2xl mx-auto">
             <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">Связаться</p>
-            <h2 className="font-display-stencil text-4xl md:text-5xl text-doorium-platinum leading-[0.95] mb-12">ОСТАВИТЬ ЗАЯВКУ</h2>
+            <h2 className="font-display text-4xl md:text-5xl font-light text-doorium-platinum leading-[0.95] mb-12 tracking-wide">ОСТАВИТЬ ЗАЯВКУ</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block font-body text-sm tracking-[0.15em] uppercase text-primary mb-4">Тип услуги</label>
