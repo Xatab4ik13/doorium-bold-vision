@@ -52,7 +52,7 @@ const Header = () => {
   return (
     <>
       {/* Top bar: logo center + burger right */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-6 py-0">
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-start md:justify-center px-4 md:px-6 py-0">
         <button
           onClick={() => handleNav("/")}
           className="bg-transparent border-none cursor-pointer p-0 -mt-12 md:-mt-16"
