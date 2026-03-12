@@ -123,13 +123,13 @@ const Hero = () => {
                 boxShadow: "0 8px 32px -8px rgba(0,0,0,0.6), 0 0 0 1px hsl(34 24% 48% / 0.15)",
               }}
             >
-              <div className="px-4 md:px-6 py-5 md:py-7 flex flex-col items-start gap-3">
+              <div className="px-3 md:px-6 py-4 md:py-7 flex flex-col items-start gap-2 md:gap-3">
                 <feature.icon
-                  size={28}
-                  className="text-primary"
+                  size={22}
+                  className="text-primary md:w-7 md:h-7"
                   strokeWidth={1.5}
                 />
-                <p className="font-body text-xs md:text-sm font-medium tracking-[0.15em] uppercase text-doorium-platinum leading-relaxed whitespace-pre-line">
+                <p className="font-body text-[10px] md:text-sm font-medium tracking-[0.1em] md:tracking-[0.15em] uppercase text-doorium-platinum leading-snug whitespace-pre-line">
                   {feature.title}
                 </p>
               </div>
