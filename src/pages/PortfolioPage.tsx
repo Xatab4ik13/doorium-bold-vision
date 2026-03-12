@@ -145,9 +145,8 @@ const PortfolioPage = () => {
       {/* CTA */}
       <section
         className="py-20 md:py-28 px-8 md:px-16 lg:px-24 text-center"
-        style={{
-          background: "linear-gradient(to bottom, hsl(50 14% 8%) 0%, hsl(60 8% 13%) 50%, hsl(70 7% 16%) 100%)",
-        }}
+        style={{ background: "hsl(50 14% 5%)" }}
+      >
       >
         <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-4">
           Хотите так же?
