@@ -115,7 +115,7 @@ const PortfolioPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ background: "hsl(50 14% 8%)" }}>
+    <div className="min-h-screen" style={{ background: "hsl(50 14% 5%)" }}>
       <Header />
 
       {/* Hero */}
