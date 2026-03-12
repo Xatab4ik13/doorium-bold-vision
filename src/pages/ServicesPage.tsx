@@ -371,7 +371,7 @@ const ServicesPage = () => {
           {requirementsData.map((req, i) => (
             <FadeIn key={i} delay={i * 0.08}>
               <div className="border-l-2 border-primary/40 pl-6">
-                <h3 className="font-display-stencil text-lg text-doorium-platinum mb-4">{req.title}</h3>
+                <h3 className="font-display text-lg font-light text-doorium-platinum mb-4 tracking-wide">{req.title}</h3>
                 <ul className="space-y-2">
                   {req.items.map((item, j) => (
                     <li key={j} className="font-body text-sm text-doorium-platinum/60 leading-relaxed flex gap-2">
