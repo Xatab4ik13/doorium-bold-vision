@@ -151,7 +151,7 @@ const PortfolioPage = () => {
         <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-4">
           Хотите так же?
         </p>
-        <h2 className="font-display-stencil text-3xl md:text-4xl text-doorium-platinum leading-[0.95] mb-8">
+        <h2 className="font-display text-3xl md:text-4xl font-light text-doorium-platinum leading-[0.95] mb-8 tracking-wide">
           ЗАКАЖИТЕ МОНТАЖ
         </h2>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
