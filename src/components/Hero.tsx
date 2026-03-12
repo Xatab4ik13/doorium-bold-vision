@@ -82,7 +82,7 @@ const Hero = () => {
         <div className="w-full md:w-3/5 px-8 md:px-16 lg:px-24">
           <div className="max-w-xl">
             <h1
-              className="font-display text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-light leading-[1] text-doorium-platinum mb-6 md:mb-8 animate-fade-in-up tracking-wide"
+              className="font-display text-[1.65rem] sm:text-5xl md:text-7xl lg:text-8xl font-light leading-[1.05] text-doorium-platinum mb-6 md:mb-8 animate-fade-in-up tracking-wide"
             >
               ПРОФЕССИОНАЛЬНЫЙ
               <br />
