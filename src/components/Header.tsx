@@ -100,7 +100,7 @@ const Header = () => {
           <img
             src={dooriumLogo}
             alt="Doorium"
-            className="h-9 w-auto brightness-0 invert opacity-70"
+            className="h-16 w-auto brightness-0 invert opacity-70"
           />
           <button
             onClick={() => setMenuOpen(false)}
