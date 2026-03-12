@@ -124,7 +124,7 @@ const PortfolioPage = () => {
           Портфолио
         </p>
         <h1
-          className="font-display-stencil text-5xl md:text-6xl lg:text-7xl text-doorium-platinum leading-[0.95] mb-4 animate-fade-in-up"
+          className="font-display text-5xl md:text-6xl lg:text-7xl font-light text-doorium-platinum leading-[0.95] mb-4 animate-fade-in-up tracking-wide"
           style={{ animationDelay: "0.1s" }}
         >
           НАШИ РАБОТЫ
