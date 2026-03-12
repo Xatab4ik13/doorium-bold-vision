@@ -386,7 +386,7 @@ const ServicesPage = () => {
       </section>
 
       {/* Contact form */}
-      <section id="services-contact" className="py-24 md:py-32 px-8 md:px-16 lg:px-24" style={{ background: "hsl(70 7% 16%)" }}>
+      <section id="services-contact" className="py-24 md:py-32 px-8 md:px-16 lg:px-24" style={{ background: "hsl(50 14% 5%)" }}>
         <FadeIn>
           <div className="max-w-2xl mx-auto">
             <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">Связаться</p>
