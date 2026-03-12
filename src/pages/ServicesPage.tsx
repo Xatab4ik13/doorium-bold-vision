@@ -352,7 +352,7 @@ const ServicesPage = () => {
       {/* CTA */}
       <section className="px-8 md:px-16 lg:px-24 pb-24">
         <FadeIn>
-          <a href="#services-contact" className="inline-block font-display-stencil text-sm tracking-[0.2em] uppercase px-10 py-4 bg-primary text-primary-foreground hover:bg-primary/80 transition-colors duration-300">
+          <a href="#services-contact" className="inline-block font-body text-sm font-medium tracking-[0.15em] uppercase px-10 py-4 bg-primary text-primary-foreground hover:bg-primary/80 transition-colors duration-300 rounded-sm">
             Оставить заявку
           </a>
         </FadeIn>
