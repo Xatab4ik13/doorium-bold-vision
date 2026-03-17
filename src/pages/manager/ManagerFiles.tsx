@@ -1,7 +1,7 @@
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { Upload, Image, FolderOpen } from "lucide-react";
+import { FolderOpen, Upload, Image, FileText } from "lucide-react";
 
 const ManagerFiles = () => {
   const { user } = useAuth();
