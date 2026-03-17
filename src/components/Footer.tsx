@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import dooriumLogo from "@/assets/doorium-logo-new.png";
 
@@ -9,7 +10,7 @@ const navLinks = [
   { label: "Стать Партнёром", href: "/partner" },
 ];
 
-const Footer = () => {
+const Footer = forwardRef<HTMLElement>((_, ref) => {
   const navigate = useNavigate();
 
   return (
