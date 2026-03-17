@@ -14,7 +14,38 @@ import NotFound from "./pages/NotFound";
 
 // CRM pages (lazy loaded)
 const LoginPage = lazy(() => import("./pages/LoginPage"));
+
+// Admin
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminRequests = lazy(() => import("./pages/admin/AdminRequests"));
+const AdminAccounts = lazy(() => import("./pages/admin/AdminAccounts"));
+const AdminCalendar = lazy(() => import("./pages/admin/AdminCalendar"));
+const AdminEstimates = lazy(() => import("./pages/admin/AdminEstimates"));
+const AdminPartners = lazy(() => import("./pages/admin/AdminPartners"));
+const AdminNews = lazy(() => import("./pages/admin/AdminNews"));
+
+// Manager
+const ManagerDashboard = lazy(() => import("./pages/manager/ManagerDashboard"));
+const ManagerAssign = lazy(() => import("./pages/manager/ManagerAssign"));
+const ManagerFiles = lazy(() => import("./pages/manager/ManagerFiles"));
+const ManagerEstimates = lazy(() => import("./pages/manager/ManagerEstimates"));
+const ManagerCalendar = lazy(() => import("./pages/manager/ManagerCalendar"));
+
+// Measurer
+const MeasurerDashboard = lazy(() => import("./pages/measurer/MeasurerDashboard"));
+const MeasurerHistory = lazy(() => import("./pages/measurer/MeasurerHistory"));
+const MeasurerCalendar = lazy(() => import("./pages/measurer/MeasurerCalendar"));
+
+// Installer
+const InstallerDashboard = lazy(() => import("./pages/installer/InstallerDashboard"));
+const InstallerHistory = lazy(() => import("./pages/installer/InstallerHistory"));
+const InstallerEstimates = lazy(() => import("./pages/installer/InstallerEstimates"));
+const InstallerCalendar = lazy(() => import("./pages/installer/InstallerCalendar"));
+
+// Partner
+const PartnerDashboard = lazy(() => import("./pages/partner/PartnerDashboard"));
+const PartnerNewRequest = lazy(() => import("./pages/partner/PartnerNewRequest"));
+const PartnerHistory = lazy(() => import("./pages/partner/PartnerHistory"));
 
 const queryClient = new QueryClient();
 
@@ -42,12 +73,37 @@ const App = () => (
               {/* CRM Login */}
               <Route path="/login" element={<LoginPage />} />
 
-              {/* Admin routes */}
-              <Route path="/admin" element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              } />
+              {/* Admin */}
+              <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin/requests" element={<ProtectedRoute allowedRoles={["admin"]}><AdminRequests /></ProtectedRoute>} />
+              <Route path="/admin/accounts" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAccounts /></ProtectedRoute>} />
+              <Route path="/admin/calendar" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCalendar /></ProtectedRoute>} />
+              <Route path="/admin/estimates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminEstimates /></ProtectedRoute>} />
+              <Route path="/admin/partners" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPartners /></ProtectedRoute>} />
+              <Route path="/admin/news" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNews /></ProtectedRoute>} />
+
+              {/* Manager */}
+              <Route path="/manager" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerDashboard /></ProtectedRoute>} />
+              <Route path="/manager/assign" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerAssign /></ProtectedRoute>} />
+              <Route path="/manager/files" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerFiles /></ProtectedRoute>} />
+              <Route path="/manager/estimates" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerEstimates /></ProtectedRoute>} />
+              <Route path="/manager/calendar" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerCalendar /></ProtectedRoute>} />
+
+              {/* Measurer */}
+              <Route path="/measurer" element={<ProtectedRoute allowedRoles={["measurer"]}><MeasurerDashboard /></ProtectedRoute>} />
+              <Route path="/measurer/history" element={<ProtectedRoute allowedRoles={["measurer"]}><MeasurerHistory /></ProtectedRoute>} />
+              <Route path="/measurer/calendar" element={<ProtectedRoute allowedRoles={["measurer"]}><MeasurerCalendar /></ProtectedRoute>} />
+
+              {/* Installer */}
+              <Route path="/installer" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerDashboard /></ProtectedRoute>} />
+              <Route path="/installer/history" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerHistory /></ProtectedRoute>} />
+              <Route path="/installer/estimates" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerEstimates /></ProtectedRoute>} />
+              <Route path="/installer/calendar" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerCalendar /></ProtectedRoute>} />
+
+              {/* Partner */}
+              <Route path="/partner" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerDashboard /></ProtectedRoute>} />
+              <Route path="/partner/new" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerNewRequest /></ProtectedRoute>} />
+              <Route path="/partner/history" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerHistory /></ProtectedRoute>} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
