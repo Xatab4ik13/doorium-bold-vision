@@ -14,18 +14,22 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Remove old lock file
         run: rm -f package-lock.json
 
       - name: Generate new lock file
-        run: npm install --package-lock-only
+        run: npm install --package-lock-only --legacy-peer-deps
 
       - name: Commit updated lock file
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add package-lock.json
-          git diff --cached --quiet || git commit -m "Fix package-lock.json"
+          if git diff --cached --quiet; then
+            echo "No lockfile changes"
+            exit 0
+          fi
+          git commit -m "Fix package-lock.json"
           git push
