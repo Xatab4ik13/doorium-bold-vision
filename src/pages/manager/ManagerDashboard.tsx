@@ -182,7 +182,7 @@ const ManagerDashboard = () => {
               </Card>
             )}
 
-            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            <Pagination page={page} totalPages={totalPages} total={total} limit={limit} onPageChange={setPage} />
           </div>
         )}
       </div>
