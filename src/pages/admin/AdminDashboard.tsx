@@ -1,209 +1,150 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClipboardList, Clock, CheckCircle, AlertTriangle, TrendingUp } from "lucide-react";
+import { statusLabels, statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
+import { ClipboardList, Clock, CheckCircle, AlertTriangle, Pause, ChevronRight } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashboard";
+import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
+import { demoRequests, getDemoUserName } from "@/data/demoData";
 
-// Demo data
-const demoRequests = [
-  { id: "1", status: "new", type: "measurement", client_name: "Иванов И.И.", created_at: "2026-03-17" },
-  { id: "2", status: "new", type: "installation", client_name: "Петрова А.С.", created_at: "2026-03-17" },
-  { id: "3", status: "new", type: "measurement", client_name: "Сидоров К.В.", created_at: "2026-03-16" },
-  { id: "4", status: "pending", type: "measurement", client_name: "Козлов Д.М.", created_at: "2026-03-16" },
-  { id: "5", status: "pending", type: "installation", client_name: "Волкова М.И.", created_at: "2026-03-15" },
-  { id: "6", status: "measurer_assigned", type: "measurement", client_name: "Лебедев В.Г.", created_at: "2026-03-15" },
-  { id: "7", status: "date_agreed", type: "measurement", client_name: "Егорова Т.Л.", created_at: "2026-03-14" },
-  { id: "8", status: "date_agreed", type: "installation", client_name: "Михайлова Е.В.", created_at: "2026-03-14" },
-  { id: "9", status: "measurement_done", type: "measurement", client_name: "Новиков А.А.", created_at: "2026-03-13" },
-  { id: "10", status: "closed", type: "measurement", client_name: "Соколова Н.Р.", created_at: "2026-03-12" },
-  { id: "11", status: "closed", type: "installation", client_name: "Кузнецов П.П.", created_at: "2026-03-11" },
-  { id: "12", status: "closed", type: "reclamation", client_name: "Морозов А.И.", created_at: "2026-03-10" },
+const FUNNEL_STAGES: { status: RequestStatus; fill: string }[] = [
+  { status: "new", fill: "hsl(217, 91%, 50%)" },
+  { status: "pending", fill: "hsl(45, 93%, 47%)" },
+  { status: "measurer_assigned", fill: "hsl(38, 92%, 50%)" },
+  { status: "date_agreed", fill: "hsl(190, 80%, 45%)" },
+  { status: "measurement_done", fill: "hsl(280, 65%, 50%)" },
+  { status: "closed", fill: "hsl(142, 71%, 45%)" },
 ];
-
-const demoChartData = [
-  { name: "Пн", заявки: 8, выполнено: 5 },
-  { name: "Вт", заявки: 12, выполнено: 9 },
-  { name: "Ср", заявки: 6, выполнено: 7 },
-  { name: "Чт", заявки: 15, выполнено: 11 },
-  { name: "Пт", заявки: 10, выполнено: 8 },
-  { name: "Сб", заявки: 4, выполнено: 6 },
-  { name: "Вс", заявки: 2, выполнено: 3 },
-];
-
-const IN_PROGRESS = ["pending", "measurer_assigned", "date_agreed", "measurement_done", "installation_rescheduled"];
+const IN_PROGRESS: RequestStatus[] = ["pending", "measurer_assigned", "date_agreed", "measurement_done"];
+const DONE: RequestStatus[] = ["closed"];
+const DAY_NAMES = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
 const AdminDashboard = () => {
+  const isMobile = useIsMobile();
   const { user } = useAuth();
-  const isDemo = user?.id?.startsWith("demo");
+  const navigate = useNavigate();
+  useEffect(() => { document.title = "Админ-панель — Doorium Service"; }, []);
 
   const stats = useMemo(() => {
-    const total = demoRequests.length;
-    const newCount = demoRequests.filter(r => r.status === "new").length;
-    const inProgress = demoRequests.filter(r => IN_PROGRESS.includes(r.status)).length;
-    const closed = demoRequests.filter(r => r.status === "closed").length;
-    return { total, newCount, inProgress, closed };
+    const r = demoRequests;
+    return { total: r.length, newCount: r.filter(x => x.status === "new").length, pendingCount: r.filter(x => x.status === "pending").length, inProgress: r.filter(x => IN_PROGRESS.includes(x.status as RequestStatus)).length, completed: r.filter(x => DONE.includes(x.status as RequestStatus)).length, reclamations: r.filter(x => x.type === "reclamation").length };
   }, []);
 
-  const recentRequests = demoRequests.slice(0, 5);
+  const chartData = useMemo(() => {
+    const today = new Date();
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today); d.setDate(d.getDate() - (6 - i));
+      return { name: DAY_NAMES[d.getDay()], заявки: Math.floor(Math.random() * 4) + 1, выполнено: Math.floor(Math.random() * 3) };
+    });
+  }, []);
 
   const funnelData = useMemo(() => {
-    const stages: { status: RequestStatus; fill: string }[] = [
-      { status: "new", fill: "#3b82f6" },
-      { status: "pending", fill: "#eab308" },
-      { status: "measurer_assigned", fill: "#f59e0b" },
-      { status: "date_agreed", fill: "#06b6d4" },
-      { status: "measurement_done", fill: "#8b5cf6" },
-      { status: "closed", fill: "#22c55e" },
-    ];
-    return stages.map(s => ({
-      name: statusLabels[s.status],
-      value: demoRequests.filter(r => r.status === s.status).length,
-      fill: s.fill,
+    const order = FUNNEL_STAGES.map(s => s.status);
+    return FUNNEL_STAGES.map((stage, idx) => ({
+      stage: statusLabels[stage.status],
+      value: idx === 0 ? demoRequests.length : demoRequests.filter(r => order.indexOf(r.status as RequestStatus) >= idx).length,
+      fill: stage.fill,
     }));
   }, []);
+
+  const topEmployees = useMemo(() => {
+    const c: Record<string, { name: string; role: string; n: number }> = {};
+    demoRequests.filter(r => DONE.includes(r.status as RequestStatus)).forEach(r => {
+      [{ id: r.measurer_id, role: "Замерщик" }, { id: r.installer_id, role: "Монтажник" }].forEach(({ id, role }) => {
+        if (!id) return;
+        if (!c[id]) c[id] = { name: getDemoUserName(id) || id, role, n: 0 };
+        c[id].n++;
+      });
+    });
+    return Object.values(c).sort((a, b) => b.n - a.n).slice(0, 5);
+  }, []);
+
+  const statCards = [
+    { label: "Всего заявок", value: stats.total, icon: <ClipboardList className="w-5 h-5" />, color: "text-blue-600 bg-blue-50", href: "/admin/requests" },
+    { label: "Новые", value: stats.newCount, icon: <AlertTriangle className="w-5 h-5" />, color: "text-amber-600 bg-amber-50", href: "/admin/requests?quick=new" },
+    { label: "В ожидании", value: stats.pendingCount, icon: <Pause className="w-5 h-5" />, color: "text-yellow-600 bg-yellow-50", href: "/admin/requests?quick=pending" },
+    { label: "В работе", value: stats.inProgress, icon: <Clock className="w-5 h-5" />, color: "text-purple-600 bg-purple-50", href: "/admin/requests?quick=in_progress" },
+    { label: "Выполнено", value: stats.completed, icon: <CheckCircle className="w-5 h-5" />, color: "text-green-600 bg-green-50", href: "/admin/requests?quick=closed" },
+    { label: "Рекламации", value: stats.reclamations, icon: <AlertTriangle className="w-5 h-5" />, color: "text-red-600 bg-red-50", href: "/admin/requests?quick=reclamation" },
+  ];
 
   return (
     <DashboardLayout role="admin" userName={user?.name}>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-slate-900">Дашборд</h1>
-          {isDemo && (
-            <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
-              Демо-режим
-            </span>
-          )}
+        <h1 className="text-2xl font-semibold text-slate-900">Дашборд</h1>
+        <div className={`grid gap-4 ${isMobile ? "grid-cols-2" : "grid-cols-3 lg:grid-cols-6"}`}>
+          {statCards.map(s => (
+            <Card key={s.label} onClick={() => navigate(s.href)} className="bg-white border-slate-200 cursor-pointer hover:shadow-md transition-shadow">
+              <CardContent className="pt-4 pb-4 px-4">
+                <div className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center mb-3`}>{s.icon}</div>
+                <div className="text-2xl font-bold text-slate-900">{s.value}</div>
+                <div className="text-xs text-slate-500 mt-0.5">{s.label}</div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-
-        {/* Stats cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className={`grid gap-6 ${isMobile ? "grid-cols-1" : "grid-cols-2"}`}>
           <Card className="bg-white border-slate-200">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Всего заявок</p>
-                  <p className="text-3xl font-bold text-slate-900">{stats.total}</p>
-                </div>
-                <ClipboardList className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-white border-slate-200">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Новые</p>
-                  <p className="text-3xl font-bold text-slate-900">{stats.newCount}</p>
-                </div>
-                <AlertTriangle className="w-8 h-8 text-amber-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-white border-slate-200">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">В работе</p>
-                  <p className="text-3xl font-bold text-slate-900">{stats.inProgress}</p>
-                </div>
-                <Clock className="w-8 h-8 text-cyan-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-white border-slate-200">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Закрыты</p>
-                  <p className="text-3xl font-bold text-slate-900">{stats.closed}</p>
-                </div>
-                <CheckCircle className="w-8 h-8 text-emerald-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Chart + Recent */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Weekly chart */}
-          <Card className="bg-white border-slate-200 lg:col-span-2">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base text-slate-900 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" />
-                Заявки за неделю
-              </CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-base">Динамика за неделю</CardTitle></CardHeader>
             <CardContent>
-              <div className="h-[240px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={demoChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#94a3b8" }} />
-                    <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: "8px",
-                        border: "1px solid #e2e8f0",
-                        boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
-                      }}
-                    />
-                    <Bar dataKey="заявки" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="выполнено" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={chartData} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fontSize: 12 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <Tooltip />
+                  <Bar dataKey="заявки" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="выполнено" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
-
-          {/* Recent requests */}
           <Card className="bg-white border-slate-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base text-slate-900">Последние заявки</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {recentRequests.map((req) => (
-                <div key={req.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">{req.client_name}</p>
-                    <p className="text-xs text-slate-400">{req.created_at}</p>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[req.status as RequestStatus]}`}>
-                    {statusLabels[req.status as RequestStatus]}
-                  </span>
+            <CardHeader><CardTitle className="text-base">Воронка конверсии</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              {funnelData.map(item => (
+                <div key={item.stage} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs"><span className="text-slate-600">{item.stage}</span><span className="font-medium text-slate-800">{item.value}</span></div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${funnelData[0].value > 0 ? (item.value / funnelData[0].value) * 100 : 0}%`, backgroundColor: item.fill }} /></div>
                 </div>
               ))}
             </CardContent>
           </Card>
         </div>
-
-        {/* Funnel */}
-        <Card className="bg-white border-slate-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base text-slate-900">Воронка заявок</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end gap-2 h-32">
-              {funnelData.map((stage, i) => {
-                const maxVal = Math.max(...funnelData.map(s => s.value), 1);
-                const height = (stage.value / maxVal) * 100;
-                return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                    <span className="text-xs font-bold text-slate-700">{stage.value}</span>
-                    <div
-                      className="w-full rounded-t-md transition-all"
-                      style={{ height: `${height}%`, backgroundColor: stage.fill, minHeight: 4 }}
-                    />
-                    <span className="text-[10px] text-slate-400 text-center leading-tight mt-1">{stage.name}</span>
+        <div className={`grid gap-6 ${isMobile ? "grid-cols-1" : "grid-cols-2"}`}>
+          <Card className="bg-white border-slate-200">
+            <CardHeader><CardTitle className="text-base">Топ сотрудников</CardTitle></CardHeader>
+            <CardContent>
+              {topEmployees.length === 0 ? <div className="text-sm text-slate-400 text-center py-6">Нет данных</div> : (
+                <div className="space-y-2">{topEmployees.map((emp, i) => (
+                  <div key={i} className="flex items-center gap-3 py-2 border-b border-slate-50 last:border-0">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">{i + 1}</div>
+                    <div className="flex-1"><div className="text-sm font-medium text-slate-800">{emp.name}</div><div className="text-xs text-slate-400">{emp.role}</div></div>
+                    <div className="text-sm font-bold text-slate-700">{emp.n}</div>
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                ))}</div>
+              )}
+            </CardContent>
+          </Card>
+          <Card className="bg-white border-slate-200">
+            <CardHeader><CardTitle className="text-base">Последние заявки</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">{demoRequests.slice(0, 6).map(r => (
+                <div key={r.id} onClick={() => navigate("/admin/requests")} className="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100 transition-colors cursor-pointer">
+                  <div>
+                    <div className="flex items-center gap-2 mb-0.5"><span className="text-xs font-mono text-slate-400">{r.number}</span><span className="text-xs text-slate-500">{requestTypeLabels[r.type]}</span></div>
+                    <div className="text-sm font-medium text-slate-800">{r.client_name}</div>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus]}`}>{getStatusLabel(r.status as RequestStatus, r.type as RequestType)}</span>
+                </div>
+              ))}</div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </DashboardLayout>
   );
 };
-
 export default AdminDashboard;
