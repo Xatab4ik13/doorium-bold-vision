@@ -256,6 +256,43 @@ const LoginPage = () => {
           </form>
         )}
 
+        {/* Demo mode */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-200" />
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-slate-50 px-3 text-slate-400">или</span>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs text-slate-400 text-center">Демо-вход (без бэкенда)</p>
+          <div className="grid grid-cols-2 gap-2">
+            {(["admin", "manager", "measurer", "installer", "partner"] as const).map((role) => (
+              <button
+                key={role}
+                onClick={() => {
+                  const demoUsers: Record<string, { id: string; name: string }> = {
+                    admin: { id: "demo-1", name: "Демо Админ" },
+                    manager: { id: "demo-2", name: "Демо Менеджер" },
+                    measurer: { id: "demo-3", name: "Демо Замерщик" },
+                    installer: { id: "demo-4", name: "Демо Монтажник" },
+                    partner: { id: "demo-5", name: "Демо Партнёр" },
+                  };
+                  const u = demoUsers[role];
+                  login("demo-token", { ...u, role });
+                  toast.success(`Демо-вход: ${u.name}`);
+                  navigate(roleRoutes[role], { replace: true });
+                }}
+                className={`py-2 px-3 rounded-lg text-xs font-medium transition-colors border border-slate-200 hover:border-slate-300 hover:bg-white text-slate-600 ${role === "partner" ? "col-span-2" : ""}`}
+              >
+                {{ admin: "👑 Админ", manager: "📋 Менеджер", measurer: "📐 Замерщик", installer: "🔧 Монтажник", partner: "🤝 Партнёр" }[role]}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Back to site */}
         <div className="text-center">
           <Link to="/" className="text-sm text-slate-400 hover:text-slate-600 transition-colors">
