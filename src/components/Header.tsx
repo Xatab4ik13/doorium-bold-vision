@@ -188,6 +188,8 @@ const Header = forwardRef<HTMLElement>((_, ref) => {
       </nav>
     </>
   );
-};
+});
+
+Header.displayName = "Header";
 
 export default Header;
