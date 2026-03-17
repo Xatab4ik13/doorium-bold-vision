@@ -125,7 +125,7 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
 
   // Desktop layout
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 dashboard-theme">
       {/* Sidebar */}
       <aside
         className={`${
