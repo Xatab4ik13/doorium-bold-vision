@@ -62,7 +62,7 @@ const Header = forwardRef<HTMLElement>((_, ref) => {
           <img
             src={dooriumLogo}
             alt="Doorium Service"
-            className="h-[8rem] md:h-[11rem] w-auto brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+            className="h-[11rem] md:h-[16rem] w-auto brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
           />
         </button>
 
