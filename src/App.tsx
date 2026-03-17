@@ -64,8 +64,8 @@ const LoadingFallback = () => (
   </div>
 );
 
-const CrmRedirectInner = () => {
-  const { isAuthenticated, user } = require("@/contexts/AuthContext").useAuth();
+const CrmRedirect = () => {
+  const { isAuthenticated, user } = useAuth();
   if (isAuthenticated && user) {
     const rolePath = user.role === "admin" ? "/admin" : `/${user.role}`;
     return <Navigate to={rolePath} replace />;
