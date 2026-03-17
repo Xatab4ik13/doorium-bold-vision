@@ -2,12 +2,12 @@ import { useEffect, useMemo } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
-import { ClipboardList, Clock, CheckCircle, AlertTriangle, Pause, ChevronRight } from "lucide-react";
+import { ClipboardList, Clock, CheckCircle, AlertTriangle, Pause, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
-import { demoRequests, getDemoUserName } from "@/data/demoData";
+import { useRequests, useUsers } from "@/hooks/useRequests";
 
 const FUNNEL_STAGES: { status: RequestStatus; fill: string }[] = [
   { status: "new", fill: "hsl(217, 91%, 50%)" },
@@ -25,41 +25,46 @@ const AdminDashboard = () => {
   const isMobile = useIsMobile();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { requests, loading } = useRequests();
+  const { getUserName } = useUsers();
   useEffect(() => { document.title = "Админ-панель — Doorium Service"; }, []);
 
   const stats = useMemo(() => {
-    const r = demoRequests;
+    const r = requests;
     return { total: r.length, newCount: r.filter(x => x.status === "new").length, pendingCount: r.filter(x => x.status === "pending").length, inProgress: r.filter(x => IN_PROGRESS.includes(x.status as RequestStatus)).length, completed: r.filter(x => DONE.includes(x.status as RequestStatus)).length, reclamations: r.filter(x => x.type === "reclamation").length };
-  }, []);
+  }, [requests]);
 
   const chartData = useMemo(() => {
     const today = new Date();
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(today); d.setDate(d.getDate() - (6 - i));
-      return { name: DAY_NAMES[d.getDay()], заявки: Math.floor(Math.random() * 4) + 1, выполнено: Math.floor(Math.random() * 3) };
+      const dateStr = d.toISOString().split("T")[0];
+      const dayRequests = requests.filter(r => r.created_at?.split("T")[0] === dateStr);
+      const dayCompleted = requests.filter(r => r.closed_at?.split("T")[0] === dateStr);
+      return { name: DAY_NAMES[d.getDay()], заявки: dayRequests.length, выполнено: dayCompleted.length };
     });
-  }, []);
+  }, [requests]);
 
   const funnelData = useMemo(() => {
     const order = FUNNEL_STAGES.map(s => s.status);
     return FUNNEL_STAGES.map((stage, idx) => ({
       stage: statusLabels[stage.status],
-      value: idx === 0 ? demoRequests.length : demoRequests.filter(r => order.indexOf(r.status as RequestStatus) >= idx).length,
+      value: idx === 0 ? requests.length : requests.filter(r => order.indexOf(r.status as RequestStatus) >= idx).length,
       fill: stage.fill,
     }));
-  }, []);
+  }, [requests]);
 
   const topEmployees = useMemo(() => {
     const c: Record<string, { name: string; role: string; n: number }> = {};
-    demoRequests.filter(r => DONE.includes(r.status as RequestStatus)).forEach(r => {
+    requests.filter(r => DONE.includes(r.status as RequestStatus)).forEach(r => {
       [{ id: r.measurer_id, role: "Замерщик" }, { id: r.installer_id, role: "Монтажник" }].forEach(({ id, role }) => {
         if (!id) return;
-        if (!c[id]) c[id] = { name: getDemoUserName(id) || id, role, n: 0 };
+        if (!c[id]) c[id] = { name: getUserName(id) || id, role, n: 0 };
         c[id].n++;
       });
     });
     return Object.values(c).sort((a, b) => b.n - a.n).slice(0, 5);
-  }, []);
+  }, [requests, getUserName]);
 
   const statCards = [
     { label: "Всего заявок", value: stats.total, icon: <ClipboardList className="w-5 h-5" />, color: "text-blue-600 bg-blue-50", href: "/admin/requests" },
@@ -69,6 +74,14 @@ const AdminDashboard = () => {
     { label: "Выполнено", value: stats.completed, icon: <CheckCircle className="w-5 h-5" />, color: "text-green-600 bg-green-50", href: "/admin/requests?quick=closed" },
     { label: "Рекламации", value: stats.reclamations, icon: <AlertTriangle className="w-5 h-5" />, color: "text-red-600 bg-red-50", href: "/admin/requests?quick=reclamation" },
   ];
+
+  if (loading) {
+    return (
+      <DashboardLayout role="admin" userName={user?.name}>
+        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role="admin" userName={user?.name}>
@@ -131,7 +144,7 @@ const AdminDashboard = () => {
           <Card className="bg-white border-slate-200">
             <CardHeader><CardTitle className="text-base">Последние заявки</CardTitle></CardHeader>
             <CardContent>
-              <div className="space-y-2">{demoRequests.slice(0, 6).map(r => (
+              <div className="space-y-2">{requests.slice(0, 6).map(r => (
                 <div key={r.id} onClick={() => navigate("/admin/requests")} className="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100 transition-colors cursor-pointer">
                   <div>
                     <div className="flex items-center gap-2 mb-0.5"><span className="text-xs font-mono text-slate-400">{r.number}</span><span className="text-xs text-slate-500">{requestTypeLabels[r.type]}</span></div>
