@@ -100,6 +100,11 @@ const AdminRequests = () => {
     toast.success("Заявка удалена");
   };
 
+  const handleExport = (format: "csv" | "xlsx") => {
+    if (format === "csv") exportToCSV(filtered, getDemoUserName);
+    else exportToExcel(filtered, getDemoUserName);
+  };
+
   return (
     <DashboardLayout role="admin" userName={user?.name}>
       <div className="space-y-4">
