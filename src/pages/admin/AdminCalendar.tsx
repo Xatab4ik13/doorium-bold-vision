@@ -10,7 +10,7 @@ const AdminCalendar = () => {
     <DashboardLayout role="admin" userName={user?.name}>
       <div className="space-y-4">
         <h1 className="text-2xl font-semibold text-slate-900">Календарь</h1>
-        <InstallationCalendar city={city} onCityChange={setCity} />
+        <InstallationCalendar cityFilter={city} />
       </div>
     </DashboardLayout>
   );
