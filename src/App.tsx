@@ -6,14 +6,17 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
-import ServicesPage from "./pages/ServicesPage";
-import PortfolioPage from "./pages/PortfolioPage";
-import ContactsPage from "./pages/ContactsPage";
-import CareersPage from "./pages/CareersPage";
-import PartnerPage from "./pages/PartnerPage";
-import ArticlePage from "./pages/ArticlePage";
+import { isCrmDomain } from "@/hooks/useCrmDomain";
 import NotFound from "./pages/NotFound";
+
+// Public pages (only loaded on main domain)
+const Index = lazy(() => import("./pages/Index"));
+const ServicesPage = lazy(() => import("./pages/ServicesPage"));
+const PortfolioPage = lazy(() => import("./pages/PortfolioPage"));
+const ContactsPage = lazy(() => import("./pages/ContactsPage"));
+const CareersPage = lazy(() => import("./pages/CareersPage"));
+const PartnerPage = lazy(() => import("./pages/PartnerPage"));
+const ArticlePage = lazy(() => import("./pages/ArticlePage"));
 
 // CRM pages (lazy loaded)
 const LoginPage = lazy(() => import("./pages/LoginPage"));
