@@ -75,6 +75,7 @@ const App = () => (
               <Route path="/contacts" element={<ContactsPage />} />
               <Route path="/careers" element={<CareersPage />} />
               <Route path="/partner" element={<PartnerPage />} />
+              <Route path="/news/:slug" element={<ArticlePage />} />
 
               {/* CRM Login & Register */}
               <Route path="/login" element={<LoginPage />} />
