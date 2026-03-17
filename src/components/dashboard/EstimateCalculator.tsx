@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, Download, Plus, Search, Loader2 } from "lucide-react";
 import { priceData, serviceTypeLabels, parsePrice, type PriceItem } from "@/data/priceData";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/doorium-logo-new.png";
 import { toast } from "sonner";
 import api from "@/lib/api";
 import type { UserRole } from "@/data/mockDashboard";
