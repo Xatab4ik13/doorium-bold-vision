@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { formatPhone } from "@/lib/formatPhone";
+import AddressInput from "@/components/AddressInput";
 
 const cities = ["Москва", "Санкт-Петербург"] as const;
 
