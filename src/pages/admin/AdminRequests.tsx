@@ -24,7 +24,7 @@ const AdminRequests = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const quickFromUrl = searchParams.get("quick") || undefined;
-  const [city, setCity] = useState("Москва");
+  const [city, setCity] = useState<CityFilter>("Москва");
   const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва" });
   const [requests, setRequests] = useState(demoRequests);
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
