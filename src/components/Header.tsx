@@ -14,7 +14,7 @@ const navItems = [
   { label: "Стать Партнёром", href: "/partner" },
 ];
 
-const Header = () => {
+const Header = forwardRef<HTMLElement>((_, ref) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
