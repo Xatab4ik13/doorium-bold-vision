@@ -3,17 +3,18 @@ import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
-import { Plus, Download } from "lucide-react";
+import { Plus } from "lucide-react";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 import RequestFilters, { type FilterState, defaultFilters } from "@/components/dashboard/RequestFilters";
 import CreateRequestModal from "@/components/dashboard/CreateRequestModal";
 import Pagination from "@/components/dashboard/Pagination";
-import CityToggle from "@/components/dashboard/CityToggle";
+import CityToggle, { type CityFilter } from "@/components/dashboard/CityToggle";
 import MobileRequestCard from "@/components/dashboard/MobileRequestCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { demoRequests, demoUsers, getDemoUserName } from "@/data/demoData";
 import type { ApiRequest } from "@/hooks/useRequests";
+import { exportToCSV, exportToExcel } from "@/lib/exportRequests";
 import { toast } from "sonner";
 
 const ITEMS_PER_PAGE = 10;
@@ -23,7 +24,7 @@ const AdminRequests = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const quickFromUrl = searchParams.get("quick") || undefined;
-  const [city, setCity] = useState("Москва");
+  const [city, setCity] = useState<CityFilter>("Москва");
   const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва" });
   const [requests, setRequests] = useState(demoRequests);
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
@@ -99,6 +100,11 @@ const AdminRequests = () => {
     toast.success("Заявка удалена");
   };
 
+  const handleExport = (format: "csv" | "xlsx") => {
+    if (format === "csv") exportToCSV(filtered, getDemoUserName);
+    else exportToExcel(filtered, getDemoUserName);
+  };
+
   return (
     <DashboardLayout role="admin" userName={user?.name}>
       <div className="space-y-4">
@@ -116,7 +122,13 @@ const AdminRequests = () => {
           </div>
         </div>
 
-        <RequestFilters filters={filters} onChange={(f) => { setFilters(f); setPage(1); }} users={demoUsers} />
+        <RequestFilters
+          filters={filters}
+          onChange={(f) => { setFilters(f); setPage(1); }}
+          users={demoUsers}
+          onExport={handleExport}
+          resultCount={filtered.length}
+        />
 
         <Card className="bg-white border-slate-200 overflow-hidden">
           {isMobile ? (

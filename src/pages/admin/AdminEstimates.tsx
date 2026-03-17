@@ -1,3 +1,9 @@
 import EstimateCalculator from "@/components/dashboard/EstimateCalculator";
-const AdminEstimates = () => <EstimateCalculator role="admin" />;
+import { useAuth } from "@/contexts/AuthContext";
+
+const AdminEstimates = () => {
+  const { user } = useAuth();
+  return <EstimateCalculator role="admin" userName={user?.name || "Администратор"} />;
+};
+
 export default AdminEstimates;
