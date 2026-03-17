@@ -5,6 +5,7 @@ import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashb
 import { Phone, MapPin, Calendar, Upload, CheckCircle2, FileText, Camera, X, ChevronRight, AlertCircle, Loader2, Briefcase } from "lucide-react";
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
+import { uploadFile } from "@/lib/api";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -15,6 +16,7 @@ const MeasurerDashboard = () => {
   const [selected, setSelected] = useState<ApiRequest | null>(null);
 
   const [measurementNotes, setMeasurementNotes] = useState("");
+  
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [agreedDate, setAgreedDate] = useState("");
   const [dateConfirmed, setDateConfirmed] = useState(false);
@@ -25,6 +27,7 @@ const MeasurerDashboard = () => {
 
   const handleSelectRequest = (r: ApiRequest) => {
     setSelected(r);
+    setMeasurementNotes("");
     setMeasurementNotes(r.notes || "");
     setUploadedFiles([]);
     setAgreedDate(r.agreed_date?.split("T")[0] || "");
@@ -36,14 +39,24 @@ const MeasurerDashboard = () => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     setUploading(true);
-    // Demo mode: simulate upload
-    setTimeout(() => {
-      const newUrls = files.map((f, i) => `demo://uploads/${Date.now()}_${i}_${f.name}`);
-      setUploadedFiles(prev => [...prev, ...newUrls]);
-      toast.success(`Загружено: ${files.length}`);
+    let success = 0;
+    let failed = 0;
+    try {
+      for (const file of files) {
+        try {
+          const { url } = await uploadFile(file, "measurements");
+          setUploadedFiles(prev => [...prev, url]);
+          success++;
+        } catch {
+          failed++;
+        }
+      }
+      if (success > 0) toast.success(`Загружено: ${success}`);
+      if (failed > 0) toast.error(`Не удалось: ${failed}`);
+    } finally {
       setUploading(false);
-    }, 800);
-    e.target.value = "";
+      e.target.value = "";
+    }
   };
 
   const handleRemoveFile = (index: number) => {
@@ -55,7 +68,7 @@ const MeasurerDashboard = () => {
     try {
       const updated = await updateRequest(selected.id, { agreed_date: agreedDate, status: "date_agreed" as any });
       setDateConfirmed(true);
-      setSelected(updated as ApiRequest);
+      setSelected(updated);
       toast.success("Дата согласована");
     } catch {}
   };
@@ -81,71 +94,77 @@ const MeasurerDashboard = () => {
   const doneRequests = requests.filter((r) => ["measurement_done", "closed"].includes(r.status));
 
   return (
-    <DashboardLayout role="measurer" userName={user?.name}>
-      <div className="space-y-4">
-        <h1 className="text-2xl font-semibold text-slate-900">Мои заявки</h1>
+    <DashboardLayout role="measurer" userName={user?.name || "Замерщик"}>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-heading font-bold">Мои заявки</h1>
 
         {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-          </div>
+          <div className="flex justify-center py-12"><Loader2 className="animate-spin text-muted-foreground" size={32} /></div>
         ) : activeRequests.length === 0 && doneRequests.length === 0 ? (
-          <p className="text-sm text-slate-400 text-center py-8">Нет активных заявок</p>
+          <Card><CardContent className="p-8 text-center text-muted-foreground text-sm">Нет активных заявок</CardContent></Card>
         ) : (
-          <div className="space-y-3">
+          <div className="grid gap-4">
             {activeRequests.map((r) => (
               <Card
                 key={r.id}
+                className={`hover:shadow-md transition-shadow cursor-pointer border-l-4 ${
+                  selected?.id === r.id ? "border-l-primary ring-2 ring-primary/20" : "border-l-amber-400"
+                }`}
                 onClick={() => handleSelectRequest(r)}
-                className={`bg-white border-slate-200 cursor-pointer transition-all ${selected?.id === r.id ? "ring-2 ring-blue-500/30" : "hover:shadow-sm"}`}
               >
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-slate-400">{r.number}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
-                        {statusLabels[r.status as RequestStatus] || r.status}
-                      </span>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-mono text-xs text-muted-foreground">{r.number}</p>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100"}`}>
+                          {statusLabels[r.status as RequestStatus] || r.status}
+                        </span>
+                        {r.partner_id && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
+                            <Briefcase size={10} /> {r.partner_name || "Партнёр"}
+                          </span>
+                        )}
+                      </div>
+                      <p className="font-semibold">{r.client_name}</p>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin size={12} /> 
+                        <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(r.client_address + (r.city ? ", " + r.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{r.client_address}</a>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Phone size={12} /> <a href={`tel:${r.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{r.client_phone}</a>
+                      </div>
+                      {r.agreed_date && (
+                        <div className="flex items-center gap-1 text-xs text-primary font-medium">
+                          <Calendar size={12} /> Согласовано: {r.agreed_date.split("T")[0]}
+                        </div>
+                      )}
                     </div>
-                    {r.partner_id && (
-                      <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded">{r.partner_name || "Партнёр"}</span>
-                    )}
-                  </div>
-                  <div className="font-medium text-slate-800 mb-1">{r.client_name}</div>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                    <MapPin className="w-3.5 h-3.5" />
-                    <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(r.client_address)}`} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">{r.client_address}</a>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
-                    <Phone className="w-3.5 h-3.5" />
-                    <a href={`tel:${r.client_phone?.replace(/\s/g, "")}`}>{r.client_phone}</a>
-                  </div>
-                  {r.agreed_date && (
-                    <div className="flex items-center gap-1.5 text-xs text-emerald-600 mt-1">
-                      <Calendar className="w-3.5 h-3.5" />
-                      Согласовано: {r.agreed_date.split("T")[0]}
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar size={14} />
+                      <span className="text-xs">{r.created_at?.split("T")[0]}</span>
+                      <ChevronRight size={16} />
                     </div>
-                  )}
-                  <div className="text-xs text-slate-300 mt-2">{r.created_at?.split("T")[0]}</div>
+                  </div>
                 </CardContent>
               </Card>
             ))}
 
             {doneRequests.length > 0 && (
               <>
-                <h2 className="text-lg font-semibold text-slate-700 mt-6 flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" /> Замер выполнен
+                <h2 className="text-sm font-medium text-muted-foreground mt-4 flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-green-600" /> Замер выполнен
                 </h2>
                 {doneRequests.map((r) => (
-                  <Card key={r.id} className="bg-white border-slate-200 opacity-60">
-                    <CardContent className="py-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs text-slate-400">{r.number}</span>
-                        <span className="text-xs text-slate-500">{r.client_name}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
-                          {statusLabels[r.status as RequestStatus] || r.status}
-                        </span>
+                  <Card key={r.id} className="border-l-4 border-l-green-400 opacity-70">
+                    <CardContent className="p-4 flex items-center justify-between">
+                      <div>
+                        <p className="font-mono text-xs text-muted-foreground">{r.number}</p>
+                        <p className="font-medium text-sm">{r.client_name}</p>
                       </div>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100"}`}>
+                        {statusLabels[r.status as RequestStatus] || r.status}
+                      </span>
                     </CardContent>
                   </Card>
                 ))}
@@ -154,88 +173,94 @@ const MeasurerDashboard = () => {
           </div>
         )}
 
-        {/* Detail panel */}
         {selected && (
           <>
             {isMobile && (
-              <div onClick={() => setSelected(null)} className="fixed inset-0 z-[84] bg-black/40" />
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="fixed inset-0 z-[84] bg-foreground/40"
+                aria-label="Закрыть заявку"
+              />
             )}
-            <div className={`${isMobile ? "fixed inset-x-0 bottom-0 z-[85] max-h-[85vh] overflow-y-auto rounded-t-2xl" : "mt-6"} bg-white border border-slate-200 rounded-xl p-5 space-y-4 shadow-xl`}>
-              <div className="flex items-center justify-between">
+            <Card className={`border-t-4 border-t-primary bg-card ${isMobile ? "fixed inset-x-2 top-[calc(env(safe-area-inset-top,0px)+8px)] bottom-[calc(env(safe-area-inset-bottom,0px)+8px)] z-[85] overflow-y-auto shadow-2xl" : ""}`}>
+              <CardContent className="p-6 space-y-5">
+              <div className="flex items-start justify-between">
                 <div>
-                  <span className="font-mono text-sm text-slate-400">{selected.number}</span>
-                  {selected.partner_id && (
-                    <span className="ml-2 text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded">{selected.partner_name || "Партнёр"}</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
+                    {selected.partner_id && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
+                        <Briefcase size={10} /> {selected.partner_name || "Партнёр"}
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(selected.client_address + (selected.city ? ", " + selected.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a>
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{selected.client_phone}</a>
+                  </p>
+                  {selected.extra_name && (
+                    <div className="mt-2 p-2 rounded-lg bg-accent/50">
+                      <p className="text-xs text-muted-foreground">Доп. контакт</p>
+                      <p className="text-sm font-medium">{selected.extra_name}</p>
+                      {selected.extra_phone && <p className="text-xs text-muted-foreground">{selected.extra_phone}</p>}
+                    </div>
                   )}
                 </div>
-                <button onClick={() => setSelected(null)} className="p-1 hover:bg-slate-100 rounded">
-                  <X className="w-5 h-5 text-slate-400" />
-                </button>
+                <button onClick={() => setSelected(null)} className="p-1 hover:bg-accent rounded"><X size={18} /></button>
               </div>
 
-              <h3 className="text-lg font-semibold text-slate-900">{selected.client_name}</h3>
-
-              <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                <MapPin className="w-4 h-4" />
-                <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(selected.client_address)}`} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">{selected.client_address}</a>
-              </div>
-
-              <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                <Phone className="w-4 h-4" />
-                <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`}>{selected.client_phone}</a>
-              </div>
-
-              {selected.extra_name && (
-                <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                  <div className="text-xs text-slate-400 mb-1">Доп. контакт</div>
-                  <div className="text-sm text-slate-800">{selected.extra_name}</div>
-                  {selected.extra_phone && <div className="text-sm text-slate-500">{selected.extra_phone}</div>}
-                </div>
-              )}
-
+              {/* Notes from admin/manager */}
               {selected.notes && (
-                <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
-                  <div className="text-xs font-medium text-amber-700 mb-1">Заметки</div>
-                  <div className="text-sm text-amber-800">{selected.notes}</div>
+                <div className="p-4 rounded-xl bg-accent/30 border border-border">
+                  <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Заметки</p>
+                  <p className="text-sm leading-relaxed">{selected.notes}</p>
                 </div>
               )}
 
+              {/* Work description */}
               {selected.work_description && (
-                <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                  <div className="text-xs font-medium text-slate-500 mb-1">Описание работ</div>
-                  <div className="text-sm text-slate-700">{selected.work_description}</div>
+                <div className="p-4 rounded-xl bg-accent/30 border border-border">
+                  <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Описание работ</p>
+                  <p className="text-sm leading-relaxed">{selected.work_description}</p>
                 </div>
               )}
 
-              {/* Date confirmation */}
               {!dateConfirmed && (
-                <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 space-y-2">
-                  <div className="text-sm font-medium text-amber-800">Выберите дату замера</div>
-                  <p className="text-xs text-amber-600">Укажите дату, которую согласовали с клиентом.</p>
-                  <div className="flex gap-2">
-                    <input
-                      type="date"
-                      value={agreedDate}
-                      onChange={(e) => setAgreedDate(e.target.value)}
+                <div className="border border-amber-300 bg-amber-50 rounded-lg p-4 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-800">Выберите дату замера</p>
+                      <p className="text-xs text-amber-700">Укажите дату, которую согласовали с клиентом.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)}
                       min={new Date().toISOString().split("T")[0]}
-                      className="flex-1 px-3 py-2 rounded-lg border border-amber-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <button onClick={handleConfirmDate} className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700">Подтвердить</button>
+                      className="flex-1 px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <button onClick={handleConfirmDate} disabled={!agreedDate}
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40">
+                      Подтвердить
+                    </button>
                   </div>
                 </div>
               )}
 
               {dateConfirmed && (
                 <>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50 border border-emerald-200">
-                    <div className="flex items-center gap-2 text-sm text-emerald-700">
-                      <Calendar className="w-4 h-4" />
-                      Согласованная дата: {agreedDate}
+                  <div className="flex items-center justify-between px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
+                    <div className="flex items-center gap-2">
+                      <Calendar size={14} className="text-primary" />
+                      <span className="text-sm font-medium text-primary">Согласованная дата: {agreedDate}</span>
                     </div>
                     {selected.status !== "measurement_done" && selected.status !== "closed" && (
                       <button
                         onClick={() => setRescheduleOpen(!rescheduleOpen)}
-                        className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-700 hover:border-blue-400/40 transition-colors"
+                        className="text-xs px-3 py-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
                       >
                         {rescheduleOpen ? "Отменить" : "Перенести дату"}
                       </button>
@@ -243,17 +268,18 @@ const MeasurerDashboard = () => {
                   </div>
 
                   {rescheduleOpen && (
-                    <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 space-y-2">
-                      <div className="text-sm font-medium text-amber-800">Перенос даты замера</div>
-                      <p className="text-xs text-amber-600">Укажите новую дату.</p>
-                      <div className="flex gap-2">
-                        <input
-                          type="date"
-                          value={agreedDate}
-                          onChange={(e) => setAgreedDate(e.target.value)}
+                    <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-amber-800">Перенос даты замера</p>
+                          <p className="text-xs text-amber-700">Укажите новую дату.</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)}
                           min={new Date().toISOString().split("T")[0]}
-                          className="flex-1 px-3 py-2 rounded-lg border border-amber-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                        />
+                          className="flex-1 px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
                         <button
                           onClick={async () => {
                             if (!agreedDate || !selected) return;
@@ -261,12 +287,12 @@ const MeasurerDashboard = () => {
                               const updated = await updateRequest(selected.id, { agreed_date: agreedDate, status: "date_agreed" as any });
                               setDateConfirmed(true);
                               setRescheduleOpen(false);
-                              setSelected(updated as ApiRequest);
+                              setSelected(updated);
                               toast.success("Дата перенесена");
                             } catch {}
                           }}
                           disabled={!agreedDate || agreedDate === selected.agreed_date?.split("T")[0]}
-                          className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-40"
+                          className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40"
                         >
                           Подтвердить
                         </button>
@@ -274,61 +300,58 @@ const MeasurerDashboard = () => {
                     </div>
                   )}
 
-                  {/* Measurement data */}
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-semibold text-slate-700">Данные замера</h4>
+                  <div className="border-t border-border pt-4">
+                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><FileText size={16} /> Данные замера</h3>
                     <div>
-                      <label className="text-xs text-slate-500 mb-1 block">Заметки по замеру *</label>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Заметки по замеру <span className="text-destructive">*</span></label>
                       <textarea
                         value={measurementNotes}
                         onChange={(e) => setMeasurementNotes(e.target.value)}
-                        placeholder="Размеры проёмов, особенности, рекомендации..."
-                        className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[80px]"
+                        rows={5}
+                        placeholder="Опишите результаты замера: количество проёмов, размеры, материал стен, особенности объекта..."
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                       />
-                    </div>
-
-                    <div>
-                      <label className="text-xs text-slate-500 mb-1 block">Фото замера *</label>
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {uploadedFiles.map((url, i) => (
-                          <div key={i} className="relative group">
-                            <div className="w-16 h-16 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
-                              <Camera className="w-6 h-6" />
-                            </div>
-                            <button
-                              onClick={() => handleRemoveFile(i)}
-                              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                      <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed border-slate-300 text-sm text-slate-500 hover:border-blue-400 hover:text-blue-600 cursor-pointer transition-colors">
-                        <Upload className="w-4 h-4" />
-                        {uploading ? "Загрузка..." : "Загрузить фото"}
-                        <input type="file" multiple accept="image/*" onChange={handleFileUpload} className="hidden" disabled={uploading} />
-                      </label>
                     </div>
                   </div>
 
-                  <button
-                    onClick={handleComplete}
-                    disabled={!canComplete}
-                    className="w-full py-3 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle2 className="w-4 h-4" /> Замер завершён
-                  </button>
+                  <div className="border-t border-border pt-4">
+                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                      <Camera size={16} /> Фото проёмов <span className="text-destructive text-xs">*</span>
+                    </h3>
+                    {uploadedFiles.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {uploadedFiles.map((f, i) => (
+                          <span key={i} className="flex items-center gap-1 px-3 py-1.5 bg-accent rounded-lg text-xs">
+                            📎 {f.split("/").pop()}
+                            <button onClick={() => handleRemoveFile(i)} className="text-muted-foreground hover:text-destructive"><X size={12} /></button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <label className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
+                      {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                      {uploading ? "Загрузка..." : "Загрузить файл"}
+                      <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*,video/*,.pdf" />
+                    </label>
+                  </div>
 
                   {!canComplete && (
-                    <div className="flex items-start gap-2 text-xs text-amber-600">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                      <span>Для завершения нужно: согласовать дату, заполнить заметки и загрузить фото</span>
-                    </div>
+                    <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+                      ⚠ Заполните все обязательные поля и загрузите хотя бы одно фото
+                    </p>
                   )}
+
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button onClick={() => setSelected(null)} className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">Отмена</button>
+                    <button onClick={handleComplete} disabled={!canComplete}
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 flex items-center gap-2">
+                      <CheckCircle2 size={16} /> Замер выполнен
+                    </button>
+                  </div>
                 </>
               )}
-            </div>
+            </CardContent>
+          </Card>
           </>
         )}
       </div>

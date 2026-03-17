@@ -2,116 +2,329 @@ import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import api from "@/lib/api";
 import { toast } from "sonner";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import {
+  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Eye, Handshake, Loader2 } from "lucide-react";
-import api from "@/lib/api";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Loader2, Trash2, Eye, Handshake, UserPlus, ChevronRight } from "lucide-react";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 
-interface PF { id: number; name: string; store_name: string; store_address: string; phone: string; email: string; status: string; notes: string | null; created_at: string; }
-const sL: Record<string, string> = { new: "Новая", in_progress: "В работе", done: "Завершена", rejected: "Отклонена" };
-const sC: Record<string, string> = { new: "bg-blue-100 text-blue-700", in_progress: "bg-yellow-100 text-yellow-700", done: "bg-green-100 text-green-700", rejected: "bg-red-100 text-red-700" };
+interface PartnerForm {
+  id: number;
+  name: string;
+  store_name: string;
+  store_address: string;
+  phone: string;
+  email: string;
+  status: string;
+  notes: string | null;
+  created_at: string;
+}
+
+const statusLabels: Record<string, string> = {
+  new: "Новая",
+  in_progress: "В работе",
+  done: "Завершена",
+  rejected: "Отклонена",
+};
+
+const statusColors: Record<string, string> = {
+  new: "bg-blue-100 text-blue-700",
+  in_progress: "bg-yellow-100 text-yellow-700",
+  done: "bg-green-100 text-green-700",
+  rejected: "bg-red-100 text-red-700",
+};
 
 const AdminPartners = () => {
   const isMobile = useIsMobile();
   const { user } = useAuth();
-  const [forms, setForms] = useState<PF[]>([]);
+  const [forms, setForms] = useState<PartnerForm[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<PF | null>(null);
+  const [selected, setSelected] = useState<PartnerForm | null>(null);
   const [editNotes, setEditNotes] = useState("");
   const [editStatus, setEditStatus] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [approveResult, setApproveResult] = useState<{ pin: string; name: string } | null>(null);
 
-  useEffect(() => {
-    api("/api/partner-forms", { auth: true })
-      .then((data: any) => setForms(Array.isArray(data) ? data : data.data || []))
-      .catch((err: any) => toast.error(err.message || "Ошибка загрузки"))
-      .finally(() => setLoading(false));
-  }, []);
+  const fetchForms = async () => {
+    try {
+      const data = await api<PartnerForm[]>("/api/partner-forms", { auth: true });
+      setForms(data);
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка загрузки");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleOpen = (f: PF) => { setSelected(f); setEditNotes(f.notes || ""); setEditStatus(f.status); };
+  useEffect(() => { fetchForms(); }, []);
+
+  const handleOpen = (form: PartnerForm) => {
+    setSelected(form);
+    setEditNotes(form.notes || "");
+    setEditStatus(form.status);
+    setApproveResult(null);
+  };
 
   const handleSave = async () => {
     if (!selected) return;
+    setSaving(true);
     try {
-      if (editStatus === "done" && selected.status !== "done") {
-        await api(`/api/partner-forms/${selected.id}/approve`, { method: "POST", body: { notes: editNotes }, auth: true });
-      }
-      // For other status changes, we update locally (backend may not have a generic update endpoint)
-      setForms(p => p.map(f => f.id === selected.id ? { ...f, status: editStatus, notes: editNotes } : f));
+      await api(`/api/partner-forms/${selected.id}`, {
+        method: "PATCH",
+        auth: true,
+        body: { status: editStatus, notes: editNotes },
+      });
       toast.success("Сохранено");
       setSelected(null);
+      fetchForms();
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleApprove = async () => {
+    if (!selected) return;
+    setApproving(true);
+    try {
+      const result = await api<{ success: boolean; pin: string; message: string }>(`/api/partner-forms/${selected.id}/approve`, {
+        method: "POST",
+        auth: true,
+      });
+      setApproveResult({ pin: result.pin, name: selected.name });
+      setEditStatus("done");
+      toast.success(result.message);
+      fetchForms();
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка создания аккаунта");
+    } finally {
+      setApproving(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Удалить заявку?")) return;
+    try {
+      await api(`/api/partner-forms/${id}`, { method: "DELETE", auth: true });
+      toast.success("Удалено");
+      setForms((prev) => prev.filter((f) => f.id !== id));
     } catch (err: any) {
       toast.error(err.message || "Ошибка");
     }
   };
 
-  const handleDelete = async (id: number) => {
-    try {
-      await api(`/api/partner-forms/${id}`, { method: "DELETE", auth: true });
-      setForms(p => p.filter(f => f.id !== id));
-      toast.success("Удалено");
-    } catch (err: any) {
-      toast.error(err.message || "Ошибка удаления");
-    }
-  };
-
-  if (loading) {
-    return (
-      <DashboardLayout role="admin" userName={user?.name}>
-        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>
-      </DashboardLayout>
-    );
-  }
-
   return (
     <DashboardLayout role="admin" userName={user?.name}>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between"><h1 className="text-2xl font-semibold text-slate-900">Заявки на партнёрство</h1><Badge variant="secondary">{forms.length}</Badge></div>
-        {forms.length === 0 ? <div className="py-16 text-center"><Handshake className="w-12 h-12 text-slate-300 mx-auto mb-4" /><p className="text-slate-500 text-sm">Заявок пока нет</p></div> : isMobile ? (
-          <div className="space-y-2">{forms.map(f => (
-            <div key={f.id} onClick={() => handleOpen(f)} className="bg-white rounded-xl border border-slate-200/50 p-3.5 cursor-pointer">
-              <div className="flex items-center justify-between mb-1"><span className="text-sm font-medium text-slate-800">{f.name}</span><span className={`text-xs px-2 py-0.5 rounded-full ${sC[f.status]}`}>{sL[f.status]}</span></div>
-              <div className="text-xs text-slate-500">{f.store_name}</div>
-              <div className="flex items-center justify-between mt-2"><a href={`tel:${f.phone}`} onClick={e => e.stopPropagation()} className="text-xs text-blue-600">{f.phone}</a><button onClick={e => { e.stopPropagation(); handleDelete(f.id); }} className="p-1.5 text-slate-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button></div>
-            </div>
-          ))}</div>
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <Handshake size={24} className="text-primary" />
+          <h1 className="text-2xl font-bold">Заявки на партнёрство</h1>
+          <Badge variant="secondary" className="ml-2">{forms.length}</Badge>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="animate-spin text-muted-foreground" size={32} />
+          </div>
+        ) : forms.length === 0 ? (
+          <div className="text-center py-20 text-muted-foreground">
+            Заявок пока нет
+          </div>
         ) : (
-          <Table><TableHeader><TableRow><TableHead>Дата</TableHead><TableHead>ФИО</TableHead><TableHead>Магазин</TableHead><TableHead>Телефон</TableHead><TableHead>Email</TableHead><TableHead>Статус</TableHead><TableHead>Действия</TableHead></TableRow></TableHeader>
-            <TableBody>{forms.map(f => (
-              <TableRow key={f.id}><TableCell className="text-xs">{new Date(f.created_at).toLocaleDateString("ru-RU")}</TableCell><TableCell className="font-medium">{f.name}</TableCell><TableCell>{f.store_name}</TableCell><TableCell><a href={`tel:${f.phone}`} className="text-blue-600">{f.phone}</a></TableCell><TableCell><a href={`mailto:${f.email}`} className="text-blue-600">{f.email}</a></TableCell><TableCell><span className={`text-xs px-2 py-0.5 rounded-full ${sC[f.status]}`}>{sL[f.status]}</span></TableCell>
-                <TableCell><div className="flex gap-1"><Button variant="ghost" size="sm" onClick={() => handleOpen(f)}><Eye className="w-4 h-4" /></Button><Button variant="ghost" size="sm" onClick={() => handleDelete(f.id)} className="text-red-600"><Trash2 className="w-4 h-4" /></Button></div></TableCell></TableRow>
-            ))}</TableBody></Table>
+          isMobile ? (
+            <div className="space-y-2">
+              {forms.map((form) => (
+                <div
+                  key={form.id}
+                  onClick={() => handleOpen(form)}
+                  className="bg-card rounded-xl border border-border/50 p-3.5 active:scale-[0.98] transition-transform cursor-pointer"
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-medium text-sm">{form.name}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${statusColors[form.status] || "bg-muted text-muted-foreground"}`}>
+                      {statusLabels[form.status] || form.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{form.store_name}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <a href={`tel:${form.phone}`} className="text-xs text-primary" onClick={(e) => e.stopPropagation()}>{form.phone}</a>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground">{format(new Date(form.created_at), "dd.MM.yy", { locale: ru })}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(form.id); }}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Дата</TableHead>
+                    <TableHead>ФИО</TableHead>
+                    <TableHead>Магазин</TableHead>
+                    <TableHead>Телефон</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Статус</TableHead>
+                    <TableHead className="w-[100px]">Действия</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {forms.map((form) => (
+                    <TableRow key={form.id}>
+                      <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                        {format(new Date(form.created_at), "dd.MM.yyyy HH:mm", { locale: ru })}
+                      </TableCell>
+                      <TableCell className="font-medium">{form.name}</TableCell>
+                      <TableCell>{form.store_name}</TableCell>
+                      <TableCell>
+                        <a href={`tel:${form.phone}`} className="text-primary hover:underline">
+                          {form.phone}
+                        </a>
+                      </TableCell>
+                      <TableCell>
+                        <a href={`mailto:${form.email}`} className="text-primary hover:underline text-sm">
+                          {form.email}
+                        </a>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[form.status] || "bg-muted text-muted-foreground"}`}>
+                          {statusLabels[form.status] || form.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleOpen(form)}>
+                            <Eye size={16} />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(form.id)} className="text-destructive hover:text-destructive">
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )
         )}
       </div>
-      <Dialog open={!!selected} onOpenChange={o => !o && setSelected(null)}>
-        <DialogContent className="max-w-md"><DialogHeader><DialogTitle>Заявка на партнёрство</DialogTitle></DialogHeader>
-          {selected && (<div className="space-y-4 mt-2">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><div className="text-xs text-slate-500">ФИО</div><div className="font-medium">{selected.name}</div></div>
-              <div><div className="text-xs text-slate-500">Магазин</div><div className="font-medium">{selected.store_name}</div></div>
-              <div><div className="text-xs text-slate-500">Телефон</div><a href={`tel:${selected.phone}`} className="font-medium text-blue-600">{selected.phone}</a></div>
-              <div><div className="text-xs text-slate-500">Email</div><a href={`mailto:${selected.email}`} className="font-medium text-blue-600">{selected.email}</a></div>
+
+      {/* Detail Modal */}
+      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+        <DialogContent className="max-w-lg [&]:bg-white [&]:text-gray-900 [&]:border-gray-200 [&_*]:!text-gray-900 [&_a]:!text-blue-600 [&_.text-muted-foreground]:!text-gray-500 [&_button]:!text-gray-900 [&_[data-radix-select-viewport]]:!bg-white [&_[role=option]]:!text-gray-900 [&_[role=option][data-highlighted]]:!bg-gray-100 [&_textarea]:!bg-white [&_textarea]:!border-gray-300 [&_button[role=combobox]]:!bg-white [&_button[role=combobox]]:!border-gray-300">
+          <DialogHeader>
+            <DialogTitle>Заявка на партнёрство</DialogTitle>
+          </DialogHeader>
+          {selected && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-muted-foreground">ФИО</span>
+                  <p className="font-medium">{selected.name}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Магазин</span>
+                  <p className="font-medium">{selected.store_name}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Адрес</span>
+                  <p className="font-medium">{selected.store_address}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Телефон</span>
+                  <p className="font-medium">
+                    <a href={`tel:${selected.phone}`} className="text-primary hover:underline">{selected.phone}</a>
+                  </p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Email</span>
+                  <p className="font-medium">
+                    <a href={`mailto:${selected.email}`} className="text-primary hover:underline">{selected.email}</a>
+                  </p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Дата</span>
+                  <p className="font-medium">{format(new Date(selected.created_at), "dd.MM.yyyy HH:mm", { locale: ru })}</p>
+                </div>
+              </div>
+
+              {approveResult && (
+                <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+                  <p className="text-sm font-medium text-green-800 mb-1">✅ Аккаунт партнёра создан!</p>
+                  <p className="text-sm text-green-700">Имя: <strong>{approveResult.name}</strong></p>
+                  <p className="text-sm text-green-700">ПИН-код: <strong className="text-lg">{approveResult.pin}</strong></p>
+                  <p className="text-xs text-green-600 mt-2">Сообщите ПИН-код партнёру для входа в систему</p>
+                </div>
+              )}
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Статус</label>
+                <Select value={editStatus} onValueChange={setEditStatus}>
+                  <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-gray-200 text-gray-900 [&_[role=option]]:text-gray-900 [&_[role=option][data-highlighted]]:bg-gray-100 [&_[role=option][data-highlighted]]:text-gray-900">
+                    <SelectItem value="new">Новая</SelectItem>
+                    <SelectItem value="in_progress">В работе</SelectItem>
+                    <SelectItem value="done">Завершена</SelectItem>
+                    <SelectItem value="rejected">Отклонена</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Заметки</label>
+                <Textarea
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  placeholder="Добавить заметку..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-between gap-2 pt-2">
+                {editStatus !== "done" && !approveResult && (
+                  <Button variant="outline" onClick={handleApprove} disabled={approving} className="flex items-center gap-2 !border-gray-300 !text-gray-900 !bg-white hover:!bg-gray-50">
+                    {approving ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+                    Одобрить и создать аккаунт
+                  </Button>
+                )}
+                <div className="flex gap-2 ml-auto">
+                  <Button variant="outline" onClick={() => setSelected(null)} className="!border-gray-300 !text-gray-900 !bg-white hover:!bg-gray-50">Отмена</Button>
+                  <Button onClick={handleSave} disabled={saving} className="!bg-blue-600 !text-white hover:!bg-blue-700 !border-blue-600">
+                    {saving && <Loader2 size={16} className="animate-spin mr-2" />}
+                    Сохранить
+                  </Button>
+                </div>
+              </div>
             </div>
-            <div><div className="text-xs text-slate-500 mb-1">Статус</div><Select value={editStatus} onValueChange={setEditStatus}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="new">Новая</SelectItem><SelectItem value="in_progress">В работе</SelectItem><SelectItem value="done">Завершена</SelectItem><SelectItem value="rejected">Отклонена</SelectItem></SelectContent></Select></div>
-            <div><div className="text-xs text-slate-500 mb-1">Заметки</div><Textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={3} /></div>
-            <div className="flex gap-2"><Button onClick={handleSave} className="flex-1">Сохранить</Button>{editStatus !== "done" && <Button variant="outline" onClick={async () => {
-              try {
-                await api(`/api/partner-forms/${selected.id}/approve`, { method: "POST", body: { notes: editNotes }, auth: true });
-                setForms(p => p.map(f => f.id === selected.id ? { ...f, status: "done" } : f));
-                setEditStatus("done");
-                toast.success("Аккаунт партнёра создан!");
-              } catch (err: any) {
-                toast.error(err.message || "Ошибка");
-              }
-            }} className="flex-1"><Handshake className="w-4 h-4 mr-2" />Создать аккаунт</Button>}</div>
-          </div>)}
+          )}
         </DialogContent>
       </Dialog>
     </DashboardLayout>
   );
 };
+
 export default AdminPartners;
