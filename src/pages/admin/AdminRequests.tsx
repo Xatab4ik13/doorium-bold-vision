@@ -117,7 +117,13 @@ const AdminRequests = () => {
           </div>
         </div>
 
-        <RequestFilters filters={filters} onChange={(f) => { setFilters(f); setPage(1); }} users={demoUsers} />
+        <RequestFilters
+          filters={filters}
+          onChange={(f) => { setFilters(f); setPage(1); }}
+          users={demoUsers}
+          onExport={handleExport}
+          resultCount={filtered.length}
+        />
 
         <Card className="bg-white border-slate-200 overflow-hidden">
           {isMobile ? (

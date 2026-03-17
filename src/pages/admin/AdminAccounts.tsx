@@ -75,7 +75,7 @@ const AdminAccounts = () => {
         </Card>
       </div>
       {showCreate && <CreateAccountModal onClose={() => setShowCreate(false)} onSave={async (d) => { setUsers(p => [{ id: `u${Date.now()}`, ...d, active: true, created_at: new Date().toISOString() }, ...p]); toast.success(`Аккаунт "${d.name}" создан`); }} />}
-      {deleteTarget && <DeleteConfirmModal title="Удалить аккаунт?" message={`Удалить "${deleteTarget.name}"?`} onClose={() => setDeleteTarget(null)} onConfirm={() => { setUsers(p => p.filter(u => u.id !== deleteTarget.id)); toast.success("Удалён"); setDeleteTarget(null); }} />}
+      {deleteTarget && <DeleteConfirmModal title="Удалить аккаунт?" description={`Удалить "${deleteTarget.name}"?`} onClose={() => setDeleteTarget(null)} onConfirm={() => { setUsers(p => p.filter(u => u.id !== deleteTarget.id)); toast.success("Удалён"); setDeleteTarget(null); }} />}
       {detailTarget && <AccountDetailModal user={detailTarget} onClose={() => setDetailTarget(null)} onSave={async (id, upd) => { setUsers(p => p.map(u => u.id === id ? { ...u, ...upd } : u)); toast.success("Обновлён"); }} />}
     </DashboardLayout>
   );
