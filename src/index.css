@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -105,7 +107,7 @@
     --ring: 34 24% 48%;
   }
 
-  /* Light corporate theme for CRM dashboard panels (matches PrimeDoor) */
+  /* Light corporate theme for CRM dashboard panels (matches PrimeDoor 1:1) */
   .dashboard-theme {
     --background: 220 25% 97%;
     --foreground: 222 47% 11%;
@@ -151,10 +153,14 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-family: 'Raleway', sans-serif;
     font-weight: 300;
     font-synthesis-weight: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
   }
 
   /* Grain texture overlay */
@@ -178,22 +184,30 @@
   }
 }
 
-/* Dashboard CRM overrides — normal sans-serif headings */
+/* ═══════════════════════════════════════════════════
+   CRM Dashboard theme overrides — Inter + Space Grotesk
+   Matches PrimeDoor 1:1
+   ═══════════════════════════════════════════════════ */
+.dashboard-theme,
+.dashboard-theme body {
+  font-family: 'Inter', sans-serif;
+}
+
 .dashboard-theme h1,
 .dashboard-theme h2,
 .dashboard-theme h3,
 .dashboard-theme h4,
 .dashboard-theme h5,
 .dashboard-theme h6 {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'Space Grotesk', sans-serif;
   text-transform: none;
   letter-spacing: normal;
   font-weight: 600;
 }
 
-.dashboard-theme body,
-.dashboard-theme {
-  font-family: 'Raleway', sans-serif;
+.dashboard-theme ::selection {
+  background: hsl(221 83% 53% / 0.2);
+  color: hsl(222 47% 11%);
 }
 
 /* iOS safe area support for CRM */
@@ -202,3 +216,270 @@
     padding-top: env(safe-area-inset-top);
   }
 }
+
+/* Smooth scroll for iOS */
+.overflow-auto, .overflow-y-auto, .overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* iOS-style active states */
+@media (max-width: 767px) {
+  .dashboard-theme button,
+  .dashboard-theme a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* iOS scroll momentum */
+.-webkit-overflow-scrolling-touch {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ═══════════════════════════════════════════════════
+   Component utility classes (used by Login, site pages)
+   ═══════════════════════════════════════════════════ */
+.nav-link {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: hsl(0 0% 50%);
+  transition: color 0.5s;
+}
+.nav-link:hover {
+  color: hsl(0 0% 100%);
+}
+
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: hsl(0 0% 50%);
+}
+
+.body-text {
+  font-size: 0.875rem;
+  color: hsl(0 0% 50%);
+  line-height: 1.7;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2rem;
+  background: hsl(0 0% 100%);
+  color: hsl(0 0% 0%);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  transition: all 0.5s;
+}
+.btn-primary:hover {
+  background: hsl(0 0% 70%);
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2rem;
+  border: 1px solid hsl(0 0% 15%);
+  color: hsl(0 0% 100%);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  transition: all 0.5s;
+}
+.btn-outline:hover {
+  background: hsl(0 0% 100%);
+  color: hsl(0 0% 0%);
+}
+
+.heading-xl {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+@media (min-width: 768px) {
+  .heading-xl { font-size: 4.5rem; }
+}
+@media (min-width: 1024px) {
+  .heading-xl { font-size: 6rem; }
+}
+
+.heading-lg {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+@media (min-width: 768px) {
+  .heading-lg { font-size: 3.5rem; }
+}
+
+.heading-md {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+@media (min-width: 768px) {
+  .heading-md { font-size: 2.25rem; }
+}
+
+.stat-number {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+}
+@media (min-width: 768px) {
+  .stat-number { font-size: 4.5rem; }
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: hsl(0 0% 50%);
+  margin-top: 0.75rem;
+}
+
+/* Overlay menu */
+.overlay-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: hsl(0 0% 0%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay-menu-link {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: hsl(0 0% 100%);
+  padding: 0.75rem 0;
+  transition: color 0.3s;
+}
+.overlay-menu-link:hover {
+  color: hsl(0 0% 50%);
+}
+@media (min-width: 768px) {
+  .overlay-menu-link {
+    font-size: 3.5rem;
+  }
+}
+
+/* Project/portfolio cards */
+.project-card {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+.project-card:hover .project-card-image {
+  transform: scale(1.05);
+}
+.project-card:hover .project-card-overlay {
+  background: rgba(0,0,0,0.1);
+}
+
+.project-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  transition: background 0.7s;
+}
+
+.project-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background: hsl(0 0% 15%);
+}
+
+/* Works gallery — accordion hover */
+.works-container {
+  position: relative;
+  display: flex;
+  gap: 0.75em;
+  width: 1100px;
+  height: 500px;
+}
+
+.works-container:hover .works-box {
+  filter: grayscale(100%) opacity(24%);
+  flex: 1;
+}
+
+.works-box {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  background: var(--img) center center;
+  background-size: cover;
+  border-radius: 1rem;
+  transition: flex 1.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+              filter 1.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.works-container .works-box:hover {
+  flex: 4;
+  filter: grayscale(0%) opacity(100%);
+}
+
+.works-box:nth-child(odd) {
+  transform: translateY(-16px);
+}
+.works-box:nth-child(even) {
+  transform: translateY(16px);
+}
+
+@media (max-width: 768px) {
+  .works-container {
+    width: 100%;
+    height: 300px;
+    gap: 0.4em;
+  }
+  .works-box {
+    border-radius: 0.5rem;
+  }
+  .works-box:nth-child(odd) {
+    transform: translateY(-8px);
+  }
+  .works-box:nth-child(even) {
+    transform: translateY(8px);
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: hsl(0 0% 0%); }
+::-webkit-scrollbar-thumb { background: hsl(0 0% 25%); }
+::-webkit-scrollbar-thumb:hover { background: hsl(0 0% 50%); }
+
+::selection {
+  background: rgba(255,255,255,0.15);
+  color: white;
+}
+
+html { scroll-behavior: smooth; }
