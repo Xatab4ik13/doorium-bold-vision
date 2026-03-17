@@ -1,31 +1,34 @@
 import { MapPin } from "lucide-react";
 
-export type CityFilter = string;
+export type CityFilter = "Москва" | "Санкт-Петербург";
 
-interface Props {
+interface CityToggleProps {
   value: CityFilter;
   onChange: (city: CityFilter) => void;
 }
 
-const cities = ["Москва", "СПб"];
+const cities: { label: string; value: CityFilter }[] = [
+  { label: "Москва", value: "Москва" },
+  { label: "Санкт-Петербург", value: "Санкт-Петербург" },
+];
 
-const CityToggle = ({ value, onChange }: Props) => {
-  return (
-    <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
-      {cities.map((city) => (
-        <button
-          key={city}
-          onClick={() => onChange(city)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            value === city ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
-          }`}
-        >
-          <MapPin className="w-3.5 h-3.5" />
-          {city}
-        </button>
-      ))}
-    </div>
-  );
-};
+const CityToggle = ({ value, onChange }: CityToggleProps) => (
+  <div className="flex items-center gap-1.5 bg-card rounded-xl border border-border/50 p-1">
+    {cities.map((c) => (
+      <button
+        key={c.value}
+        onClick={() => onChange(c.value)}
+        className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+          value === c.value
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground hover:bg-accent"
+        }`}
+      >
+        <MapPin size={14} />
+        {c.label}
+      </button>
+    ))}
+  </div>
+);
 
 export default CityToggle;

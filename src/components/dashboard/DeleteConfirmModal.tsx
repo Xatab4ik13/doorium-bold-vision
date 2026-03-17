@@ -1,40 +1,34 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertTriangle } from "lucide-react";
+import { X, AlertTriangle } from "lucide-react";
 
-interface Props {
+interface DeleteConfirmModalProps {
   title: string;
-  message: string;
+  description: string;
   onClose: () => void;
   onConfirm: () => void;
 }
 
-const DeleteConfirmModal = ({ title, message, onClose, onConfirm }: Props) => {
+const DeleteConfirmModal = ({ title, description, onClose, onConfirm }: DeleteConfirmModalProps) => {
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-red-600">
-            <AlertTriangle className="w-5 h-5" />
-            {title}
-          </DialogTitle>
-        </DialogHeader>
-        <p className="text-sm text-slate-600 mt-2">{message}</p>
-        <div className="flex gap-3 mt-4">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-          >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative bg-card rounded-xl shadow-2xl w-full max-w-sm">
+        <div className="p-6 text-center">
+          <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle size={24} className="text-destructive" />
+          </div>
+          <h3 className="text-lg font-heading font-bold mb-2">{title}</h3>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+        <div className="flex gap-3 p-6 pt-0">
+          <button onClick={onClose} className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">
             Отмена
           </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors"
-          >
+          <button onClick={onConfirm} className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors">
             Удалить
           </button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
 

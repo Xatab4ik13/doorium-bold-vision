@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Search, Filter, X } from "lucide-react";
-import type { RequestStatus, RequestType } from "@/data/mockDashboard";
+import { Search, Filter, X, Download, Calendar, Users, ChevronDown } from "lucide-react";
+import { statusLabels, requestTypeLabels, type RequestStatus } from "@/data/mockDashboard";
+import { type ApiUser } from "@/hooks/useRequests";
+import { motion, AnimatePresence } from "framer-motion";
 
 export interface FilterState {
   search: string;
@@ -12,14 +14,14 @@ export interface FilterState {
   partnerId: string;
   dateFrom: string;
   dateTo: string;
-  dateField: string;
+  dateField: "created_at" | "closed_at";
 }
 
 export const defaultFilters: FilterState = {
   search: "",
   status: "all",
   type: "all",
-  city: "all",
+  city: "Москва",
   measurerId: "all",
   installerId: "all",
   partnerId: "all",
@@ -28,104 +30,164 @@ export const defaultFilters: FilterState = {
   dateField: "created_at",
 };
 
-interface Props {
+interface RequestFiltersProps {
   filters: FilterState;
   onChange: (filters: FilterState) => void;
-  users?: { id: string; name: string; role: string }[];
+  users: ApiUser[];
+  onExport: (format: "csv" | "xlsx") => void;
+  resultCount: number;
 }
 
-const RequestFilters = ({ filters, onChange, users = [] }: Props) => {
-  const [expanded, setExpanded] = useState(false);
+const RequestFilters = ({ filters, onChange, users, onExport, resultCount }: RequestFiltersProps) => {
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const update = (key: keyof FilterState, value: string) => {
-    onChange({ ...filters, [key]: value });
-  };
-
-  const measurers = users.filter(u => u.role === "measurer");
-  const installers = users.filter(u => u.role === "installer");
+  const measurers = users.filter(u => u.role === "measurer" && u.active);
+  const installers = users.filter(u => u.role === "installer" && u.active);
   const partners = users.filter(u => u.role === "partner");
 
-  const hasActiveFilters = filters.status !== "all" || filters.type !== "all" || filters.measurerId !== "all" || filters.installerId !== "all" || filters.partnerId !== "all" || filters.dateFrom || filters.dateTo;
+  const set = (key: keyof FilterState, value: string) => onChange({ ...filters, [key]: value });
+
+  const activeFilterCount = [
+    filters.status !== "all",
+    filters.type !== "all",
+    filters.measurerId !== "all",
+    filters.installerId !== "all",
+    filters.partnerId !== "all",
+    !!filters.dateFrom,
+    !!filters.dateTo,
+  ].filter(Boolean).length;
+
+  const resetFilters = () => onChange(defaultFilters);
+
+  const selectClass = "px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 hover:border-primary/40 transition-all appearance-none cursor-pointer";
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-2 items-center">
+      {/* Main search row */}
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Поиск по имени, номеру или адресу..."
+            autoComplete="off"
+            placeholder="Поиск по имени, номеру, адресу, телефону..."
             value={filters.search}
-            onChange={(e) => update("search", e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            onChange={(e) => set("search", e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 hover:border-primary/40 transition-all"
           />
+          {filters.search && (
+            <button onClick={() => set("search", "")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <X size={14} />
+            </button>
+          )}
         </div>
+
+        <select value={filters.type} onChange={(e) => set("type", e.target.value)} className={selectClass}>
+          <option value="all">Все типы</option>
+          {Object.entries(requestTypeLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+
+        <select value={filters.status} onChange={(e) => set("status", e.target.value)} className={selectClass}>
+          <option value="all">Все статусы</option>
+          {Object.entries(statusLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+
         <button
-          onClick={() => setExpanded(!expanded)}
-          className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-            hasActiveFilters ? "border-blue-300 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+            showAdvanced || activeFilterCount > 0
+              ? "bg-primary/10 border-primary/30 text-primary"
+              : "border-border text-muted-foreground hover:text-foreground hover:border-primary/40"
           }`}
         >
-          <Filter className="w-4 h-4" />
+          <Filter size={14} />
           Фильтры
-          {hasActiveFilters && (
-            <X className="w-3 h-3 ml-1 cursor-pointer" onClick={(e) => { e.stopPropagation(); onChange(defaultFilters); }} />
+          {activeFilterCount > 0 && (
+            <span className="bg-primary text-primary-foreground text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">
+              {activeFilterCount}
+            </span>
           )}
+          <ChevronDown size={14} className={`transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
         </button>
       </div>
 
-      {expanded && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-white rounded-lg border border-slate-200">
-          <div>
-            <label className="text-xs text-slate-500 mb-1 block">Статус</label>
-            <select value={filters.status} onChange={(e) => update("status", e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm">
-              <option value="all">Все</option>
-              <option value="new">Новые</option>
-              <option value="pending">В ожидании</option>
-              <option value="measurer_assigned">Замерщик назначен</option>
-              <option value="date_agreed">Дата согласована</option>
-              <option value="measurement_done">Замер выполнен</option>
-              <option value="closed">Закрыта</option>
-              <option value="cancelled">Отменена</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-xs text-slate-500 mb-1 block">Тип</label>
-            <select value={filters.type} onChange={(e) => update("type", e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm">
-              <option value="all">Все</option>
-              <option value="measurement">Замер</option>
-              <option value="installation">Монтаж</option>
-              <option value="reclamation">Рекламация</option>
-            </select>
-          </div>
-          {measurers.length > 0 && (
-            <div>
-              <label className="text-xs text-slate-500 mb-1 block">Замерщик</label>
-              <select value={filters.measurerId} onChange={(e) => update("measurerId", e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm">
-                <option value="all">Все</option>
-                {measurers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
+      {/* Advanced filters */}
+      <AnimatePresence>
+        {showAdvanced && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-4 rounded-xl bg-accent/50 border border-border">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Users size={11} /> Замерщик</label>
+                <select value={filters.measurerId} onChange={(e) => set("measurerId", e.target.value)} className={selectClass + " w-full"}>
+                  <option value="all">Все</option>
+                  {measurers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Users size={11} /> Монтажник</label>
+                <select value={filters.installerId} onChange={(e) => set("installerId", e.target.value)} className={selectClass + " w-full"}>
+                  <option value="all">Все</option>
+                  {installers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Users size={11} /> Партнёр</label>
+                <select value={filters.partnerId} onChange={(e) => set("partnerId", e.target.value)} className={selectClass + " w-full"}>
+                  <option value="all">Все</option>
+                  {partners.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Calendar size={11} /> Тип даты</label>
+                <select value={filters.dateField} onChange={(e) => set("dateField", e.target.value)} className={selectClass + " w-full"}>
+                  <option value="created_at">Дата создания</option>
+                  <option value="closed_at">Дата закрытия (только закрытые)</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Calendar size={11} /> От</label>
+                  <input type="date" value={filters.dateFrom} onChange={(e) => set("dateFrom", e.target.value)} className={selectClass + " w-full"} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Calendar size={11} /> До</label>
+                  <input type="date" value={filters.dateTo} onChange={(e) => set("dateTo", e.target.value)} className={selectClass + " w-full"} />
+                </div>
+              </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Results row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            Найдено: <span className="font-semibold text-foreground">{resultCount}</span>
+          </span>
+          {activeFilterCount > 0 && (
+            <button onClick={resetFilters} className="text-xs text-primary hover:underline flex items-center gap-1">
+              <X size={12} /> Сбросить
+            </button>
           )}
-          {installers.length > 0 && (
-            <div>
-              <label className="text-xs text-slate-500 mb-1 block">Монтажник</label>
-              <select value={filters.installerId} onChange={(e) => update("installerId", e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm">
-                <option value="all">Все</option>
-                {installers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
-            </div>
-          )}
-          <div>
-            <label className="text-xs text-slate-500 mb-1 block">Дата от</label>
-            <input type="date" value={filters.dateFrom} onChange={(e) => update("dateFrom", e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500 mb-1 block">Дата до</label>
-            <input type="date" value={filters.dateTo} onChange={(e) => update("dateTo", e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" />
-          </div>
         </div>
-      )}
+        <div className="flex items-center gap-2">
+          <button onClick={() => onExport("csv")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">
+            <Download size={12} /> CSV
+          </button>
+          <button onClick={() => onExport("xlsx")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+            <Download size={12} /> Excel
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
