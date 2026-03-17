@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { LogIn } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import dooriumLogo from "@/assets/doorium-logo-new.png";
@@ -124,6 +125,14 @@ const Header = () => {
               {item.label}
             </button>
           ))}
+          <div className="h-px bg-border/15 my-2" />
+          <button
+            onClick={() => handleNav("/login")}
+            className="font-display text-xl font-light tracking-[0.1em] text-doorium-platinum/70 hover:text-primary hover:pl-2 transition-all duration-200 uppercase py-3 text-left bg-transparent border-none cursor-pointer flex items-center gap-3"
+          >
+            <LogIn size={18} className="opacity-50" />
+            Кабинет
+          </button>
         </div>
 
         {/* Contact info */}
