@@ -83,7 +83,7 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
   // Mobile layout
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 dashboard-theme">
         {/* Mobile header */}
         <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
