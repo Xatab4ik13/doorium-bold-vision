@@ -87,7 +87,6 @@ const LoginPage = () => {
         method: "POST",
         body: { phone, pin: value },
       });
-      // Save device token for "remember device"
       if (data.device_token) {
         localStorage.setItem("crm_device_token", data.device_token);
         localStorage.setItem("crm_device_phone", phone);
@@ -122,53 +121,57 @@ const LoginPage = () => {
   };
 
   const inputClass =
-    "w-full bg-transparent border-b border-border py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors duration-500";
+    "w-full bg-transparent border-b-2 border-doorium-chamoisee/30 py-4 text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-doorium-chamoisee transition-colors duration-500";
 
   if (autoLogging) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-6 bg-background">
+      <main className="min-h-screen flex items-center justify-center px-6" style={{ background: "hsl(240 2% 90%)" }}>
         <div className="text-center space-y-4">
-          <Loader2 size={32} className="animate-spin mx-auto text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Выполняется вход...</p>
+          <Loader2 size={32} className="animate-spin mx-auto text-doorium-chamoisee" />
+          <p className="text-sm" style={{ color: "hsl(50 14% 8% / 0.6)" }}>Выполняется вход...</p>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 bg-background">
+    <main className="min-h-screen flex items-center justify-center px-6" style={{ background: "hsl(240 2% 90%)" }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         className="w-full max-w-md"
       >
-        <div className="text-center mb-12">
-          <Link to="/">
-            <img src={logo} alt="Doorium Service" className="h-52 w-auto mx-auto mb-8 brightness-0 invert" />
+        <div className="text-center mb-10">
+          <Link to={isCrm ? "/login" : "/"}>
+            <img src={logo} alt="Doorium Service" className="h-40 w-auto mx-auto mb-6" style={{ filter: "none" }} />
           </Link>
-          <h1 className="heading-md">Вход в кабинет</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-wide uppercase" style={{ fontFamily: "'Space Grotesk', sans-serif", color: "hsl(50 14% 8%)" }}>
+            Вход в кабинет
+          </h1>
         </div>
 
         {/* Mode tabs */}
-        <div className="flex gap-2 mb-8">
+        <div className="flex gap-3 mb-8">
           <button
             onClick={() => { setMode("pin"); setStep("phone"); setPin(""); }}
-            className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
               mode === "pin"
-                ? "bg-foreground text-background"
-                : "bg-accent text-muted-foreground hover:text-foreground"
+                ? "text-white shadow-lg"
+                : "text-doorium-chamoisee/60 hover:text-doorium-chamoisee"
             }`}
+            style={mode === "pin" ? { background: "hsl(34 24% 48%)" } : { background: "hsl(34 24% 48% / 0.1)" }}
           >
             <Phone size={16} /> По телефону
           </button>
           <button
             onClick={() => { setMode("admin"); setStep("phone"); }}
-            className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
               mode === "admin"
-                ? "bg-foreground text-background"
-                : "bg-accent text-muted-foreground hover:text-foreground"
+                ? "text-white shadow-lg"
+                : "text-doorium-chamoisee/60 hover:text-doorium-chamoisee"
             }`}
+            style={mode === "admin" ? { background: "hsl(34 24% 48%)" } : { background: "hsl(34 24% 48% / 0.1)" }}
           >
             <Shield size={16} /> Администратор
           </button>
@@ -187,8 +190,8 @@ const LoginPage = () => {
                 className="space-y-0"
               >
                 <div className="flex items-center gap-2 mb-4 px-1">
-                  <Phone size={14} className="text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">
+                  <Phone size={14} style={{ color: "hsl(34 24% 48%)" }} />
+                  <p className="text-sm" style={{ color: "hsl(50 14% 8% / 0.5)" }}>
                     Введите номер телефона, указанный при регистрации
                   </p>
                 </div>
@@ -201,16 +204,22 @@ const LoginPage = () => {
                   onChange={(e) => setPhone(formatPhone(e.target.value))}
                   className={inputClass}
                   autoFocus
+                  style={{ color: "hsl(50 14% 8%)" }}
                 />
-                <div className="pt-10">
-                  <button type="submit" className="btn-primary w-full">
+                <div className="pt-8">
+                  <button
+                    type="submit"
+                    className="w-full py-4 rounded-lg text-sm font-semibold uppercase tracking-[0.15em] transition-all"
+                    style={{ background: "hsl(34 24% 48%)", color: "white" }}
+                  >
                     Продолжить
                   </button>
                 </div>
-                <div className="pt-6">
+                <div className="pt-4">
                   <Link
                     to="/register"
-                    className="block w-full text-center py-3 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
+                    className="block w-full text-center py-3.5 rounded-lg text-sm font-semibold transition-colors"
+                    style={{ background: "hsl(34 24% 48% / 0.12)", color: "hsl(34 24% 48%)" }}
                   >
                     Нет аккаунта? Зарегистрироваться
                   </Link>
@@ -227,17 +236,18 @@ const LoginPage = () => {
               >
                 <button
                   onClick={() => { setStep("phone"); setPin(""); }}
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-1.5 text-xs transition-colors"
+                  style={{ color: "hsl(50 14% 8% / 0.5)" }}
                 >
                   <ArrowLeft size={14} /> Изменить номер
                 </button>
 
                 <div className="text-center space-y-2">
-                  <div className="w-14 h-14 rounded-full bg-accent flex items-center justify-center mx-auto">
-                    <Lock size={24} className="text-foreground" />
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto" style={{ background: "hsl(34 24% 48% / 0.1)" }}>
+                    <Lock size={24} style={{ color: "hsl(34 24% 48%)" }} />
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Введите ПИН-код для <span className="text-foreground font-medium">{phone}</span>
+                  <p className="text-sm" style={{ color: "hsl(50 14% 8% / 0.5)" }}>
+                    Введите ПИН-код для <span className="font-medium" style={{ color: "hsl(50 14% 8%)" }}>{phone}</span>
                   </p>
                 </div>
 
@@ -253,17 +263,17 @@ const LoginPage = () => {
                     disabled={loading}
                   >
                     <InputOTPGroup>
-                      <InputOTPSlot index={0} className="w-14 h-14 text-xl font-bold rounded-xl border" />
-                      <InputOTPSlot index={1} className="w-14 h-14 text-xl font-bold rounded-xl border" />
-                      <InputOTPSlot index={2} className="w-14 h-14 text-xl font-bold rounded-xl border" />
-                      <InputOTPSlot index={3} className="w-14 h-14 text-xl font-bold rounded-xl border" />
+                      <InputOTPSlot index={0} className="w-14 h-14 text-xl font-bold rounded-xl border-2" style={{ borderColor: "hsl(34 24% 48% / 0.3)", color: "hsl(50 14% 8%)" }} />
+                      <InputOTPSlot index={1} className="w-14 h-14 text-xl font-bold rounded-xl border-2" style={{ borderColor: "hsl(34 24% 48% / 0.3)", color: "hsl(50 14% 8%)" }} />
+                      <InputOTPSlot index={2} className="w-14 h-14 text-xl font-bold rounded-xl border-2" style={{ borderColor: "hsl(34 24% 48% / 0.3)", color: "hsl(50 14% 8%)" }} />
+                      <InputOTPSlot index={3} className="w-14 h-14 text-xl font-bold rounded-xl border-2" style={{ borderColor: "hsl(34 24% 48% / 0.3)", color: "hsl(50 14% 8%)" }} />
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
 
                 {loading && (
                   <div className="flex justify-center">
-                    <Loader2 size={20} className="animate-spin text-muted-foreground" />
+                    <Loader2 size={20} className="animate-spin" style={{ color: "hsl(34 24% 48%)" }} />
                   </div>
                 )}
               </motion.div>
@@ -272,8 +282,8 @@ const LoginPage = () => {
         ) : (
           <form onSubmit={handleAdminLogin} className="space-y-0">
             <div className="flex items-center gap-2 mb-4 px-1">
-              <Lock size={14} className="text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">
+              <Lock size={14} style={{ color: "hsl(34 24% 48%)" }} />
+              <p className="text-sm" style={{ color: "hsl(50 14% 8% / 0.5)" }}>
                 Вход по email и паролю — только для администраторов
               </p>
             </div>
@@ -284,6 +294,7 @@ const LoginPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={inputClass}
+              style={{ color: "hsl(50 14% 8%)" }}
             />
             <input
               type="password"
@@ -292,9 +303,15 @@ const LoginPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={inputClass}
+              style={{ color: "hsl(50 14% 8%)" }}
             />
-            <div className="pt-10">
-              <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2" disabled={loading}>
+            <div className="pt-8">
+              <button
+                type="submit"
+                className="w-full py-4 rounded-lg text-sm font-semibold uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all"
+                disabled={loading}
+                style={{ background: "hsl(34 24% 48%)", color: "white" }}
+              >
                 {loading ? <><Loader2 size={16} className="animate-spin" /> Вход...</> : "Войти"}
               </button>
             </div>
@@ -314,14 +331,15 @@ const LoginPage = () => {
                 install();
               }
             }}
-            className="w-full mt-8 py-3.5 rounded-xl text-sm font-medium bg-foreground text-background flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            className="w-full mt-6 py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-lg"
+            style={{ background: "hsl(50 14% 8%)", color: "hsl(240 2% 90%)" }}
           >
-            <Download size={16} /> Скачать приложение
+            <Download size={16} /> Установить приложение
           </motion.button>
         )}
 
         {isInstalled && (
-          <p className="text-center text-xs text-muted-foreground mt-6 flex items-center justify-center gap-1.5">
+          <p className="text-center text-xs mt-6 flex items-center justify-center gap-1.5" style={{ color: "hsl(34 24% 48%)" }}>
             ✓ Приложение установлено
           </p>
         )}
@@ -342,46 +360,48 @@ const LoginPage = () => {
                 exit={{ y: 100 }}
                 transition={{ type: "spring", damping: 25 }}
                 onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-md rounded-2xl bg-card text-card-foreground p-6 pb-8 space-y-5"
+                className="w-full max-w-md rounded-2xl p-6 pb-8 space-y-5"
+                style={{ background: "white", color: "hsl(50 14% 8%)" }}
               >
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Установка на iPhone</h3>
-                  <button onClick={() => setShowIosGuide(false)} className="p-1 rounded-full hover:bg-accent">
+                  <button onClick={() => setShowIosGuide(false)} className="p-1 rounded-full" style={{ background: "hsl(0 0% 95%)" }}>
                     <X size={20} />
                   </button>
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">1</div>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white" style={{ background: "hsl(34 24% 48%)" }}>1</div>
                     <div>
                       <p className="text-sm font-medium">Нажмите кнопку «Поделиться»</p>
-                      <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: "hsl(50 14% 8% / 0.5)" }}>
                         Иконка <Share size={14} /> внизу экрана Safari
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">2</div>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white" style={{ background: "hsl(34 24% 48%)" }}>2</div>
                     <div>
                       <p className="text-sm font-medium">Выберите «На экран Домой»</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Прокрутите вниз, если не видите</p>
+                      <p className="text-xs mt-0.5" style={{ color: "hsl(50 14% 8% / 0.5)" }}>Прокрутите вниз, если не видите</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">3</div>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white" style={{ background: "hsl(34 24% 48%)" }}>3</div>
                     <div>
                       <p className="text-sm font-medium">Нажмите «Добавить»</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Приложение появится на домашнем экране</p>
+                      <p className="text-xs mt-0.5" style={{ color: "hsl(50 14% 8% / 0.5)" }}>Приложение появится на домашнем экране</p>
                     </div>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setShowIosGuide(false)}
-                  className="w-full py-3 rounded-xl text-sm font-medium bg-foreground text-background"
+                  className="w-full py-3 rounded-xl text-sm font-semibold text-white"
+                  style={{ background: "hsl(34 24% 48%)" }}
                 >
                   Понятно
                 </button>
@@ -391,8 +411,8 @@ const LoginPage = () => {
         </AnimatePresence>
 
         {!isCrm && (
-          <p className="text-center text-xs text-muted-foreground mt-6">
-            <Link to="/" className="hover:text-foreground transition-colors">
+          <p className="text-center text-xs mt-6">
+            <Link to="/" className="transition-colors" style={{ color: "hsl(50 14% 8% / 0.4)" }}>
               ← На главную
             </Link>
           </p>
