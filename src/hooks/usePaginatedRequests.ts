@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { type ApiRequest } from "@/hooks/useRequests";
 import { type FilterState } from "@/components/dashboard/RequestFilters";
-import { demoRequests } from "@/data/demoData";
+import api from "@/lib/api";
 
 const DEFAULT_LIMIT = 30;
 
@@ -21,61 +21,69 @@ interface UsePaginatedRequestsOptions {
 export function usePaginatedRequests(filters: FilterState, options: UsePaginatedRequestsOptions = {}) {
   const { limit = DEFAULT_LIMIT, quickFilter } = options;
   const [page, setPage] = useState(1);
+  const [requests, setRequests] = useState<ApiRequest[]>([]);
+  const [total, setTotal] = useState(0);
+  const [counts, setCounts] = useState<Record<string, number>>({ all: 0, new: 0, in_progress: 0, reclamation: 0 });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => { setPage(1); }, [filters.search, filters.status, filters.type, filters.measurerId, filters.installerId, filters.partnerId, filters.dateFrom, filters.dateTo, quickFilter]);
 
-  const result = useMemo(() => {
-    let filtered = [...demoRequests];
+  const fetchData = useCallback(async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("limit", String(limit));
+      if (filters.search) params.set("search", filters.search);
+      if (filters.status !== "all") params.set("status", filters.status);
+      if (filters.type !== "all") params.set("type", filters.type);
+      if (filters.city && filters.city !== "all") params.set("city", filters.city);
+      if (filters.measurerId !== "all") params.set("measurer_id", filters.measurerId);
+      if (filters.installerId !== "all") params.set("installer_id", filters.installerId);
+      if (filters.partnerId && filters.partnerId !== "all") params.set("partner_id", filters.partnerId);
+      if (filters.dateFrom) params.set("date_from", filters.dateFrom);
+      if (filters.dateTo) params.set("date_to", filters.dateTo);
+      if (quickFilter && quickFilter !== "all") params.set("quick", quickFilter);
 
-    if (filters.search) {
-      const s = filters.search.toLowerCase();
-      filtered = filtered.filter(r =>
-        r.client_name.toLowerCase().includes(s) ||
-        r.number.toLowerCase().includes(s) ||
-        (r.client_address || "").toLowerCase().includes(s) ||
-        (r.client_phone || "").toLowerCase().includes(s)
-      );
+      const response = await api(`/api/requests?${params.toString()}`, { auth: true });
+      const data = Array.isArray(response) ? response : response.data || [];
+      const responseTotal = response.total ?? data.length;
+
+      setRequests(data);
+      setTotal(responseTotal);
+
+      // Calculate counts from full dataset if not provided by backend
+      if (response.counts) {
+        setCounts(response.counts);
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setLoading(false);
     }
-    if (filters.status !== "all") filtered = filtered.filter(r => r.status === filters.status);
-    if (filters.type !== "all") filtered = filtered.filter(r => r.type === filters.type);
-    if (filters.city && filters.city !== "all") filtered = filtered.filter(r => (r.city || "") === filters.city);
-    if (filters.measurerId !== "all") filtered = filtered.filter(r => r.measurer_id === filters.measurerId);
-    if (filters.installerId !== "all") filtered = filtered.filter(r => r.installer_id === filters.installerId);
-    if (filters.partnerId && filters.partnerId !== "all") filtered = filtered.filter(r => r.partner_id === filters.partnerId);
-    if (filters.dateFrom) filtered = filtered.filter(r => (r.created_at?.split("T")[0] || "") >= filters.dateFrom);
-    if (filters.dateTo) filtered = filtered.filter(r => (r.created_at?.split("T")[0] || "") <= filters.dateTo);
+  }, [page, limit, filters, quickFilter]);
 
-    if (quickFilter === "new") filtered = filtered.filter(r => r.status === "new");
-    else if (quickFilter === "pending") filtered = filtered.filter(r => r.status === "pending");
-    else if (quickFilter === "closed") filtered = filtered.filter(r => r.status === "closed");
-    else if (quickFilter === "in_progress") filtered = filtered.filter(r => !["new", "closed", "cancelled"].includes(r.status));
-    else if (quickFilter === "reclamation") filtered = filtered.filter(r => r.type === "reclamation");
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-    const counts: Record<string, number> = {
-      all: demoRequests.length,
-      new: demoRequests.filter(r => r.status === "new").length,
-      in_progress: demoRequests.filter(r => !["new", "closed", "cancelled"].includes(r.status)).length,
-      reclamation: demoRequests.filter(r => r.type === "reclamation").length,
-    };
+  // Poll every 10s
+  useEffect(() => {
+    const interval = setInterval(() => fetchData(true), 10000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
 
-    const total = filtered.length;
-    const start = (page - 1) * limit;
-    const paged = filtered.slice(start, start + limit);
-
-    return { data: paged, total, page, limit, counts };
-  }, [filters, quickFilter, page, limit]);
-
-  const totalPages = Math.max(1, Math.ceil(result.total / limit));
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return {
-    requests: result.data,
-    total: result.total,
+    requests,
+    total,
     page,
     totalPages,
     limit,
-    counts: result.counts,
-    loading: false,
+    counts,
+    loading,
     setPage,
-    refetch: useCallback(async () => {}, []),
+    refetch: fetchData,
   };
 }

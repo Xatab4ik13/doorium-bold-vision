@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { roleLabels, type UserRole } from "@/data/mockDashboard";
-import { UserPlus, Trash2, Search, CheckCircle } from "lucide-react";
+import { UserPlus, Trash2, Search, CheckCircle, Loader2 } from "lucide-react";
 import CreateAccountModal from "@/components/dashboard/CreateAccountModal";
 import AccountDetailModal from "@/components/dashboard/AccountDetailModal";
 import DeleteConfirmModal from "@/components/dashboard/DeleteConfirmModal";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { demoUsers } from "@/data/demoData";
+import api from "@/lib/api";
 
 interface UserAccount { id: string; name: string; role: UserRole; phone?: string; email?: string; notes?: string; active: boolean; created_at: string; }
 
@@ -18,7 +18,8 @@ const roleColorMap: Record<UserRole, string> = { admin: "bg-red-50 text-red-700"
 const AdminAccounts = () => {
   const isMobile = useIsMobile();
   const { user: authUser } = useAuth();
-  const [users, setUsers] = useState<UserAccount[]>(demoUsers.filter(u => u.role !== "admin").map(u => ({ ...u, role: u.role as UserRole, created_at: "2026-03-01T10:00:00Z" })));
+  const [users, setUsers] = useState<UserAccount[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [showCreate, setShowCreate] = useState(false);
@@ -27,10 +28,73 @@ const AdminAccounts = () => {
 
   useEffect(() => { document.title = "Аккаунты — Админ-панель"; }, []);
 
+  const fetchUsers = async () => {
+    try {
+      const data = await api("/api/users", { auth: true });
+      setUsers(data.filter((u: any) => u.role !== "admin"));
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка загрузки");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchUsers(); }, []);
+
   const filtered = users.filter(u => {
     const q = search.toLowerCase();
     return (u.name.toLowerCase().includes(q) || (u.phone || "").includes(search)) && (filterRole === "all" || u.role === filterRole);
   });
+
+  const handleCreate = async (d: any) => {
+    try {
+      const created = await api("/api/users", { method: "POST", body: d, auth: true });
+      setUsers(p => [created, ...p]);
+      toast.success(`Аккаунт "${d.name}" создан`);
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка создания");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await api(`/api/users/${deleteTarget.id}`, { method: "DELETE", auth: true });
+      setUsers(p => p.filter(u => u.id !== deleteTarget.id));
+      toast.success("Удалён");
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка удаления");
+    }
+    setDeleteTarget(null);
+  };
+
+  const handleActivate = async (id: string) => {
+    try {
+      await api(`/api/users/${id}`, { method: "PUT", body: { active: true }, auth: true });
+      setUsers(p => p.map(u => u.id === id ? { ...u, active: true } : u));
+      toast.success("Активирован");
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка");
+    }
+  };
+
+  const handleSaveDetail = async (id: string, upd: any) => {
+    try {
+      await api(`/api/users/${id}`, { method: "PUT", body: upd, auth: true });
+      setUsers(p => p.map(u => u.id === id ? { ...u, ...upd } : u));
+      toast.success("Обновлён");
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка");
+    }
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout role="admin" userName={authUser?.name}>
+        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role="admin" userName={authUser?.name}>
@@ -66,7 +130,7 @@ const AdminAccounts = () => {
                   <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded-full ${roleColorMap[u.role]}`}>{roleLabels[u.role]}</span></td>
                   <td className="px-4 py-3 text-xs">{u.active ? <span className="text-green-600">Активен</span> : <span className="text-amber-600">Ожидает</span>}</td>
                   <td className="px-4 py-3 text-xs text-slate-400">{u.created_at?.split("T")[0]}</td>
-                  <td className="px-4 py-3"><div className="flex gap-1">{!u.active && <button onClick={e => { e.stopPropagation(); setUsers(p => p.map(x => x.id === u.id ? { ...x, active: true } : x)); toast.success("Активирован"); }} className="text-green-600 p-1"><CheckCircle className="w-4 h-4" /></button>}<button onClick={e => { e.stopPropagation(); setDeleteTarget(u); }} className="text-slate-400 hover:text-red-600 p-1"><Trash2 className="w-4 h-4" /></button></div></td>
+                  <td className="px-4 py-3"><div className="flex gap-1">{!u.active && <button onClick={e => { e.stopPropagation(); handleActivate(u.id); }} className="text-green-600 p-1"><CheckCircle className="w-4 h-4" /></button>}<button onClick={e => { e.stopPropagation(); setDeleteTarget(u); }} className="text-slate-400 hover:text-red-600 p-1"><Trash2 className="w-4 h-4" /></button></div></td>
                 </tr>
               ))}</tbody></table>
               {filtered.length === 0 && <div className="py-12 text-center text-slate-400 text-sm">Аккаунты не найдены</div>}
@@ -74,9 +138,9 @@ const AdminAccounts = () => {
           )}
         </Card>
       </div>
-      {showCreate && <CreateAccountModal onClose={() => setShowCreate(false)} onSave={async (d) => { setUsers(p => [{ id: `u${Date.now()}`, ...d, active: true, created_at: new Date().toISOString() }, ...p]); toast.success(`Аккаунт "${d.name}" создан`); }} />}
-      {deleteTarget && <DeleteConfirmModal title="Удалить аккаунт?" description={`Удалить "${deleteTarget.name}"?`} onClose={() => setDeleteTarget(null)} onConfirm={() => { setUsers(p => p.filter(u => u.id !== deleteTarget.id)); toast.success("Удалён"); setDeleteTarget(null); }} />}
-      {detailTarget && <AccountDetailModal user={detailTarget} onClose={() => setDetailTarget(null)} onSave={async (id, upd) => { setUsers(p => p.map(u => u.id === id ? { ...u, ...upd } : u)); toast.success("Обновлён"); }} />}
+      {showCreate && <CreateAccountModal onClose={() => setShowCreate(false)} onSave={handleCreate} />}
+      {deleteTarget && <DeleteConfirmModal title="Удалить аккаунт?" description={`Удалить "${deleteTarget.name}"?`} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} />}
+      {detailTarget && <AccountDetailModal user={detailTarget} onClose={() => setDetailTarget(null)} onSave={handleSaveDetail} />}
     </DashboardLayout>
   );
 };

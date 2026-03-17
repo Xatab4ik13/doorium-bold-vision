@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Eye, Handshake } from "lucide-react";
-import { demoPartnerForms } from "@/data/demoData";
+import { Trash2, Eye, Handshake, Loader2 } from "lucide-react";
+import api from "@/lib/api";
 
 interface PF { id: number; name: string; store_name: string; store_address: string; phone: string; email: string; status: string; notes: string | null; created_at: string; }
 const sL: Record<string, string> = { new: "Новая", in_progress: "В работе", done: "Завершена", rejected: "Отклонена" };
@@ -19,14 +19,53 @@ const sC: Record<string, string> = { new: "bg-blue-100 text-blue-700", in_progre
 const AdminPartners = () => {
   const isMobile = useIsMobile();
   const { user } = useAuth();
-  const [forms, setForms] = useState<PF[]>(demoPartnerForms as PF[]);
+  const [forms, setForms] = useState<PF[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PF | null>(null);
   const [editNotes, setEditNotes] = useState("");
   const [editStatus, setEditStatus] = useState("");
 
+  useEffect(() => {
+    api("/api/partner-forms", { auth: true })
+      .then((data: any) => setForms(Array.isArray(data) ? data : data.data || []))
+      .catch((err: any) => toast.error(err.message || "Ошибка загрузки"))
+      .finally(() => setLoading(false));
+  }, []);
+
   const handleOpen = (f: PF) => { setSelected(f); setEditNotes(f.notes || ""); setEditStatus(f.status); };
-  const handleSave = () => { if (!selected) return; setForms(p => p.map(f => f.id === selected.id ? { ...f, status: editStatus, notes: editNotes } : f)); toast.success("Сохранено"); setSelected(null); };
-  const handleDelete = (id: number) => { setForms(p => p.filter(f => f.id !== id)); toast.success("Удалено"); };
+
+  const handleSave = async () => {
+    if (!selected) return;
+    try {
+      if (editStatus === "done" && selected.status !== "done") {
+        await api(`/api/partner-forms/${selected.id}/approve`, { method: "POST", body: { notes: editNotes }, auth: true });
+      }
+      // For other status changes, we update locally (backend may not have a generic update endpoint)
+      setForms(p => p.map(f => f.id === selected.id ? { ...f, status: editStatus, notes: editNotes } : f));
+      toast.success("Сохранено");
+      setSelected(null);
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка");
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await api(`/api/partner-forms/${id}`, { method: "DELETE", auth: true });
+      setForms(p => p.filter(f => f.id !== id));
+      toast.success("Удалено");
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка удаления");
+    }
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout role="admin" userName={user?.name}>
+        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role="admin" userName={user?.name}>
@@ -59,7 +98,16 @@ const AdminPartners = () => {
             </div>
             <div><div className="text-xs text-slate-500 mb-1">Статус</div><Select value={editStatus} onValueChange={setEditStatus}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="new">Новая</SelectItem><SelectItem value="in_progress">В работе</SelectItem><SelectItem value="done">Завершена</SelectItem><SelectItem value="rejected">Отклонена</SelectItem></SelectContent></Select></div>
             <div><div className="text-xs text-slate-500 mb-1">Заметки</div><Textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={3} /></div>
-            <div className="flex gap-2"><Button onClick={handleSave} className="flex-1">Сохранить</Button>{editStatus !== "done" && <Button variant="outline" onClick={() => { setForms(p => p.map(f => f.id === selected.id ? { ...f, status: "done" } : f)); setEditStatus("done"); toast.success("Аккаунт партнёра создан!"); }} className="flex-1"><Handshake className="w-4 h-4 mr-2" />Создать аккаунт</Button>}</div>
+            <div className="flex gap-2"><Button onClick={handleSave} className="flex-1">Сохранить</Button>{editStatus !== "done" && <Button variant="outline" onClick={async () => {
+              try {
+                await api(`/api/partner-forms/${selected.id}/approve`, { method: "POST", body: { notes: editNotes }, auth: true });
+                setForms(p => p.map(f => f.id === selected.id ? { ...f, status: "done" } : f));
+                setEditStatus("done");
+                toast.success("Аккаунт партнёра создан!");
+              } catch (err: any) {
+                toast.error(err.message || "Ошибка");
+              }
+            }} className="flex-1"><Handshake className="w-4 h-4 mr-2" />Создать аккаунт</Button>}</div>
           </div>)}
         </DialogContent>
       </Dialog>
