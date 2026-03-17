@@ -163,17 +163,23 @@ const ContactForm = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <input type="text" value={form.name || ""} onChange={(e) => update("name", e.target.value)} className={inputClass} placeholder="ФИО" maxLength={100} />
-              <input type="tel" value={form.phone || ""} onChange={(e) => update("phone", e.target.value)} className={`${inputClass} mt-3`} placeholder="+7" maxLength={20} />
+              <input type="tel" value={form.phone || ""} onChange={(e) => update("phone", formatPhone(e.target.value))} className={`${inputClass} mt-3`} placeholder="+7" maxLength={20} />
               {errors.name && <p className="text-destructive text-xs mt-1 font-body">{errors.name}</p>}
               {errors.phone && <p className="text-destructive text-xs mt-1 font-body">{errors.phone}</p>}
             </div>
             <div>
               <input type="text" value={form.extraName || ""} onChange={(e) => update("extraName", e.target.value)} className={inputClass} placeholder="ФИО доп. контакта" maxLength={100} />
-              <input type="tel" value={form.extraPhone || ""} onChange={(e) => update("extraPhone", e.target.value)} className={`${inputClass} mt-3`} placeholder="+7" maxLength={20} />
+              <input type="tel" value={form.extraPhone || ""} onChange={(e) => update("extraPhone", formatPhone(e.target.value))} className={`${inputClass} mt-3`} placeholder="+7" maxLength={20} />
             </div>
             <div>
-              <input type="text" value={form.address || ""} onChange={(e) => update("address", e.target.value)} className={inputClass} placeholder="Адрес" maxLength={200} />
-              {errors.address && <p className="text-destructive text-xs mt-1 font-body">{errors.address}</p>}
+              <AddressInput
+                value={form.address || ""}
+                onChange={(val) => update("address", val)}
+                city={form.city}
+                placeholder="Адрес"
+                className={inputClass}
+                error={errors.address}
+              />
             </div>
           </div>
 
