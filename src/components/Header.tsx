@@ -57,12 +57,12 @@ const Header = () => {
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-start md:justify-center px-4 md:px-6 py-0">
         <button
           onClick={() => handleNav("/")}
-          className="bg-transparent border-none cursor-pointer p-0 -mt-12 md:-mt-16"
+          className="bg-transparent border-none cursor-pointer p-0 -mt-8 md:-mt-10"
         >
           <img
             src={dooriumLogo}
             alt="Doorium Service"
-            className="h-[11rem] md:h-[16rem] w-auto brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+            className="h-[8rem] md:h-[11rem] w-auto brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
           />
         </button>
 

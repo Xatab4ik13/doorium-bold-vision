@@ -70,6 +70,7 @@ const ServiceCard = ({
         <img
           src={service.image}
           alt={service.title}
+          loading="lazy"
           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
         />
         {/* Bottom gradient overlay */}
