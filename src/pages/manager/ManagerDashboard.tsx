@@ -93,7 +93,7 @@ const ManagerDashboard = () => {
           ))}
         </div>
 
-        <RequestFilters value={filters} onChange={setFilters} users={users} onExport={handleExport} />
+        <RequestFilters filters={filters} onChange={setFilters} users={users} onExport={handleExport} />
 
         {loading ? (
           <div className="flex justify-center py-20">
