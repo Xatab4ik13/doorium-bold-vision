@@ -56,11 +56,22 @@ const PartnerHistory = lazy(() => import("./pages/partner/PartnerHistory"));
 
 const queryClient = new QueryClient();
 
+const isCrm = isCrmDomain();
+
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50">
     <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
   </div>
 );
+
+const CrmRedirect = () => {
+  const { isAuthenticated, user } = useAuth();
+  if (isAuthenticated && user) {
+    const rolePath = user.role === "admin" ? "/admin" : `/${user.role}`;
+    return <Navigate to={rolePath} replace />;
+  }
+  return <Navigate to="/login" replace />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -71,18 +82,27 @@ const App = () => (
         <BrowserRouter>
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
-              {/* Public site */}
-              <Route path="/" element={<Index />} />
-              <Route path="/services" element={<ServicesPage />} />
-              <Route path="/portfolio" element={<PortfolioPage />} />
-              <Route path="/contacts" element={<ContactsPage />} />
-              <Route path="/careers" element={<CareersPage />} />
-              <Route path="/partner" element={<PartnerPage />} />
-              <Route path="/news/:slug" element={<ArticlePage />} />
-
-              {/* CRM Login & Register */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
+              {isCrm ? (
+                <>
+                  {/* CRM domain — login + dashboards only */}
+                  <Route path="/" element={<CrmRedirect />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                </>
+              ) : (
+                <>
+                  {/* Public site */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/services" element={<ServicesPage />} />
+                  <Route path="/portfolio" element={<PortfolioPage />} />
+                  <Route path="/contacts" element={<ContactsPage />} />
+                  <Route path="/careers" element={<CareersPage />} />
+                  <Route path="/partner" element={<PartnerPage />} />
+                  <Route path="/news/:slug" element={<ArticlePage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                </>
+              )}
 
               {/* Admin */}
               <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
@@ -117,7 +137,7 @@ const App = () => (
               <Route path="/partner/history" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerHistory /></ProtectedRoute>} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
+              <Route path="*" element={isCrm ? <Navigate to="/login" replace /> : <NotFound />} />
             </Routes>
           </Suspense>
         </BrowserRouter>
