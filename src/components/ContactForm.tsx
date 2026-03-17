@@ -217,7 +217,7 @@ const ContactForm = () => {
 
       {/* Floating phone button */}
       <a
-        href="tel:+74951234567"
+        href="tel:+79168191996"
         className="fixed bottom-6 right-6 z-50 w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/90 flex items-center justify-center text-primary-foreground hover:bg-primary transition-colors duration-300 shadow-lg"
         aria-label="Позвонить"
       >

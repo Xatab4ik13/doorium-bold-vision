@@ -10,10 +10,13 @@ import Index from "./pages/Index";
 import ServicesPage from "./pages/ServicesPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import ContactsPage from "./pages/ContactsPage";
+import CareersPage from "./pages/CareersPage";
+import PartnerPage from "./pages/PartnerPage";
 import NotFound from "./pages/NotFound";
 
 // CRM pages (lazy loaded)
 const LoginPage = lazy(() => import("./pages/LoginPage"));
+const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 
 // Admin
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -69,9 +72,12 @@ const App = () => (
               <Route path="/services" element={<ServicesPage />} />
               <Route path="/portfolio" element={<PortfolioPage />} />
               <Route path="/contacts" element={<ContactsPage />} />
+              <Route path="/careers" element={<CareersPage />} />
+              <Route path="/partner" element={<PartnerPage />} />
 
-              {/* CRM Login */}
+              {/* CRM Login & Register */}
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
 
               {/* Admin */}
               <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
@@ -101,7 +107,7 @@ const App = () => (
               <Route path="/installer/calendar" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerCalendar /></ProtectedRoute>} />
 
               {/* Partner */}
-              <Route path="/partner" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerDashboard /></ProtectedRoute>} />
+              <Route path="/partner/dashboard" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerDashboard /></ProtectedRoute>} />
               <Route path="/partner/new" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerNewRequest /></ProtectedRoute>} />
               <Route path="/partner/history" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerHistory /></ProtectedRoute>} />
 
