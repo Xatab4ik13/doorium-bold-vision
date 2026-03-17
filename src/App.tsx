@@ -12,6 +12,7 @@ import PortfolioPage from "./pages/PortfolioPage";
 import ContactsPage from "./pages/ContactsPage";
 import CareersPage from "./pages/CareersPage";
 import PartnerPage from "./pages/PartnerPage";
+import ArticlePage from "./pages/ArticlePage";
 import NotFound from "./pages/NotFound";
 
 // CRM pages (lazy loaded)
