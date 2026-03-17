@@ -1,18 +1,21 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import InstallationCalendar from "@/components/dashboard/InstallationCalendar";
-import { useAuth } from "@/contexts/AuthContext";
+import CityToggle, { type CityFilter } from "@/components/dashboard/CityToggle";
 
 const ManagerCalendar = () => {
-  const { user } = useAuth();
-  const [city, setCity] = useState("Москва");
+  const [city, setCity] = useState<CityFilter>("Москва");
+
   return (
-    <DashboardLayout role="manager" userName={user?.name}>
+    <DashboardLayout role="manager">
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold text-slate-900">Календарь</h1>
-        <InstallationCalendar cityFilter={city} />
+        <div className="flex items-center gap-4">
+          <CityToggle value={city} onChange={setCity} />
+        </div>
+        <InstallationCalendar cityFilter={city} basePath="/manager" viewerRole="manager" />
       </div>
     </DashboardLayout>
   );
 };
+
 export default ManagerCalendar;

@@ -47,7 +47,7 @@ export interface ApiUser {
   active: boolean;
 }
 
-const POLL_INTERVAL = 10000;
+const POLL_INTERVAL = 10000; // 10 seconds
 const FULL_FETCH_LIMIT = 1000;
 
 export function useRequests() {
@@ -59,16 +59,19 @@ export function useRequests() {
   const fetchRequests = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const response = await api(`/api/requests?page=1&limit=${FULL_FETCH_LIMIT}`, { auth: true });
+      const response = await api<ApiRequest[] | { data: ApiRequest[] }>(`/api/requests?page=1&limit=${FULL_FETCH_LIMIT}`, { auth: true });
       const data = Array.isArray(response) ? response : response.data;
-
+      
+      // Notify about new requests
       if (prevCountRef.current !== null && data.length > prevCountRef.current) {
         const newCount = data.length - prevCountRef.current;
         toast.info(`🔔 ${newCount === 1 ? 'Новая заявка!' : `Новых заявок: ${newCount}`}`, {
           duration: 5000,
+          position: "top-right",
         });
       }
       prevCountRef.current = data.length;
+      
       setRequests(data);
     } catch (err: any) {
       if (!silent) toast.error(err.message || "Ошибка загрузки заявок");
@@ -85,7 +88,7 @@ export function useRequests() {
 
   const updateRequest = useCallback(async (id: string, updates: Partial<ApiRequest>) => {
     try {
-      const updated = await api(`/api/requests/${id}`, {
+      const updated = await api<ApiRequest>(`/api/requests/${id}`, {
         method: "PUT",
         body: updates,
         auth: true,
@@ -107,7 +110,7 @@ export function useRequests() {
 
   const createRequest = useCallback(async (data: Partial<ApiRequest>) => {
     try {
-      const created = await api("/api/requests", {
+      const created = await api<ApiRequest>("/api/requests", {
         method: "POST",
         body: data,
         auth: true,
@@ -141,9 +144,9 @@ export function useUsers(skip = false) {
 
   useEffect(() => {
     if (skip) return;
-    api("/api/users", { auth: true })
+    api<ApiUser[]>("/api/users", { auth: true })
       .then(setUsers)
-      .catch(() => {})
+      .catch(() => {}) // silently fail for roles without access
       .finally(() => setLoading(false));
   }, [skip]);
 
@@ -161,5 +164,5 @@ export function useUsers(skip = false) {
     return users.filter(u => u.role === role && u.active);
   }, [users]);
 
-  return { users, loading, getUserName, getUser, getByRole, setUsers };
+  return { users, loading, getUserName, getUser, getByRole };
 }

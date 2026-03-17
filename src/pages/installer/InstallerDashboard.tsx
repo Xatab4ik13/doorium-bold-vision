@@ -5,6 +5,7 @@ import { statusLabels, statusColors, requestTypeLabels, type RequestStatus } fro
 import { Phone, MapPin, Calendar, Upload, CheckCircle2, Camera, X, ChevronRight, AlertCircle, ClipboardCheck, Loader2 } from "lucide-react";
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
+import { uploadFile } from "@/lib/api";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -46,13 +47,24 @@ const InstallerDashboard = () => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     setUploading(true);
-    setTimeout(() => {
-      const newUrls = files.map((f, i) => `demo://uploads/${Date.now()}_${i}_${f.name}`);
-      setUploadedFiles(prev => [...prev, ...newUrls]);
-      toast.success(`Загружено: ${files.length}`);
+    let success = 0;
+    let failed = 0;
+    try {
+      for (const file of files) {
+        try {
+          const { url } = await uploadFile(file, "installations");
+          setUploadedFiles(prev => [...prev, url]);
+          success++;
+        } catch {
+          failed++;
+        }
+      }
+      if (success > 0) toast.success(`Загружено: ${success}`);
+      if (failed > 0) toast.error(`Не удалось: ${failed}`);
+    } finally {
       setUploading(false);
-    }, 800);
-    e.target.value = "";
+      e.target.value = "";
+    }
   };
 
   const removeFile = (index: number) => {
@@ -77,7 +89,7 @@ const InstallerDashboard = () => {
       });
       setDateConfirmed(true);
       setRescheduleOpen(false);
-      setSelected(updated as ApiRequest);
+      setSelected(updated);
       toast.success("Дата перенесена");
     } catch {}
   };
@@ -103,6 +115,8 @@ const InstallerDashboard = () => {
     } catch {}
   };
 
+  // No separate "start installation" step needed - installer confirms date then completes
+
   const activeRequests = requests.filter((r) => !["closed", "cancelled"].includes(r.status));
   const doneRequests = requests.filter((r) => r.status === "closed");
 
@@ -116,68 +130,68 @@ const InstallerDashboard = () => {
   }
 
   return (
-    <DashboardLayout role="installer" userName={user?.name}>
-      <div className="space-y-4">
-        <h1 className="text-2xl font-semibold text-slate-900">Мои заявки</h1>
+    <DashboardLayout role="installer" userName={user?.name || "Монтажник"}>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-heading font-bold">Мои заявки</h1>
 
         {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-          </div>
+          <div className="flex justify-center py-12"><Loader2 className="animate-spin text-muted-foreground" size={32} /></div>
         ) : activeRequests.length === 0 && doneRequests.length === 0 ? (
-          <p className="text-sm text-slate-400 text-center py-8">Нет активных заявок</p>
+          <Card><CardContent className="p-8 text-center text-muted-foreground text-sm">Нет активных заявок</CardContent></Card>
         ) : (
-          <div className="space-y-3">
+          <div className="grid gap-4">
             {activeRequests.map((r) => (
-              <Card
-                key={r.id}
-                onClick={() => handleSelectRequest(r)}
-                className={`bg-white border-slate-200 cursor-pointer transition-all ${selected?.id === r.id ? "ring-2 ring-blue-500/30" : "hover:shadow-sm"}`}
-              >
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-slate-400">{r.number}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
-                        {statusLabels[r.status as RequestStatus] || r.status}
-                      </span>
-                      <span className="text-xs text-slate-500">{requestTypeLabels[r.type] || r.type}</span>
+              <Card key={r.id}
+                className={`hover:shadow-md transition-shadow cursor-pointer border-l-4 ${
+                  selected?.id === r.id ? "border-l-primary ring-2 ring-primary/20" : "border-l-orange-400"
+                }`}
+                onClick={() => handleSelectRequest(r)}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-mono text-xs text-muted-foreground">{r.number}</p>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100"}`}>
+                          {statusLabels[r.status as RequestStatus] || r.status}
+                        </span>
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent text-muted-foreground">
+                          {requestTypeLabels[r.type] || r.type}
+                        </span>
+                        {r.accepted_at && (
+                          <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">Принято</span>
+                        )}
+                      </div>
+                      <p className="font-semibold">{r.client_name}</p>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin size={12} /> <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(r.client_address + (r.city ? ", " + r.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{r.client_address}</a></div>
+                      {r.agreed_date && (
+                        <div className="flex items-center gap-1 text-xs text-primary font-medium">
+                          <Calendar size={12} /> Согласовано: {r.agreed_date.split("T")[0]}
+                        </div>
+                      )}
                     </div>
-                    {r.accepted_at && (
-                      <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Принято</span>
-                    )}
-                  </div>
-                  <div className="font-medium text-slate-800 mb-1">{r.client_name}</div>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                    <MapPin className="w-3.5 h-3.5" />
-                    <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(r.client_address)}`} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">{r.client_address}</a>
-                  </div>
-                  {r.agreed_date && (
-                    <div className="flex items-center gap-1.5 text-xs text-emerald-600 mt-1">
-                      <Calendar className="w-3.5 h-3.5" />
-                      Согласовано: {r.agreed_date.split("T")[0]}
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar size={14} /><span className="text-xs">{r.created_at?.split("T")[0]}</span><ChevronRight size={16} />
                     </div>
-                  )}
-                  <div className="text-xs text-slate-300 mt-2">{r.created_at?.split("T")[0]}</div>
+                  </div>
                 </CardContent>
               </Card>
             ))}
 
             {doneRequests.length > 0 && (
               <>
-                <h2 className="text-lg font-semibold text-slate-700 mt-6 flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" /> Выполнено
+                <h2 className="text-sm font-medium text-muted-foreground mt-4 flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-green-600" /> Выполнено
                 </h2>
                 {doneRequests.map((r) => (
-                  <Card key={r.id} className="bg-white border-slate-200 opacity-60">
-                    <CardContent className="py-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs text-slate-400">{r.number}</span>
-                        <span className="text-xs text-slate-500">{r.client_name}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
-                          {statusLabels[r.status as RequestStatus] || r.status}
-                        </span>
+                  <Card key={r.id} className="border-l-4 border-l-green-400 opacity-70">
+                    <CardContent className="p-4 flex items-center justify-between">
+                      <div>
+                        <p className="font-mono text-xs text-muted-foreground">{r.number}</p>
+                        <p className="font-medium text-sm">{r.client_name}</p>
                       </div>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100"}`}>
+                        {statusLabels[r.status as RequestStatus] || r.status}
+                      </span>
                     </CardContent>
                   </Card>
                 ))}
@@ -186,248 +200,265 @@ const InstallerDashboard = () => {
           </div>
         )}
 
-        {/* Detail panel */}
         {selected && (
           <>
             {isMobile && (
-              <div onClick={() => setSelected(null)} className="fixed inset-0 z-[84] bg-black/40" />
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="fixed inset-0 z-[84] bg-foreground/40"
+                aria-label="Закрыть заявку"
+              />
             )}
-            <div className={`${isMobile ? "fixed inset-x-0 bottom-0 z-[85] max-h-[85vh] overflow-y-auto rounded-t-2xl" : "mt-6"} bg-white border border-slate-200 rounded-xl p-5 space-y-4 shadow-xl`}>
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-sm text-slate-400">{selected.number}</span>
-                <button onClick={() => setSelected(null)} className="p-1 hover:bg-slate-100 rounded">
-                  <X className="w-5 h-5 text-slate-400" />
-                </button>
-              </div>
-
-              <h3 className="text-lg font-semibold text-slate-900">{selected.client_name}</h3>
-
-              <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                <MapPin className="w-4 h-4" />
-                <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(selected.client_address)}`} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">{selected.client_address}</a>
-              </div>
-
-              <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                <Phone className="w-4 h-4" />
-                <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`}>{selected.client_phone}</a>
-              </div>
-
-              {(selected.interior_doors != null || selected.entrance_doors != null || selected.partitions != null) && (
-                <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 flex flex-wrap gap-3 text-sm text-slate-600">
-                  {selected.interior_doors != null && <span>Межкомнатные: {selected.interior_doors}</span>}
-                  {selected.entrance_doors != null && <span>Входные: {selected.entrance_doors}</span>}
-                  {selected.partitions != null && <span>Перегородка: {selected.partitions}</span>}
+            <Card className={`border-t-4 border-t-primary bg-card ${isMobile ? "fixed inset-x-2 top-[calc(env(safe-area-inset-top,0px)+8px)] bottom-[calc(env(safe-area-inset-bottom,0px)+8px)] z-[85] overflow-y-auto shadow-2xl" : ""}`}>
+              <CardContent className="p-6 space-y-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
+                  <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1"><MapPin size={14} /> <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(selected.client_address + (selected.city ? ", " + selected.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a></div>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground"><Phone size={14} /> <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{selected.client_phone}</a></div>
+                  {(selected.interior_doors != null || selected.entrance_doors != null || selected.partitions != null) && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selected.interior_doors != null && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">
+                          Межкомнатные: {selected.interior_doors}
+                        </span>
+                      )}
+                      {selected.entrance_doors != null && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">
+                          Входные: {selected.entrance_doors}
+                        </span>
+                      )}
+                      {selected.partitions != null && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">
+                          Перегородка (кол-во створок): {selected.partitions}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {selected.extra_name && (
+                    <div className="mt-2 p-2 rounded-lg bg-accent/50">
+                      <p className="text-xs text-muted-foreground">Доп. контакт</p>
+                      <p className="text-sm font-medium">{selected.extra_name}</p>
+                      {selected.extra_phone && <p className="text-xs text-muted-foreground">{selected.extra_phone}</p>}
+                    </div>
+                  )}
                 </div>
-              )}
+                <button onClick={() => setSelected(null)} className="p-1 hover:bg-accent rounded"><X size={18} /></button>
+              </div>
 
-              {selected.extra_name && (
-                <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                  <div className="text-xs text-slate-400 mb-1">Доп. контакт</div>
-                  <div className="text-sm text-slate-800">{selected.extra_name}</div>
-                  {selected.extra_phone && <div className="text-sm text-slate-500">{selected.extra_phone}</div>}
-                </div>
-              )}
-
+              {/* Notes from admin/manager */}
               {selected.notes && (
-                <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
-                  <div className="text-xs font-medium text-amber-700 mb-1">Заметки</div>
-                  <div className="text-sm text-amber-800">{selected.notes}</div>
+                <div className="p-4 rounded-xl bg-accent/30 border border-border">
+                  <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Заметки</p>
+                  <p className="text-sm leading-relaxed">{selected.notes}</p>
                 </div>
               )}
 
+              {/* Work description */}
               {selected.work_description && (
-                <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                  <div className="text-xs font-medium text-slate-500 mb-1">Описание работ</div>
-                  <div className="text-sm text-slate-700">{selected.work_description}</div>
+                <div className="p-4 rounded-xl bg-accent/30 border border-border">
+                  <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Описание работ</p>
+                  <p className="text-sm leading-relaxed">{selected.work_description}</p>
                 </div>
               )}
 
-              {/* Existing photos */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-slate-700">
-                  Прикреплённые файлы {(selected.photos || []).length > 0 && `(${selected.photos!.length})`}
-                </h4>
+              {/* Existing files from request */}
+              <div className="border border-border rounded-xl p-4">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <Camera size={14} /> Прикреплённые файлы {(selected.photos || []).length > 0 && `(${selected.photos.length})`}
+                </h3>
                 {(selected.photos || []).length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {selected.photos!.map((file: any, i: number) => (
-                      <a key={i} href={file.url} target="_blank" rel="noopener noreferrer" className="w-16 h-16 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
-                        <Camera className="w-6 h-6" />
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {selected.photos.map((file: any, i: number) => (
+                      <a
+                        key={i}
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary/40 transition-all"
+                      >
+                        {file.type === "image" ? (
+                          <img src={file.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-accent/50">
+                            <Upload size={20} className="text-muted-foreground" />
+                            <p className="text-[10px] text-muted-foreground mt-1 px-1 truncate w-full text-center">{file.url.split("/").pop()}</p>
+                          </div>
+                        )}
                       </a>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-400">Нет прикреплённых файлов</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">Нет прикреплённых файлов</p>
                 )}
               </div>
 
-              {/* Accept button */}
+              {/* Accept button - only if not yet accepted */}
               {!selected.accepted_at && selected.status !== "closed" && (
-                <div className="p-4 rounded-lg bg-blue-50 border border-blue-200 space-y-2">
-                  <div className="text-sm font-medium text-blue-800">Подтвердите принятие заявки</div>
-                  <p className="text-xs text-blue-600">Нажмите, чтобы подтвердить что вы приняли эту заявку в работу</p>
-                  <button
-                    onClick={async () => {
-                      try {
-                        const updated = await updateRequest(selected.id, { accepted_at: new Date().toISOString() } as any);
-                        setSelected(updated as ApiRequest);
-                        toast.success("Заявка принята");
-                      } catch {}
-                    }}
-                    className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                  >
-                    <ClipboardCheck className="w-4 h-4 inline mr-1" /> Принял
-                  </button>
+                <div className="border border-blue-200 bg-blue-50 rounded-xl p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 size={16} className="text-blue-600 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-800">Подтвердите принятие заявки</p>
+                        <p className="text-xs text-blue-600">Нажмите, чтобы подтвердить что вы приняли эту заявку в работу</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const updated = await updateRequest(selected.id, { accepted_at: new Date().toISOString() } as any);
+                          setSelected(updated);
+                          toast.success("Заявка принята");
+                        } catch {}
+                      }}
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap"
+                    >
+                      Принял
+                    </button>
+                  </div>
                 </div>
               )}
 
               {selected.accepted_at && (
-                <div className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
-                  Принято: {new Date(selected.accepted_at).toLocaleString("ru-RU")}
+                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                  <CheckCircle2 size={14} className="text-blue-600" />
+                  <span className="text-sm font-medium text-blue-700">Принято: {new Date(selected.accepted_at).toLocaleString("ru-RU")}</span>
                 </div>
               )}
 
-              {/* Date section */}
               {!selected.agreed_date && (
-                <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
-                  <div className="text-sm text-amber-800">{selected.type === "reclamation" ? "Ожидание даты визита" : "Ожидание даты монтажа"}</div>
-                  <p className="text-xs text-amber-600">Дата будет назначена менеджером после согласования с клиентом.</p>
+                <div className="border border-amber-300 bg-amber-50 rounded-xl p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-800">{selected.type === "reclamation" ? "Ожидание даты визита" : "Ожидание даты монтажа"}</p>
+                      <p className="text-xs text-amber-700">Дата будет назначена менеджером после согласования с клиентом.</p>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {selected.agreed_date && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50 border border-emerald-200">
-                    <div className="flex items-center gap-2 text-sm text-emerald-700">
-                      <Calendar className="w-4 h-4" />
-                      {selected.type === "reclamation" ? "Дата визита" : "Дата монтажа"}: {selected.agreed_date.split("T")[0]}
+                  <div className="flex items-center justify-between px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
+                    <div className="flex items-center gap-2">
+                      <Calendar size={14} className="text-primary" />
+                      <span className="text-sm font-medium text-primary">{selected.type === "reclamation" ? "Дата визита" : "Дата монтажа"}: {selected.agreed_date.split("T")[0]}</span>
                     </div>
                     <button
                       onClick={() => setRescheduleOpen(!rescheduleOpen)}
-                      className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-700 hover:border-blue-400/40 transition-colors"
+                      className="text-xs px-3 py-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
                     >
                       {rescheduleOpen ? "Отменить перенос" : "Перенести дату"}
                     </button>
                   </div>
 
                   {rescheduleOpen && (
-                    <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 space-y-2">
-                      <div className="text-sm font-medium text-amber-800">Перенос даты монтажа</div>
-                      <p className="text-xs text-amber-600">Укажите новую дату и причину переноса.</p>
-                      <input
-                        type="date"
-                        value={agreedDate}
-                        onChange={(e) => setAgreedDate(e.target.value)}
-                        min={new Date().toISOString().split("T")[0]}
-                        className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                      />
-                      <textarea
-                        value={rescheduleComment}
-                        onChange={(e) => setRescheduleComment(e.target.value)}
-                        placeholder="Причина переноса..."
-                        className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 min-h-[60px]"
-                      />
+                    <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-amber-800">Перенос даты монтажа</p>
+                          <p className="text-xs text-amber-700">Укажите новую дату и причину переноса.</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)}
+                          min={new Date().toISOString().split("T")[0]}
+                          className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                        <textarea
+                          value={rescheduleComment}
+                          onChange={(e) => setRescheduleComment(e.target.value)}
+                          placeholder="Причина переноса (обязательно)..."
+                          rows={2}
+                          className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                        />
+                      </div>
                       <button
                         onClick={handleConfirmDate}
-                        disabled={!agreedDate || !rescheduleComment.trim()}
-                        className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-40"
+                        disabled={!agreedDate || agreedDate === selected.agreed_date?.split("T")[0] || !rescheduleComment.trim()}
+                        className="w-full px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-40"
                       >
-                        Подтвердить
+                        Подтвердить перенос
                       </button>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Completion form */}
-              {selected.agreed_date && selected.status !== "closed" && (
-                <div className="space-y-3 pt-2 border-t border-slate-100">
-                  <h4 className="text-sm font-semibold text-slate-700">
-                    {isReclamation ? "Отчёт по рекламации" : "Отчёт о монтаже"}
-                  </h4>
+              {dateConfirmed && (
+                <div className="border-t border-border pt-4 space-y-4">
+                  <h3 className="text-sm font-semibold flex items-center gap-2"><ClipboardCheck size={16} /> {isReclamation ? "Отчёт о рекламации" : "Отчёт о монтаже"}</h3>
 
-                  <div>
-                    <label className="text-xs text-slate-500 mb-1 block">{isReclamation ? "Описание выполненных работ *" : "Установленные двери *"}</label>
-                    <textarea
-                      value={doorsInstalled}
-                      onChange={(e) => setDoorsInstalled(e.target.value)}
-                      placeholder={isReclamation ? "Что было сделано..." : "Какие двери установлены, кол-во..."}
-                      className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[60px]"
-                    />
-                  </div>
-
-                  {!isReclamation && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">{isReclamation ? "Что сделано" : "Установленные двери"} <span className="text-destructive">*</span></label>
+                      <input type="text" value={doorsInstalled} onChange={(e) => setDoorsInstalled(e.target.value)} placeholder={isReclamation ? "Описание выполненных работ" : "3 шт. межкомнатные"}
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    </div>
+                    {!isReclamation && (
                     <div>
-                      <label className="text-xs text-slate-500 mb-1 block">Фурнитура *</label>
-                      <input
-                        type="text"
-                        value={hardwareInstalled}
-                        onChange={(e) => setHardwareInstalled(e.target.value)}
-                        placeholder="Замки, ручки, петли..."
-                        className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                      />
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Фурнитура <span className="text-destructive">*</span></label>
+                      <input type="text" value={hardwareInstalled} onChange={(e) => setHardwareInstalled(e.target.value)} placeholder="Ручки, петли, замки..."
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                     </div>
-                  )}
-
-                  <div>
-                    <label className="text-xs text-slate-500 mb-1 block">Дефекты / замечания</label>
-                    <textarea
-                      value={defects}
-                      onChange={(e) => setDefects(e.target.value)}
-                      placeholder="Если есть замечания..."
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[50px]"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={clientAccepted}
-                      onChange={(e) => setClientAccepted(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <label className="text-sm text-slate-700">Клиент принял работу *</label>
+                    )}
+                    <div className="sm:col-span-2">
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Дефекты / замечания</label>
+                      <textarea value={defects} onChange={(e) => setDefects(e.target.value)} rows={2} placeholder="Если есть замечания..."
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+                    </div>
                   </div>
 
                   <div>
-                    <label className="text-xs text-slate-500 mb-1 block">Фото результата *</label>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {uploadedFiles.map((url, i) => (
-                        <div key={i} className="relative group">
-                          <div className="w-16 h-16 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
-                            <Camera className="w-6 h-6" />
-                          </div>
-                          <button
-                            onClick={() => removeFile(i)}
-                            className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed border-slate-300 text-sm text-slate-500 hover:border-blue-400 hover:text-blue-600 cursor-pointer transition-colors">
-                      <Upload className="w-4 h-4" />
-                      {uploading ? "Загрузка..." : "Загрузить фото"}
-                      <input type="file" multiple accept="image/*" onChange={handleUpload} className="hidden" disabled={uploading} />
+                    <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
+                      <Camera size={14} /> Фото / файлы <span className="text-destructive">*</span>
+                    </label>
+                    {uploadedFiles.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {uploadedFiles.map((f, i) => (
+                          <span key={i} className="flex items-center gap-1 px-2 py-1 bg-accent rounded text-xs">
+                            📎 {f.split("/").pop()}
+                            <button onClick={() => removeFile(i)} className="hover:text-destructive"><X size={10} /></button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-border rounded-lg text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors w-full justify-center cursor-pointer">
+                      {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Загрузить
+                      <input type="file" multiple className="hidden" onChange={handleUpload} accept="image/*,video/*,.pdf" />
                     </label>
                   </div>
 
+                  <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
+                    <input type="checkbox" checked={clientAccepted} onChange={(e) => setClientAccepted(e.target.checked)}
+                      className="h-4 w-4 rounded border-primary text-primary focus:ring-primary" />
+                    <span className="text-sm">Клиент принял работу</span>
+                  </label>
+
                   {missingFields.length > 0 && (
-                    <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-600 space-y-1">
-                      <div className="flex items-center gap-1 font-medium"><AlertCircle className="w-3.5 h-3.5" /> Не заполнены:</div>
-                      {missingFields.map((f, i) => <div key={i}>• {f}</div>)}
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                      <p className="text-xs text-amber-700 font-medium mb-1">Не заполнено:</p>
+                      <ul className="text-xs text-amber-600 list-disc pl-4">
+                        {missingFields.map((f, i) => <li key={i}>{f}</li>)}
+                      </ul>
                     </div>
                   )}
 
-                  <button
-                    onClick={handleComplete}
-                    className="w-full py-3 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle2 className="w-4 h-4" /> {isReclamation ? "Рекламация закрыта" : "Монтаж завершён"}
-                  </button>
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button onClick={() => setSelected(null)} className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">Отмена</button>
+                    <button onClick={handleComplete}
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2">
+                      <CheckCircle2 size={16} /> {isReclamation ? "Рекламация закрыта" : "Монтаж выполнен"}
+                    </button>
+                  </div>
                 </div>
               )}
-            </div>
+            </CardContent>
+          </Card>
           </>
         )}
       </div>

@@ -12,7 +12,7 @@ const ManagerAssign = () => {
   const { requests, loading, updateRequest } = useRequests();
   const { getByRole, loading: usersLoading } = useUsers();
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
-  const [selectedExecutorId, setSelectedExecutorId] = useState("");
+  const [selectedExecutorId, setSelectedExecutorId] = useState<string>("");
 
   useEffect(() => { document.title = "Распределение — Менеджер"; }, []);
 
@@ -30,6 +30,7 @@ const ManagerAssign = () => {
       (updates as any).status = "measurer_assigned";
       (updates as any).measurer_id = executor.id;
     } else {
+      // For installers, just assign without changing status
       (updates as any).installer_id = executor.id;
     }
 
@@ -44,29 +45,29 @@ const ManagerAssign = () => {
   const isLoading = loading || usersLoading;
 
   return (
-    <DashboardLayout role="manager" userName={user?.name}>
-      <div className="space-y-4">
-        <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-2">
-          <UserCheck className="w-6 h-6" /> Распределение заявок
-        </h1>
+    <DashboardLayout role="manager" userName={user?.name || "Менеджер"}>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-heading font-bold">Распределение заявок</h1>
 
         {isLoading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+          <div className="flex justify-center py-12">
+            <Loader2 className="animate-spin text-muted-foreground" size={32} />
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Unassigned requests */}
-            <Card className="bg-white border-slate-200">
-              <CardHeader>
-                <CardTitle className="text-base text-slate-900 flex items-center gap-2">
+            <Card className="lg:col-span-1">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center justify-between">
                   Нераспределённые
-                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{unassigned.length}</span>
+                  <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                    {unassigned.length}
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {unassigned.length === 0 ? (
-                  <p className="text-sm text-slate-400 text-center py-4">Все заявки распределены 🎉</p>
+                  <p className="text-sm text-muted-foreground text-center py-6">Все заявки распределены 🎉</p>
                 ) : (
                   unassigned.map((r) => (
                     <div
@@ -74,20 +75,21 @@ const ManagerAssign = () => {
                       onClick={() => { setSelectedRequest(r); setSelectedExecutorId(""); }}
                       className={`p-3 rounded-lg border cursor-pointer transition-all ${
                         selectedRequest?.id === r.id
-                          ? "border-blue-500 bg-blue-50/50 shadow-sm"
-                          : "border-slate-100 hover:border-blue-300"
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border hover:border-primary/30"
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs text-slate-400">{r.number}</span>
-                          <span className="text-xs font-medium text-slate-600">{requestTypeLabels[r.type] || r.type}</span>
-                        </div>
-                        <ArrowRight className="w-4 h-4 text-slate-300" />
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-mono text-xs text-muted-foreground">{r.number}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                          r.type === "reclamation" ? "bg-red-50 text-red-700" : r.type === "measurement" ? "bg-blue-50 text-blue-700" : "bg-orange-50 text-orange-700"
+                        }`}>
+                          {requestTypeLabels[r.type] || r.type}
+                        </span>
                       </div>
-                      <div className="text-sm font-medium text-slate-800 mt-1">{r.client_name}</div>
-                      <div className="text-xs text-slate-400">{r.client_address}</div>
-                      <div className="text-xs text-slate-300 mt-1">{r.created_at?.split("T")[0]}</div>
+                      <p className="text-sm font-medium">{r.client_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{r.client_address}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{r.created_at?.split("T")[0]}</p>
                     </div>
                   ))
                 )}
@@ -95,73 +97,76 @@ const ManagerAssign = () => {
             </Card>
 
             {/* Assignment panel */}
-            <Card className="bg-white border-slate-200">
-              <CardHeader>
-                <CardTitle className="text-base text-slate-900">Назначение</CardTitle>
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Назначение</CardTitle>
               </CardHeader>
               <CardContent>
                 {!selectedRequest ? (
-                  <p className="text-sm text-slate-400 text-center py-8">Выберите заявку слева для назначения</p>
+                  <div className="text-center py-12">
+                    <UserCheck size={48} className="mx-auto text-muted-foreground mb-4" />
+                    <p className="text-sm text-muted-foreground">Выберите заявку слева для назначения</p>
+                  </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono text-xs text-slate-400">{selectedRequest.number}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[selectedRequest.status as keyof typeof statusColors] || "bg-gray-100 text-gray-500"}`}>
+                  <div className="space-y-6">
+                    <div className="p-4 rounded-lg bg-accent/50 border border-border">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-mono text-xs">{selectedRequest.number}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[selectedRequest.status as keyof typeof statusColors] || "bg-gray-100"}`}>
                           {statusLabels[selectedRequest.status as keyof typeof statusLabels] || selectedRequest.status}
                         </span>
                       </div>
-                      <div className="text-sm font-medium text-slate-800">{selectedRequest.client_name}</div>
-                      <div className="text-xs text-slate-400">{selectedRequest.client_address}</div>
-                      <div className="text-xs text-slate-400">{selectedRequest.client_phone}</div>
+                      <p className="font-semibold">{selectedRequest.client_name}</p>
+                      <p className="text-sm text-muted-foreground">{selectedRequest.client_address}</p>
+                      <p className="text-sm text-muted-foreground">{selectedRequest.client_phone}</p>
                     </div>
 
                     <div>
-                      <h4 className="text-sm font-semibold text-slate-700 mb-2">Замерщики</h4>
-                      <div className="space-y-1">
+                      <h3 className="text-sm font-semibold mb-3">Замерщики</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {measurers.map((m) => (
                           <button
                             key={m.id}
                             onClick={() => setSelectedExecutorId(m.id)}
-                            className={`w-full p-3 rounded-lg border text-left transition-all ${
+                            className={`p-3 rounded-lg border text-left transition-all ${
                               selectedExecutorId === m.id
-                                ? "border-blue-500 bg-blue-50/50"
-                                : "border-slate-100 hover:border-blue-300"
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-primary/30"
                             }`}
                           >
                             <div className="flex items-center justify-between">
-                              <span className="text-sm text-slate-800">{m.name}</span>
-                              {selectedExecutorId === m.id && <Check className="w-4 h-4 text-blue-600" />}
+                              <span className="text-sm font-medium">{m.name}</span>
+                              {selectedExecutorId === m.id && <Check size={16} className="text-primary" />}
                             </div>
                           </button>
                         ))}
                         {measurers.length === 0 && (
-                          <p className="text-xs text-slate-400 py-2">Нет активных замерщиков</p>
+                          <p className="text-xs text-muted-foreground col-span-2">Нет активных замерщиков</p>
                         )}
                       </div>
                     </div>
 
                     <div>
-                      <h4 className="text-sm font-semibold text-slate-700 mb-2">Монтажные бригады</h4>
-                      <div className="space-y-1">
+                      <h3 className="text-sm font-semibold mb-3">Монтажные бригады</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {installers.map((inst) => (
                           <button
                             key={inst.id}
                             onClick={() => setSelectedExecutorId(inst.id)}
-                            className={`w-full p-3 rounded-lg border text-left transition-all ${
+                            className={`p-3 rounded-lg border text-left transition-all ${
                               selectedExecutorId === inst.id
-                                ? "border-blue-500 bg-blue-50/50"
-                                : "border-slate-100 hover:border-blue-300"
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-primary/30"
                             }`}
                           >
                             <div className="flex items-center justify-between">
-                              <span className="text-sm text-slate-800">{inst.name}</span>
-                              {selectedExecutorId === inst.id && <Check className="w-4 h-4 text-blue-600" />}
+                              <span className="text-sm font-medium">{inst.name}</span>
+                              {selectedExecutorId === inst.id && <Check size={16} className="text-primary" />}
                             </div>
                           </button>
                         ))}
                         {installers.length === 0 && (
-                          <p className="text-xs text-slate-400 py-2">Нет активных бригад</p>
+                          <p className="text-xs text-muted-foreground col-span-3">Нет активных бригад</p>
                         )}
                       </div>
                     </div>
@@ -169,8 +174,9 @@ const ManagerAssign = () => {
                     <button
                       onClick={handleAssign}
                       disabled={!selectedExecutorId}
-                      className="w-full py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
+                      <ArrowRight size={16} />
                       {selectedExecutorId
                         ? `Назначить → ${[...measurers, ...installers].find(u => u.id === selectedExecutorId)?.name}`
                         : "Выберите исполнителя"}

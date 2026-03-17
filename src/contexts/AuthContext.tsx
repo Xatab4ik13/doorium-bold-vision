@@ -1,11 +1,10 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 
-export type UserRole = "admin" | "manager" | "measurer" | "installer" | "partner";
-
-export interface User {
+interface User {
   id: string;
   name: string;
-  role: UserRole;
+  role: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
 interface AuthContextType {
@@ -26,29 +25,29 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem("crm_user");
+    const saved = localStorage.getItem("user");
     return saved ? JSON.parse(saved) : null;
   });
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem("crm_token"));
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
 
   const login = (newToken: string, newUser: User) => {
-    localStorage.setItem("crm_token", newToken);
-    localStorage.setItem("crm_user", JSON.stringify(newUser));
+    localStorage.setItem("token", newToken);
+    localStorage.setItem("user", JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
   };
 
   const logout = () => {
-    localStorage.removeItem("crm_token");
-    localStorage.removeItem("crm_user");
-    localStorage.removeItem("crm_device_token");
-    localStorage.removeItem("crm_device_phone");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("device_token");
+    localStorage.removeItem("device_phone");
     setToken(null);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token && !!user }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token }}>
       {children}
     </AuthContext.Provider>
   );
