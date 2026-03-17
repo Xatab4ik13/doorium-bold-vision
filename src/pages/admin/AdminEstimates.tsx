@@ -1,24 +1,3 @@
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
-import { Calculator } from "lucide-react";
-
-const AdminEstimates = () => {
-  const { user } = useAuth();
-
-  return (
-    <DashboardLayout role="admin" userName={user?.name}>
-      <div className="space-y-4">
-        <h1 className="text-2xl font-semibold text-slate-900">Сметы</h1>
-        <Card className="bg-white border-slate-200">
-          <CardContent className="py-16 flex flex-col items-center justify-center text-center">
-            <Calculator className="w-12 h-12 text-slate-300 mb-4" />
-            <p className="text-slate-500 text-sm">Калькулятор смет будет доступен после подключения бэкенда</p>
-          </CardContent>
-        </Card>
-      </div>
-    </DashboardLayout>
-  );
-};
-
+import EstimateCalculator from "@/components/dashboard/EstimateCalculator";
+const AdminEstimates = () => <EstimateCalculator role="admin" />;
 export default AdminEstimates;
