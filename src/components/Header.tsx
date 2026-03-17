@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { LogIn } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import dooriumLogo from "@/assets/doorium-logo-new.png";
