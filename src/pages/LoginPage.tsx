@@ -1,12 +1,20 @@
 import { useState, useEffect, useCallback } from "react";
+import { Share, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Shield, Lock, Loader2, Phone, ArrowLeft } from "lucide-react";
+import logo from "@/assets/doorium-logo-new.png";
+import { Shield, Lock, Loader2, Phone, ArrowLeft, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { formatPhone } from "@/lib/formatPhone";
-import logoImg from "@/assets/doorium-logo-new.png";
+// import { usePwaInstall } from "@/hooks/usePwaInstall";
+// import { isCrmDomain } from "@/hooks/useCrmDomain";
+
+// Stubs for hooks not yet ported
+const usePwaInstall = () => ({ canInstall: false, isInstalled: false, install: () => {}, showIosInstructions: false });
+const isCrmDomain = () => false;
 
 type LoginMode = "pin" | "admin";
 type PinStep = "phone" | "code";
@@ -30,6 +38,9 @@ const LoginPage = () => {
   const [autoLogging, setAutoLogging] = useState(false);
   const navigate = useNavigate();
   const { login, isAuthenticated, user } = useAuth();
+  const { canInstall, isInstalled, install, showIosInstructions } = usePwaInstall();
+  const [showIosGuide, setShowIosGuide] = useState(false);
+  const isCrm = isCrmDomain();
 
   useEffect(() => {
     document.title = "Вход в кабинет — Doorium Service";
@@ -37,11 +48,11 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      navigate(roleRoutes[user.role] || "/", { replace: true });
+      navigate(roleRoutes[user.role] || "/");
     }
   }, [isAuthenticated, user, navigate]);
 
-  // Auto-login with device token
+  // Try auto-login with device token on mount
   useEffect(() => {
     const deviceToken = localStorage.getItem("crm_device_token");
     const savedPhone = localStorage.getItem("crm_device_phone");
@@ -80,6 +91,7 @@ const LoginPage = () => {
         method: "POST",
         body: { phone, pin: value },
       });
+      // Save device token for "remember device"
       if (data.device_token) {
         localStorage.setItem("crm_device_token", data.device_token);
         localStorage.setItem("crm_device_phone", phone);
@@ -114,87 +126,125 @@ const LoginPage = () => {
   };
 
   const inputClass =
-    "w-full bg-transparent border-b border-slate-300 py-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 transition-colors duration-500";
+    "w-full bg-transparent border-b border-border py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors duration-500";
 
   if (autoLogging) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-        <span className="ml-3 text-slate-500">Выполняется вход...</span>
-      </div>
+      <main className="min-h-screen flex items-center justify-center px-6 bg-background">
+        <div className="text-center space-y-4">
+          <Loader2 size={32} className="animate-spin mx-auto text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Выполняется вход...</p>
+        </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm space-y-8">
-        {/* Logo */}
-        <div className="text-center">
-          <img src={logoImg} alt="Doorium Service" className="h-12 mx-auto mb-4" />
-          <h1 className="text-xl font-semibold text-slate-900">Вход в кабинет</h1>
+    <main className="min-h-screen flex items-center justify-center px-6 bg-background">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="w-full max-w-md"
+      >
+        <div className="text-center mb-12">
+          <Link to="/">
+            <img src={logo} alt="Doorium Service" className="h-52 w-auto mx-auto mb-8 brightness-0 invert" />
+          </Link>
+          <h1 className="heading-md">Вход в кабинет</h1>
         </div>
 
         {/* Mode tabs */}
-        <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
+        <div className="flex gap-2 mb-8">
           <button
             onClick={() => { setMode("pin"); setStep("phone"); setPin(""); }}
             className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
               mode === "pin"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
+                ? "bg-foreground text-background"
+                : "bg-accent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Phone className="w-4 h-4" />
-            По телефону
+            <Phone size={16} /> По телефону
           </button>
           <button
             onClick={() => { setMode("admin"); setStep("phone"); }}
             className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
               mode === "admin"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
+                ? "bg-foreground text-background"
+                : "bg-accent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Shield className="w-4 h-4" />
-            Администратор
+            <Shield size={16} /> Администратор
           </button>
         </div>
 
         {mode === "pin" ? (
-          <div>
+          <AnimatePresence mode="wait">
             {step === "phone" ? (
-              <form onSubmit={handlePhoneSubmit} className="space-y-6">
-                <p className="text-sm text-slate-500">
-                  Введите номер телефона, указанный при регистрации
-                </p>
+              <motion.form
+                key="phone-step"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                onSubmit={handlePhoneSubmit}
+                className="space-y-0"
+              >
+                <div className="flex items-center gap-2 mb-4 px-1">
+                  <Phone size={14} className="text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">
+                    Введите номер телефона, указанный при регистрации
+                  </p>
+                </div>
                 <input
                   type="tel"
                   placeholder="+7 ___ ___ __ __"
+                  required
                   value={phone}
                   onFocus={(e) => { if (!e.target.value) setPhone("+7"); }}
                   onChange={(e) => setPhone(formatPhone(e.target.value))}
                   className={inputClass}
                   autoFocus
                 />
-                <button
-                  type="submit"
-                  className="w-full py-3.5 rounded-xl text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 transition-colors"
-                >
-                  Продолжить
-                </button>
-              </form>
+                <div className="pt-10">
+                  <button type="submit" className="btn-primary w-full">
+                    Продолжить
+                  </button>
+                </div>
+                <div className="pt-6">
+                  <Link
+                    to="/register"
+                    className="block w-full text-center py-3 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
+                  >
+                    Нет аккаунта? Зарегистрироваться
+                  </Link>
+                </div>
+              </motion.form>
             ) : (
-              <div className="space-y-6">
+              <motion.div
+                key="code-step"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
                 <button
                   onClick={() => { setStep("phone"); setPin(""); }}
-                  className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  Изменить номер
+                  <ArrowLeft size={14} /> Изменить номер
                 </button>
-                <p className="text-sm text-slate-500">
-                  Введите ПИН-код для {phone}
-                </p>
+
+                <div className="text-center space-y-2">
+                  <div className="w-14 h-14 rounded-full bg-accent flex items-center justify-center mx-auto">
+                    <Lock size={24} className="text-foreground" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Введите ПИН-код для <span className="text-foreground font-medium">{phone}</span>
+                  </p>
+                </div>
+
                 <div className="flex justify-center">
                   <InputOTP
                     maxLength={4}
@@ -207,29 +257,34 @@ const LoginPage = () => {
                     disabled={loading}
                   >
                     <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={0} className="w-14 h-14 text-xl font-bold rounded-xl border" />
+                      <InputOTPSlot index={1} className="w-14 h-14 text-xl font-bold rounded-xl border" />
+                      <InputOTPSlot index={2} className="w-14 h-14 text-xl font-bold rounded-xl border" />
+                      <InputOTPSlot index={3} className="w-14 h-14 text-xl font-bold rounded-xl border" />
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
+
                 {loading && (
                   <div className="flex justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                    <Loader2 size={20} className="animate-spin text-muted-foreground" />
                   </div>
                 )}
-              </div>
+              </motion.div>
             )}
-          </div>
+          </AnimatePresence>
         ) : (
-          <form onSubmit={handleAdminLogin} className="space-y-6">
-            <p className="text-sm text-slate-500">
-              Вход по email и паролю — только для администраторов
-            </p>
+          <form onSubmit={handleAdminLogin} className="space-y-0">
+            <div className="flex items-center gap-2 mb-4 px-1">
+              <Lock size={14} className="text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">
+                Вход по email и паролю — только для администраторов
+              </p>
+            </div>
             <input
               type="email"
               placeholder="Email"
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={inputClass}
@@ -237,70 +292,117 @@ const LoginPage = () => {
             <input
               type="password"
               placeholder="Пароль"
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={inputClass}
             />
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 rounded-xl text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Вход...
-                </span>
-              ) : "Войти"}
-            </button>
+            <div className="pt-10">
+              <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2" disabled={loading}>
+                {loading ? <><Loader2 size={16} className="animate-spin" /> Вход...</> : "Войти"}
+              </button>
+            </div>
           </form>
         )}
 
-        {/* Demo mode */}
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-slate-50 px-3 text-slate-400">или</span>
-          </div>
-        </div>
+        {/* PWA Install button */}
+        {canInstall && !isInstalled && (
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            onClick={() => {
+              if (showIosInstructions) {
+                setShowIosGuide(true);
+              } else {
+                install();
+              }
+            }}
+            className="w-full mt-8 py-3.5 rounded-xl text-sm font-medium bg-foreground text-background flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+          >
+            <Download size={16} /> Скачать приложение
+          </motion.button>
+        )}
 
-        <div className="space-y-2">
-          <p className="text-xs text-slate-400 text-center">Демо-вход (без бэкенда)</p>
-          <div className="grid grid-cols-2 gap-2">
-            {(["admin", "manager", "measurer", "installer", "partner"] as const).map((role) => (
-              <button
-                key={role}
-                onClick={() => {
-                  const demoUsers: Record<string, { id: string; name: string }> = {
-                    admin: { id: "demo-1", name: "Демо Админ" },
-                    manager: { id: "demo-2", name: "Демо Менеджер" },
-                    measurer: { id: "demo-3", name: "Демо Замерщик" },
-                    installer: { id: "demo-4", name: "Демо Монтажник" },
-                    partner: { id: "demo-5", name: "Демо Партнёр" },
-                  };
-                  const u = demoUsers[role];
-                  login("demo-token", { ...u, role });
-                  toast.success(`Демо-вход: ${u.name}`);
-                  navigate(roleRoutes[role], { replace: true });
-                }}
-                className={`py-2 px-3 rounded-lg text-xs font-medium transition-colors border border-slate-200 hover:border-slate-300 hover:bg-white text-slate-600 ${role === "partner" ? "col-span-2" : ""}`}
+        {isInstalled && (
+          <p className="text-center text-xs text-muted-foreground mt-6 flex items-center justify-center gap-1.5">
+            ✓ Приложение установлено
+          </p>
+        )}
+
+        {/* iOS install guide modal */}
+        <AnimatePresence>
+          {showIosGuide && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4"
+              onClick={() => setShowIosGuide(false)}
+            >
+              <motion.div
+                initial={{ y: 100 }}
+                animate={{ y: 0 }}
+                exit={{ y: 100 }}
+                transition={{ type: "spring", damping: 25 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md rounded-2xl bg-card text-card-foreground p-6 pb-8 space-y-5"
               >
-                {{ admin: "👑 Админ", manager: "📋 Менеджер", measurer: "📐 Замерщик", installer: "🔧 Монтажник", partner: "🤝 Партнёр" }[role]}
-              </button>
-            ))}
-          </div>
-        </div>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Установка на iPhone</h3>
+                  <button onClick={() => setShowIosGuide(false)} className="p-1 rounded-full hover:bg-accent">
+                    <X size={20} />
+                  </button>
+                </div>
 
-        {/* Back to site */}
-        <div className="text-center">
-          <Link to="/" className="text-sm text-slate-400 hover:text-slate-600 transition-colors">
-            ← На главную
-          </Link>
-        </div>
-      </div>
-    </div>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">1</div>
+                    <div>
+                      <p className="text-sm font-medium">Нажмите кнопку «Поделиться»</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                        Иконка <Share size={14} /> внизу экрана Safari
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">2</div>
+                    <div>
+                      <p className="text-sm font-medium">Выберите «На экран Домой»</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Прокрутите вниз, если не видите</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">3</div>
+                    <div>
+                      <p className="text-sm font-medium">Нажмите «Добавить»</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Приложение появится на домашнем экране</p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowIosGuide(false)}
+                  className="w-full py-3 rounded-xl text-sm font-medium bg-foreground text-background"
+                >
+                  Понятно
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {!isCrm && (
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            <Link to="/" className="hover:text-foreground transition-colors">
+              ← На главную
+            </Link>
+          </p>
+        )}
+      </motion.div>
+    </main>
   );
 };
 

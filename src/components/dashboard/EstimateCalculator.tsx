@@ -257,7 +257,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       <button class="print-btn" onclick="window.print()">📄 Скачать / Печать</button>
       <div class="header">
         <div>
-          ${logoBase64 ? `<img src="${logoBase64}" alt="PrimeDoor" class="header-logo" />` : `<h1>PrimeDoor Service</h1>`}
+          ${logoBase64 ? `<img src="${logoBase64}" alt="Doorium" class="header-logo" />` : `<h1>Doorium Service</h1>`}
           <p style="font-size:12px;color:#666;margin-top:4px;">Смета от ${new Date().toLocaleDateString("ru-RU")}</p>
         </div>
         <div class="meta" style="display:flex;gap:24px;">
@@ -270,7 +270,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
           <div>
             <p style="font-weight:600;margin-bottom:2px;">Санкт-Петербург</p>
             <p>+7 993 266 35 04</p>
-            <p style="margin-top:6px;">service@primedoor.ru</p>
+            <p style="margin-top:6px;">service@doorium.ru</p>
           </div>
         </div>
       </div>
