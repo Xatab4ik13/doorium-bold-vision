@@ -15,6 +15,7 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
 
   return (
     <footer
+      ref={ref}
       className="relative pt-16 md:pt-20 pb-6 px-8 md:px-16 lg:px-24"
       style={{
         background: "hsl(50 14% 5%)",
