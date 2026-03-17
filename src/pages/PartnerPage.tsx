@@ -4,11 +4,11 @@ import Footer from "@/components/Footer";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
-  Handshake,
   Shield,
   FileText,
   HeadphonesIcon,
   MonitorSmartphone,
+  Handshake,
   Store,
   Palette,
   Building2,
@@ -16,23 +16,23 @@ import {
   CheckCircle2,
   Send,
 } from "lucide-react";
-import handshakeImg from "@/assets/handshake-icon.png";
 import logo from "@/assets/doorium-logo-new.png";
+import api from "@/lib/api";
 
 const partnerSchema = z.object({
   name: z.string().trim().min(1, "Введите ФИО").max(100),
-  company: z.string().trim().min(1, "Введите название компании").max(100),
-  address: z.string().trim().max(200).optional(),
+  store_name: z.string().trim().min(1, "Введите название компании").max(100),
+  store_address: z.string().trim().min(1, "Введите адрес").max(200),
   phone: z.string().trim().min(6, "Введите номер телефона").max(20),
   email: z.string().trim().email("Введите корректный email").max(255),
 });
 
 const offerings = [
-  { icon: Shield, title: "Стабильный сервис", items: ["Качественный монтаж любой сложности", "Работа строго по замеру и ТЗ", "Постмонтажная чистота на объекте"] },
-  { icon: FileText, title: "Понятные условия", items: ["Прозрачный понятный прайс на все виды работ", "Составление и согласование сметы перед монтажом", "Работа «в белую», полный комплект документов"] },
-  { icon: HeadphonesIcon, title: "Поддержка партнёров", items: ["Персональный менеджер", "Оперативная связь", "Приоритетное бронирование дат монтажа", "Консультация по всем техническим вопросам"] },
-  { icon: Handshake, title: "Гарантия", items: ["Гарантия на монтаж 12 месяцев", "Оперативный выезд и бесплатная регулировка", "100% закрытие рекламационных случаев"] },
-  { icon: MonitorSmartphone, title: "Удобная CRM-система", items: ["Удобное направление заявок", "Отслеживание статуса и сроков", "Полный отчёт о проделанной работе"] },
+  { icon: Shield, title: "СТАБИЛЬНЫЙ СЕРВИС", items: ["Качественный монтаж любой сложности", "Работа строго по замеру и ТЗ", "Постмонтажная чистота на объекте"] },
+  { icon: FileText, title: "ПОНЯТНЫЕ УСЛОВИЯ", items: ["Прозрачный понятный прайс на все виды работ", "Составление и согласование сметы перед монтажом", "Работа «в белую», полный комплект документов"] },
+  { icon: HeadphonesIcon, title: "ПОДДЕРЖКА ПАРТНЁРОВ", items: ["Персональный менеджер", "Оперативная связь", "Приоритетное бронирование дат монтажа", "Консультация по всем техническим вопросам"] },
+  { icon: Handshake, title: "ГАРАНТИЯ", items: ["Гарантия на монтаж 12 месяцев", "Оперативный выезд и бесплатная регулировка", "100% закрытие рекламационных случаев"] },
+  { icon: MonitorSmartphone, title: "УДОБНАЯ CRM-СИСТЕМА", items: ["Удобное направление заявок", "Отслеживание статуса и сроков", "Полный отчёт о проделанной работе"] },
 ];
 
 const formats = [
@@ -85,7 +85,7 @@ const PartnerPage = () => {
     document.title = "Стать партнёром — Doorium Service | Партнёрская программа";
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
     const result = partnerSchema.safeParse(form);
@@ -98,11 +98,18 @@ const PartnerPage = () => {
       return;
     }
     setSending(true);
-    setTimeout(() => {
-      setSending(false);
+    try {
+      await api("/api/partner-form", {
+        method: "POST",
+        body: result.data,
+      });
       toast.success("Заявка отправлена! Мы свяжемся с вами в ближайшее время.");
       setForm({});
-    }, 1500);
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка отправки");
+    } finally {
+      setSending(false);
+    }
   };
 
   const update = (key: string, value: string) => setForm({ ...form, [key]: value });
@@ -114,10 +121,10 @@ const PartnerPage = () => {
     <div className="min-h-screen" style={{ background: "hsl(50 14% 5%)" }}>
       <Header />
 
-      {/* Hero */}
+      {/* Hero — clean, with logo */}
       <section className="pt-40 pb-16 md:pt-48 md:pb-24 px-8 md:px-16 lg:px-24">
         <div ref={hero.ref} style={hero.style} className="max-w-5xl mx-auto text-center">
-          <img src={handshakeImg} alt="Партнёрство" className="w-24 h-24 md:w-32 md:h-32 mx-auto mb-8 opacity-80" />
+          <img src={logo} alt="Doorium" className="h-28 md:h-36 w-auto mx-auto mb-6 brightness-0 invert opacity-70" />
           <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-4">Doorium Service</p>
           <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-light text-doorium-platinum leading-[0.95] mb-6 tracking-wide">
             СТАТЬ ПАРТНЁРОМ
@@ -154,20 +161,32 @@ const PartnerPage = () => {
         </div>
       </section>
 
-      {/* What we offer */}
+      {/* What we offer — matching screenshot layout */}
       <section className="px-8 md:px-16 lg:px-24 pb-16 md:pb-24">
         <div ref={offerRef.ref} style={offerRef.style} className="max-w-5xl mx-auto">
           <h2 className="font-display text-3xl md:text-4xl font-light text-doorium-platinum mb-10 tracking-wide text-center">
-            Что мы предлагаем партнёрам
+            ЧТО МЫ ПРЕДЛАГАЕМ ПАРТНЁРАМ
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {offerings.map((o, i) => (
-              <div
-                key={i}
-                className="border border-border/20 rounded-lg p-6 hover:border-primary/30 transition-colors duration-500"
-              >
-                <o.icon className="w-8 h-8 text-primary mb-4" strokeWidth={1.5} />
-                <h3 className="font-display text-lg text-doorium-platinum mb-3 tracking-wide">{o.title}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {offerings.slice(0, 3).map((o, i) => (
+              <div key={i} className="border border-border/20 rounded-lg p-6 hover:border-primary/30 transition-colors duration-500">
+                <o.icon className="w-7 h-7 text-primary mb-4" strokeWidth={1.5} />
+                <h3 className="font-display text-base text-doorium-platinum mb-3 tracking-wide uppercase">{o.title}</h3>
+                <ul className="space-y-1.5">
+                  {o.items.map((item, j) => (
+                    <li key={j} className="font-body text-sm text-doorium-platinum/50 flex items-start gap-2">
+                      <span className="text-primary mt-0.5">•</span> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            {offerings.slice(3).map((o, i) => (
+              <div key={i} className="border border-border/20 rounded-lg p-6 hover:border-primary/30 transition-colors duration-500">
+                <o.icon className="w-7 h-7 text-primary mb-4" strokeWidth={1.5} />
+                <h3 className="font-display text-base text-doorium-platinum mb-3 tracking-wide uppercase">{o.title}</h3>
                 <ul className="space-y-1.5">
                   {o.items.map((item, j) => (
                     <li key={j} className="font-body text-sm text-doorium-platinum/50 flex items-start gap-2">
@@ -185,14 +204,11 @@ const PartnerPage = () => {
       <section className="px-8 md:px-16 lg:px-24 pb-16 md:pb-24">
         <div ref={formatRef.ref} style={formatRef.style} className="max-w-5xl mx-auto">
           <h2 className="font-display text-3xl md:text-4xl font-light text-doorium-platinum mb-10 tracking-wide text-center">
-            Форматы сотрудничества
+            ФОРМАТЫ СОТРУДНИЧЕСТВА
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {formats.map((f, i) => (
-              <div
-                key={i}
-                className="border border-border/20 rounded-lg p-6 flex items-start gap-4 hover:border-primary/30 transition-colors duration-500"
-              >
+              <div key={i} className="border border-border/20 rounded-lg p-6 flex items-start gap-4 hover:border-primary/30 transition-colors duration-500">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <f.icon className="w-6 h-6 text-primary" strokeWidth={1.5} />
                 </div>
@@ -236,7 +252,7 @@ const PartnerPage = () => {
       <section className="px-8 md:px-16 lg:px-24 pb-20 md:pb-28">
         <div ref={formRef.ref} style={formRef.style} className="max-w-2xl mx-auto">
           <h2 className="font-display text-3xl md:text-4xl font-light text-doorium-platinum mb-10 tracking-wide text-center">
-            Оставить заявку партнёра
+            ОСТАВИТЬ ЗАЯВКУ ПАРТНЁРА
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -244,10 +260,13 @@ const PartnerPage = () => {
               {errors.name && <p className="text-destructive text-xs mt-1 font-body">{errors.name}</p>}
             </div>
             <div>
-              <input type="text" placeholder="Название компании" value={form.company || ""} onChange={(e) => update("company", e.target.value)} className={inputClass} maxLength={100} />
-              {errors.company && <p className="text-destructive text-xs mt-1 font-body">{errors.company}</p>}
+              <input type="text" placeholder="Название компании / магазина" value={form.store_name || ""} onChange={(e) => update("store_name", e.target.value)} className={inputClass} maxLength={100} />
+              {errors.store_name && <p className="text-destructive text-xs mt-1 font-body">{errors.store_name}</p>}
             </div>
-            <input type="text" placeholder="Адрес (необязательно)" value={form.address || ""} onChange={(e) => update("address", e.target.value)} className={inputClass} maxLength={200} />
+            <div>
+              <input type="text" placeholder="Адрес магазина / офиса" value={form.store_address || ""} onChange={(e) => update("store_address", e.target.value)} className={inputClass} maxLength={200} />
+              {errors.store_address && <p className="text-destructive text-xs mt-1 font-body">{errors.store_address}</p>}
+            </div>
             <div>
               <input type="tel" placeholder="+7" value={form.phone || ""} onChange={(e) => update("phone", e.target.value)} className={inputClass} maxLength={20} />
               {errors.phone && <p className="text-destructive text-xs mt-1 font-body">{errors.phone}</p>}

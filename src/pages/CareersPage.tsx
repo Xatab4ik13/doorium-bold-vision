@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Briefcase, MapPin, Clock, ChevronRight, Send } from "lucide-react";
-import careersHero from "@/assets/careers-hero.jpg";
+import { MapPin, Clock, ChevronRight, Send } from "lucide-react";
 
 const vacancies = [
   {
@@ -67,30 +66,7 @@ const benefits = [
   { title: "Поддержка", desc: "Персональный менеджер и техническая помощь" },
 ];
 
-const useFadeIn = (threshold = 0.2) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.unobserve(el); } },
-      { threshold }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [threshold]);
-  return { ref, style: {
-    opacity: visible ? 1 : 0,
-    transform: visible ? "translateY(0)" : "translateY(40px)",
-    transition: "opacity 0.8s ease-out, transform 0.8s ease-out",
-  }};
-};
-
 const CareersPage = () => {
-  const hero = useFadeIn(0.15);
-  const benefitsRef = useFadeIn(0.2);
-  const listRef = useFadeIn(0.15);
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
   useEffect(() => {
@@ -101,13 +77,9 @@ const CareersPage = () => {
     <div className="min-h-screen" style={{ background: "hsl(50 14% 5%)" }}>
       <Header />
 
-      {/* Hero */}
-      <section className="relative pt-40 pb-16 md:pt-48 md:pb-24 px-8 md:px-16 lg:px-24">
-        <div className="absolute inset-0 z-0">
-          <img src={careersHero} alt="Команда Doorium" className="w-full h-full object-cover opacity-20" />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsl(50 14% 5%) 0%, transparent 30%, hsl(50 14% 5%) 100%)" }} />
-        </div>
-        <div ref={hero.ref} style={hero.style} className="relative z-10 max-w-5xl mx-auto">
+      {/* Hero — clean, no photo */}
+      <section className="pt-40 pb-16 md:pt-48 md:pb-24 px-8 md:px-16 lg:px-24">
+        <div className="max-w-5xl mx-auto">
           <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">Карьера</p>
           <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-light text-doorium-platinum leading-[0.9] mb-6 tracking-wide">
             ВАКАНСИИ
@@ -121,16 +93,13 @@ const CareersPage = () => {
 
       {/* Benefits */}
       <section className="px-8 md:px-16 lg:px-24 pb-16 md:pb-24">
-        <div ref={benefitsRef.ref} style={benefitsRef.style} className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <h2 className="font-display text-3xl md:text-4xl font-light text-doorium-platinum mb-10 tracking-wide">
             Почему с нами
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {benefits.map((b, i) => (
-              <div
-                key={i}
-                className="border border-border/20 rounded-lg p-6 hover:border-primary/40 transition-colors duration-500"
-              >
+              <div key={i} className="border border-border/20 rounded-lg p-6 hover:border-primary/40 transition-colors duration-500">
                 <h3 className="font-display text-lg text-doorium-platinum mb-2 tracking-wide">{b.title}</h3>
                 <p className="font-body text-sm text-doorium-platinum/50 leading-relaxed">{b.desc}</p>
               </div>
@@ -141,16 +110,13 @@ const CareersPage = () => {
 
       {/* Vacancies list */}
       <section className="px-8 md:px-16 lg:px-24 pb-20 md:pb-28">
-        <div ref={listRef.ref} style={listRef.style} className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <h2 className="font-display text-3xl md:text-4xl font-light text-doorium-platinum mb-10 tracking-wide">
             Открытые позиции
           </h2>
           <div className="space-y-4">
             {vacancies.map((v, i) => (
-              <div
-                key={i}
-                className="border border-border/20 rounded-lg overflow-hidden hover:border-primary/30 transition-colors duration-500"
-              >
+              <div key={i} className="border border-border/20 rounded-lg overflow-hidden hover:border-primary/30 transition-colors duration-500">
                 <button
                   onClick={() => setExpandedIdx(expandedIdx === i ? null : i)}
                   className="w-full text-left p-6 flex items-center justify-between gap-4 bg-transparent"
