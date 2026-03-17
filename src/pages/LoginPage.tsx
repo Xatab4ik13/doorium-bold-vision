@@ -9,12 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { formatPhone } from "@/lib/formatPhone";
-// import { usePwaInstall } from "@/hooks/usePwaInstall";
-// import { isCrmDomain } from "@/hooks/useCrmDomain";
-
-// Stubs for hooks not yet ported
-const usePwaInstall = () => ({ canInstall: false, isInstalled: false, install: () => {}, showIosInstructions: false });
-const isCrmDomain = () => false;
+import { usePwaInstall } from "@/hooks/usePwaInstall";
+import { isCrmDomain } from "@/hooks/useCrmDomain";
 
 type LoginMode = "pin" | "admin";
 type PinStep = "phone" | "code";
