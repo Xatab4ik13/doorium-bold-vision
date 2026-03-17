@@ -177,3 +177,29 @@
     font-weight: 300;
   }
 }
+
+/* Dashboard CRM overrides — normal sans-serif headings */
+.dashboard-theme h1,
+.dashboard-theme h2,
+.dashboard-theme h3,
+.dashboard-theme h4,
+.dashboard-theme h5,
+.dashboard-theme h6 {
+  font-family: 'Raleway', sans-serif;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 600;
+}
+
+.dashboard-theme body,
+.dashboard-theme {
+  font-family: 'Raleway', sans-serif;
+}
+
+/* iOS safe area support for CRM */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .dashboard-theme {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+}
