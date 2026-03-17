@@ -12,6 +12,7 @@ import PortfolioPage from "./pages/PortfolioPage";
 import ContactsPage from "./pages/ContactsPage";
 import CareersPage from "./pages/CareersPage";
 import PartnerPage from "./pages/PartnerPage";
+import ArticlePage from "./pages/ArticlePage";
 import NotFound from "./pages/NotFound";
 
 // CRM pages (lazy loaded)
@@ -74,6 +75,7 @@ const App = () => (
               <Route path="/contacts" element={<ContactsPage />} />
               <Route path="/careers" element={<CareersPage />} />
               <Route path="/partner" element={<PartnerPage />} />
+              <Route path="/news/:slug" element={<ArticlePage />} />
 
               {/* CRM Login & Register */}
               <Route path="/login" element={<LoginPage />} />

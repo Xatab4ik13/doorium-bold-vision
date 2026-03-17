@@ -68,10 +68,10 @@ const RegisterPage = () => {
   };
 
   const inputClass =
-    "w-full bg-transparent border-b border-white/15 py-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 transition-colors duration-500";
+    "w-full bg-transparent border-b-2 border-doorium-chamoisee/30 py-4 text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-doorium-chamoisee transition-colors duration-500";
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6" style={{ background: "hsl(0 0% 4%)" }}>
+    <main className="min-h-screen flex items-center justify-center px-6" style={{ background: "hsl(240 2% 90%)" }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -80,15 +80,12 @@ const RegisterPage = () => {
       >
         <div className="text-center mb-10">
           <Link to={isCrm ? "/login" : "/"}>
-            <img src={logo} alt="Doorium Service" className="h-44 w-auto mx-auto mb-4 brightness-0 invert" />
+            <img src={logo} alt="Doorium Service" className="h-40 w-auto mx-auto mb-6" style={{ filter: "none" }} />
           </Link>
-          <h1
-            className="text-3xl md:text-4xl font-light tracking-wide text-white"
-            style={{ fontFamily: "'Cormorant Garamond', serif" }}
-          >
+          <h1 className="text-3xl md:text-4xl font-bold tracking-wide uppercase" style={{ fontFamily: "'Space Grotesk', sans-serif", color: "hsl(50 14% 8%)" }}>
             Регистрация
           </h1>
-          <p className="text-xs text-white/40 mt-3">
+          <p className="text-xs mt-3" style={{ color: "hsl(50 14% 8% / 0.5)" }}>
             Заполните данные — после одобрения администратором вы сможете войти
           </p>
         </div>
@@ -96,7 +93,7 @@ const RegisterPage = () => {
         <form onSubmit={handleSubmit} className="space-y-0">
           {/* Name */}
           <div className="relative">
-            <User size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-white/30" />
+            <User size={14} className="absolute left-0 top-1/2 -translate-y-1/2" style={{ color: "hsl(34 24% 48% / 0.5)" }} />
             <input
               type="text"
               placeholder="ФИО или название компании"
@@ -106,12 +103,13 @@ const RegisterPage = () => {
               className={`${inputClass} pl-6`}
               autoFocus
               maxLength={100}
+              style={{ color: "hsl(50 14% 8%)" }}
             />
           </div>
 
           {/* Phone */}
           <div className="relative">
-            <PhoneIcon size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-white/30" />
+            <PhoneIcon size={14} className="absolute left-0 top-1/2 -translate-y-1/2" style={{ color: "hsl(34 24% 48% / 0.5)" }} />
             <input
               type="tel"
               placeholder="+7 ___ ___ __ __"
@@ -120,22 +118,23 @@ const RegisterPage = () => {
               onFocus={(e) => { if (!e.target.value) setPhone("+7"); }}
               onChange={(e) => setPhone(formatPhone(e.target.value))}
               className={`${inputClass} pl-6`}
+              style={{ color: "hsl(50 14% 8%)" }}
             />
           </div>
 
           {/* PIN code */}
           <div className="pt-6">
             <div className="flex items-center gap-2 mb-4">
-              <Lock size={14} className="text-white/30" />
-              <p className="text-xs text-white/40">Придумайте 4-значный ПИН-код</p>
+              <Lock size={14} style={{ color: "hsl(34 24% 48% / 0.5)" }} />
+              <p className="text-xs" style={{ color: "hsl(50 14% 8% / 0.5)" }}>Придумайте 4-значный ПИН-код</p>
             </div>
             <div className="flex justify-center">
               <InputOTP maxLength={4} value={pin} onChange={setPin}>
                 <InputOTPGroup>
-                  <InputOTPSlot index={0} className="w-12 h-12 text-lg font-bold rounded-lg border border-white/15 bg-transparent text-white" />
-                  <InputOTPSlot index={1} className="w-12 h-12 text-lg font-bold rounded-lg border border-white/15 bg-transparent text-white" />
-                  <InputOTPSlot index={2} className="w-12 h-12 text-lg font-bold rounded-lg border border-white/15 bg-transparent text-white" />
-                  <InputOTPSlot index={3} className="w-12 h-12 text-lg font-bold rounded-lg border border-white/15 bg-transparent text-white" />
+                  <InputOTPSlot index={0} className="w-14 h-14 text-xl font-bold rounded-xl border-2" style={{ borderColor: "hsl(34 24% 48% / 0.3)", color: "hsl(50 14% 8%)" }} />
+                  <InputOTPSlot index={1} className="w-14 h-14 text-xl font-bold rounded-xl border-2" style={{ borderColor: "hsl(34 24% 48% / 0.3)", color: "hsl(50 14% 8%)" }} />
+                  <InputOTPSlot index={2} className="w-14 h-14 text-xl font-bold rounded-xl border-2" style={{ borderColor: "hsl(34 24% 48% / 0.3)", color: "hsl(50 14% 8%)" }} />
+                  <InputOTPSlot index={3} className="w-14 h-14 text-xl font-bold rounded-xl border-2" style={{ borderColor: "hsl(34 24% 48% / 0.3)", color: "hsl(50 14% 8%)" }} />
                 </InputOTPGroup>
               </InputOTP>
             </div>
@@ -144,9 +143,9 @@ const RegisterPage = () => {
           {/* Telegram ID */}
           <div className="pt-6">
             <div className="flex items-center gap-2 mb-2">
-              <SendIcon size={14} className="text-white/30" />
-              <p className="text-xs text-white/40">
-                Telegram ID <span className="text-red-400">*</span>
+              <SendIcon size={14} style={{ color: "hsl(34 24% 48% / 0.5)" }} />
+              <p className="text-xs" style={{ color: "hsl(50 14% 8% / 0.5)" }}>
+                Telegram ID <span className="text-red-500">*</span>
               </p>
             </div>
             <input
@@ -157,20 +156,22 @@ const RegisterPage = () => {
               onChange={(e) => setTelegramId(e.target.value.replace(/\D/g, ""))}
               className={inputClass}
               maxLength={20}
+              style={{ color: "hsl(50 14% 8%)" }}
             />
             <a
-              href="https://t.me/Doorium_service?start=myid"
+              href="https://t.me/doorium_bot"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-[11px] text-white/25 mt-2 hover:text-white/50 transition-colors"
+              className="flex items-center gap-1.5 text-[11px] mt-2 hover:opacity-80 transition-opacity"
+              style={{ color: "hsl(50 14% 8% / 0.4)" }}
             >
-              <HelpCircle size={12} /> Не знаете свой ID? Узнайте через нашего бота
+              <HelpCircle size={12} /> Не знаете свой ID? Узнайте через нашего бота @doorium_bot
             </a>
           </div>
 
           {/* Role */}
           <div className="pt-6">
-            <p className="text-xs text-white/40 mb-3">Выберите роль</p>
+            <p className="text-xs mb-3" style={{ color: "hsl(50 14% 8% / 0.5)" }}>Выберите роль</p>
             <div className="flex gap-2">
               {roles.map((r) => (
                 <button
@@ -179,9 +180,13 @@ const RegisterPage = () => {
                   onClick={() => setRole(r.value)}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all border ${
                     role === r.value
-                      ? "border-white/40 bg-white/10 text-white"
-                      : "border-white/10 text-white/30 hover:text-white/60 hover:border-white/20"
+                      ? "text-white shadow-lg"
+                      : "hover:opacity-70"
                   }`}
+                  style={role === r.value
+                    ? { background: "hsl(34 24% 48%)", borderColor: "hsl(34 24% 48%)" }
+                    : { borderColor: "hsl(34 24% 48% / 0.3)", color: "hsl(50 14% 8% / 0.5)" }
+                  }
                 >
                   {r.label}
                 </button>
@@ -192,8 +197,8 @@ const RegisterPage = () => {
           {/* Captcha */}
           <div className="pt-6">
             <div className="flex items-center gap-2 mb-2">
-              <HelpCircle size={14} className="text-white/30" />
-              <p className="text-xs text-white/40">
+              <HelpCircle size={14} style={{ color: "hsl(34 24% 48% / 0.5)" }} />
+              <p className="text-xs" style={{ color: "hsl(50 14% 8% / 0.5)" }}>
                 Проверка: {captcha.a} + {captcha.b} = ?
               </p>
             </div>
@@ -205,6 +210,7 @@ const RegisterPage = () => {
               onChange={(e) => setCaptchaAnswer(e.target.value.replace(/\D/g, ""))}
               className={inputClass}
               maxLength={3}
+              style={{ color: "hsl(50 14% 8%)" }}
             />
           </div>
 
@@ -212,24 +218,25 @@ const RegisterPage = () => {
           <div className="pt-8">
             <button
               type="submit"
-              className="w-full py-4 rounded-lg text-sm font-semibold uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 bg-white text-black hover:bg-white/80 disabled:opacity-50"
+              className="w-full py-4 rounded-lg text-sm font-semibold uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               disabled={loading}
+              style={{ background: "hsl(34 24% 48%)", color: "white" }}
             >
               {loading ? (
                 <><Loader2 size={16} className="animate-spin" /> Отправка...</>
               ) : (
-                <><User size={16} /> Зарегистрироваться</>
+                "Зарегистрироваться"
               )}
             </button>
           </div>
         </form>
 
-        <div className="flex items-center justify-center gap-3 mt-6 text-xs text-white/30">
-          <Link to="/login" className="hover:text-white/60 transition-colors">
+        <div className="flex items-center justify-center gap-3 mt-6 text-xs" style={{ color: "hsl(50 14% 8% / 0.4)" }}>
+          <Link to="/login" className="hover:opacity-70 transition-opacity">
             Уже есть аккаунт? Войти
           </Link>
           <span>·</span>
-          <Link to={isCrm ? "/login" : "/"} className="hover:text-white/60 transition-colors">
+          <Link to={isCrm ? "/login" : "/"} className="hover:opacity-70 transition-opacity">
             На главную
           </Link>
         </div>
