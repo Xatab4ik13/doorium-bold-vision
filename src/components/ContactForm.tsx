@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
+import api from "@/lib/api";
 
 const cities = ["Москва", "Санкт-Петербург"] as const;
 
 const requestTypes = [
-  { id: "measure", label: "Заявка на замер" },
-  { id: "install", label: "Заявка на монтаж" },
-  { id: "claim", label: "Рекламация" },
+  { id: "measurement", label: "Заявка на замер" },
+  { id: "installation", label: "Заявка на монтаж" },
+  { id: "reclamation", label: "Рекламация" },
 ] as const;
 
 const contactSchema = z.object({
@@ -17,7 +18,7 @@ const contactSchema = z.object({
   phone: z.string().trim().min(6, "Введите номер телефона").max(20),
   extraName: z.string().trim().max(100).optional(),
   extraPhone: z.string().trim().max(20).optional(),
-  address: z.string().trim().max(200).optional(),
+  address: z.string().trim().min(1, "Введите адрес").max(200),
   details: z.string().trim().max(1000).optional(),
 });
 
@@ -43,7 +44,7 @@ const ContactForm = () => {
 
   const update = (key: keyof ContactData, value: string) => setForm({ ...form, [key]: value });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
     const result = contactSchema.safeParse(form);
@@ -56,11 +57,28 @@ const ContactForm = () => {
       return;
     }
     setSending(true);
-    setTimeout(() => {
-      setSending(false);
+    try {
+      await api("/api/requests/public", {
+        method: "POST",
+        body: {
+          client_name: result.data.name,
+          client_phone: result.data.phone,
+          client_address: result.data.address || "",
+          city: result.data.city,
+          type: result.data.requestType,
+          work_description: result.data.details || "",
+          extra_name: result.data.extraName || "",
+          extra_phone: result.data.extraPhone || "",
+          source: "site",
+        },
+      });
       toast.success("Заявка отправлена! Мы свяжемся с вами в ближайшее время.");
       setForm({});
-    }, 1500);
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка отправки заявки");
+    } finally {
+      setSending(false);
+    }
   };
 
   const inputClass =
@@ -139,70 +157,26 @@ const ContactForm = () => {
             {errors.requestType && <p className="text-destructive text-xs mt-2 font-body">{errors.requestType}</p>}
           </div>
 
-          {/* 3 short fields row */}
+          {/* Fields */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <input
-                type="text"
-                value={form.name || ""}
-                onChange={(e) => update("name", e.target.value)}
-                className={inputClass}
-                placeholder="ФИО"
-                maxLength={100}
-              />
-              <input
-                type="tel"
-                value={form.phone || ""}
-                onChange={(e) => update("phone", e.target.value)}
-                className={`${inputClass} mt-3`}
-                placeholder="+7"
-                maxLength={20}
-              />
+              <input type="text" value={form.name || ""} onChange={(e) => update("name", e.target.value)} className={inputClass} placeholder="ФИО" maxLength={100} />
+              <input type="tel" value={form.phone || ""} onChange={(e) => update("phone", e.target.value)} className={`${inputClass} mt-3`} placeholder="+7" maxLength={20} />
               {errors.name && <p className="text-destructive text-xs mt-1 font-body">{errors.name}</p>}
               {errors.phone && <p className="text-destructive text-xs mt-1 font-body">{errors.phone}</p>}
             </div>
-
             <div>
-              <input
-                type="text"
-                value={form.extraName || ""}
-                onChange={(e) => update("extraName", e.target.value)}
-                className={inputClass}
-                placeholder="ФИО доп. контакта"
-                maxLength={100}
-              />
-              <input
-                type="tel"
-                value={form.extraPhone || ""}
-                onChange={(e) => update("extraPhone", e.target.value)}
-                className={`${inputClass} mt-3`}
-                placeholder="+7"
-                maxLength={20}
-              />
+              <input type="text" value={form.extraName || ""} onChange={(e) => update("extraName", e.target.value)} className={inputClass} placeholder="ФИО доп. контакта" maxLength={100} />
+              <input type="tel" value={form.extraPhone || ""} onChange={(e) => update("extraPhone", e.target.value)} className={`${inputClass} mt-3`} placeholder="+7" maxLength={20} />
             </div>
-
             <div>
-              <input
-                type="text"
-                value={form.address || ""}
-                onChange={(e) => update("address", e.target.value)}
-                className={inputClass}
-                placeholder="Адрес"
-                maxLength={200}
-              />
+              <input type="text" value={form.address || ""} onChange={(e) => update("address", e.target.value)} className={inputClass} placeholder="Адрес" maxLength={200} />
+              {errors.address && <p className="text-destructive text-xs mt-1 font-body">{errors.address}</p>}
             </div>
           </div>
 
-          {/* Long textarea */}
           <div>
-            <textarea
-              value={form.details || ""}
-              onChange={(e) => update("details", e.target.value)}
-              rows={4}
-              className={`${inputClass} resize-none`}
-              placeholder="Что замеряем"
-              maxLength={1000}
-            />
+            <textarea value={form.details || ""} onChange={(e) => update("details", e.target.value)} rows={4} className={`${inputClass} resize-none`} placeholder="Что замеряем" maxLength={1000} />
           </div>
 
           <button
