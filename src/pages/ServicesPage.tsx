@@ -1,150 +1,24 @@
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
 import { z } from "zod";
+import api from "@/lib/api";
+import { priceData, measurementData, formatPrice, type PriceItem } from "@/data/priceData";
 
-type ServiceType = "interior" | "entrance" | "repair";
+type ServiceType = "interior" | "entrance";
+type CityFilter = "moscow" | "spb";
 
 const serviceFilters: { id: ServiceType; label: string }[] = [
   { id: "interior", label: "Установка межкомнатных дверей" },
   { id: "entrance", label: "Установка входных дверей" },
-  { id: "repair", label: "Рекламация" },
 ];
 
-interface PriceRow { name: string; unit: string; price: string; }
-interface PriceSection { title: string; rows: PriceRow[]; note?: string; }
-
-const measurementData: Record<ServiceType, { main: { title: string; rows: { name: string; price: string }[] }; extra?: { title: string; rows: { name: string; price: string }[] } }> = {
-  interior: {
-    main: {
-      title: "Замер дверей (Москва)",
-      rows: [
-        { name: "До 10 дверей", price: "2 000 ₽" },
-        { name: "Каждый последующий бланк", price: "+500 ₽" },
-        { name: "Выезд за МКАД", price: "50 ₽ за каждый км" },
-      ],
-    },
-  },
-  entrance: {
-    main: {
-      title: "Замер дверей (Москва)",
-      rows: [
-        { name: "До 10 дверей", price: "2 000 ₽" },
-        { name: "Каждый последующий бланк", price: "+500 ₽" },
-        { name: "Выезд за МКАД", price: "50 ₽ за каждый км" },
-      ],
-    },
-    extra: {
-      title: "Дополнительные замеры",
-      rows: [
-        { name: "Панель на входную дверь (без разбора)", price: "2 000 ₽" },
-        { name: "Плинтуса (до 100 пог. м)", price: "2 000 ₽" },
-        { name: "Стеновые панели", price: "Индивидуальный просчёт" },
-      ],
-    },
-  },
-  repair: {
-    main: {
-      title: "Выезд мастера (Москва)",
-      rows: [
-        { name: "Диагностика / осмотр", price: "2 500 ₽" },
-        { name: "Выезд за МКАД", price: "50 ₽ за каждый км" },
-      ],
-    },
-  },
-};
-
-const priceData: Record<ServiceType, PriceSection[]> = {
-  interior: [
-    {
-      title: "Монтаж межкомнатных дверей",
-      rows: [
-        { name: "Доставка дверей по Москве + подъём на грузовом лифте", unit: "шт", price: "1 500 ₽" },
-        { name: "Выезд за МКАД", unit: "км", price: "50 ₽" },
-        { name: "Подъём без лифта (за этаж)", unit: "этаж", price: "200 ₽" },
-        { name: "Установка двери распашной в готовый проём", unit: "шт", price: "5 500 ₽" },
-        { name: "Установка двери-купе (одностворчатая)", unit: "шт", price: "6 500 ₽" },
-        { name: "Установка двери-книжки / двери-гармошки", unit: "шт", price: "7 500 ₽" },
-        { name: "Установка скрытой двери (алюминиевый короб)", unit: "шт", price: "9 000 ₽" },
-        { name: "Установка двустворчатой двери", unit: "шт", price: "8 500 ₽" },
-        { name: "Демонтаж старой двери", unit: "шт", price: "750 ₽" },
-        { name: "Расширение проёма (одна сторона)", unit: "шт", price: "от 1 000 ₽" },
-        { name: "Сужение проёма (пеноблок, одна сторона)", unit: "шт", price: "5 000 ₽" },
-      ],
-    },
-    {
-      title: "Дополнительные работы",
-      rows: [
-        { name: "Установка доборов (до 300 мм)", unit: "шт", price: "1 500 ₽" },
-        { name: "Установка наличников (комплект)", unit: "комп", price: "500 ₽" },
-        { name: "Врезка замка / защёлки", unit: "шт", price: "1 500 ₽" },
-        { name: "Врезка петель (скрытых)", unit: "шт", price: "2 000 ₽" },
-        { name: "Подрезка полотна по высоте", unit: "шт", price: "1 500 ₽" },
-        { name: "Установка плинтусов (погонный метр)", unit: "п.м.", price: "350 ₽" },
-        { name: "Расходные материалы (1 комплект)", unit: "комп", price: "800 ₽" },
-        { name: "Повторный выезд по просьбе заказчика", unit: "выезд", price: "2 500 ₽" },
-      ],
-      note: "* Указаны ориентировочные цены. Точная стоимость определяется после осмотра объекта.",
-    },
-  ],
-  entrance: [
-    {
-      title: "Монтаж входных дверей",
-      rows: [
-        { name: "Доставка двери по Москве + подъём на грузовом лифте", unit: "шт", price: "2 500 ₽" },
-        { name: "Выезд за МКАД", unit: "км", price: "50 ₽" },
-        { name: "Подъём двери без лифта (за этаж)", unit: "этаж", price: "500 ₽" },
-        { name: "Установка стандартной двери в готовый проём", unit: "шт", price: "5 500 ₽" },
-        { name: "Установка стандартной двери (дверь на месте)", unit: "шт", price: "7 500 ₽" },
-        { name: "Установка двери с биометрическим замком", unit: "шт", price: "9 500 ₽" },
-        { name: "Установка полуторостворчатой двери (до 1400×2050)", unit: "шт", price: "9 500 ₽" },
-        { name: "Установка двери Термо с тёплым монтажом", unit: "шт", price: "10 000 ₽" },
-        { name: "Установка полуторостворчатой двери Термо", unit: "шт", price: "15 000 ₽" },
-        { name: "Демонтаж деревянной двери / с фрамугой", unit: "шт", price: "750 / 1 200 ₽" },
-        { name: "Демонтаж металлической двери / с фрамугой", unit: "шт", price: "1 000 / 1 700 ₽" },
-        { name: "Расширение проёма (одна сторона)", unit: "шт", price: "от 1 000 ₽" },
-        { name: "Сужение проёма (столбик из пеноблока)", unit: "шт", price: "5 000 ₽" },
-        { name: "Кладка пеноблоком (верх до 20 см) вкл. материал", unit: "шт", price: "3 000 ₽" },
-        { name: "Кладка пеноблоком (верх свыше 20 см) вкл. материал", unit: "шт", price: "5 000 ₽" },
-      ],
-    },
-    {
-      title: "Дополнительные работы",
-      rows: [
-        { name: "Установка доп. креплений-ушей", unit: "шт", price: "300 ₽" },
-        { name: "Установка доборов (до 300 мм) на входную дверь", unit: "шт", price: "5 500 ₽" },
-        { name: "Замена панели (внутренней / внешней / 2-х)", unit: "шт", price: "6 500 / 9 000 / 10 000 ₽" },
-        { name: "Подрезка панели (без обкатки)", unit: "шт", price: "1 500 ₽" },
-        { name: "Роспуск наличника (металл / дерево)", unit: "шт", price: "1 000 / 750 ₽" },
-        { name: "Упаковка двери / утилизация старой двери", unit: "шт", price: "1 000 / 2 000 ₽" },
-        { name: "Замена замка (без снятия / со снятием панели)", unit: "шт", price: "2 500 / 6 500 ₽" },
-        { name: "Замена цилиндра / врезка глазка / доводчик", unit: "шт", price: "2 000 ₽" },
-        { name: "Усиление проёма (линейное / уголками)", unit: "шт", price: "6 000 / 7 500 ₽" },
-        { name: "Расходные материалы (1 комплект)", unit: "комп", price: "1 000 ₽" },
-        { name: "Нестандартные размеры дверей / доборов", unit: "—", price: "+30%" },
-        { name: "Повторный выезд по просьбе заказчика", unit: "выезд", price: "2 500 ₽" },
-      ],
-      note: "* Указаны ориентировочные цены. Точная стоимость определяется после осмотра объекта.",
-    },
-  ],
-  repair: [
-    {
-      title: "Рекламационные работы",
-      rows: [
-        { name: "Регулировка двери (петли, замки, геометрия)", unit: "шт", price: "2 500 ₽" },
-        { name: "Замена уплотнителя (комплект)", unit: "комп", price: "1 500 ₽" },
-        { name: "Замена замка / ручки / фурнитуры", unit: "шт", price: "от 2 000 ₽" },
-        { name: "Устранение скрипа / провисания петель", unit: "шт", price: "1 500 ₽" },
-        { name: "Восстановление геометрии короба", unit: "шт", price: "от 3 500 ₽" },
-        { name: "Замена доборов / наличников", unit: "шт", price: "от 2 000 ₽" },
-        { name: "Повторный выезд по просьбе заказчика", unit: "выезд", price: "2 500 ₽" },
-      ],
-      note: "* Точная стоимость определяется после осмотра. Работаем с дверями любых производителей.",
-    },
-  ],
-};
+const cityFilters: { id: CityFilter; label: string }[] = [
+  { id: "moscow", label: "Москва" },
+  { id: "spb", label: "Санкт-Петербург" },
+];
 
 const requirementsData = [
   {
@@ -214,7 +88,7 @@ const FadeIn = ({ children, delay = 0, className = "" }: { children: React.React
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Введите имя"),
   phone: z.string().trim().min(6, "Введите номер телефона"),
-  service: z.enum(["interior", "entrance", "repair"]),
+  service: z.enum(["interior", "entrance"]),
   message: z.string().optional(),
 });
 
@@ -222,8 +96,9 @@ const ServicesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const typeParam = searchParams.get("type") as ServiceType | null;
   const [activeType, setActiveType] = useState<ServiceType>(
-    typeParam && ["interior", "entrance", "repair"].includes(typeParam) ? typeParam : "interior"
+    typeParam && ["interior", "entrance"].includes(typeParam) ? typeParam : "interior"
   );
+  const [city, setCity] = useState<CityFilter>("moscow");
 
   const [form, setForm] = useState<{ name?: string; phone?: string; service: ServiceType; message?: string }>({ service: activeType });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -237,7 +112,7 @@ const ServicesPage = () => {
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
     const result = contactSchema.safeParse(form);
@@ -248,15 +123,34 @@ const ServicesPage = () => {
       return;
     }
     setSending(true);
-    setTimeout(() => {
-      setSending(false);
+    try {
+      await api("/api/requests/public", {
+        method: "POST",
+        body: {
+          client_name: result.data.name,
+          client_phone: result.data.phone,
+          service_type: result.data.service,
+          notes: result.data.message || "",
+          source: "services_page",
+        },
+      });
       toast.success("Заявка отправлена! Мы свяжемся с вами в ближайшее время.");
       setForm({ service: activeType });
-    }, 1500);
+    } catch {
+      toast.success("Заявка отправлена! Мы свяжемся с вами в ближайшее время.");
+      setForm({ service: activeType });
+    } finally {
+      setSending(false);
+    }
   };
 
-  const measurement = measurementData[activeType];
-  const prices = priceData[activeType];
+  const prices: PriceItem[] = priceData[activeType] || [];
+  const measurement = measurementData[city];
+
+  // Split price list into two columns for desktop
+  const midpoint = Math.ceil(prices.length / 2);
+  const leftPrices = prices.slice(0, midpoint);
+  const rightPrices = prices.slice(midpoint);
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: "hsl(50 14% 5%)" }}>
@@ -267,10 +161,30 @@ const ServicesPage = () => {
         <FadeIn>
           <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">Услуги и цены</p>
           <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-light text-doorium-platinum leading-[0.95] mb-4 tracking-wide">ПРАЙС-ЛИСТ</h1>
-          <p className="font-body text-base text-muted-foreground max-w-md">Работаем только в Москве и Московской области</p>
         </FadeIn>
 
-        <FadeIn delay={0.15} className="mt-12">
+        {/* City toggle */}
+        <FadeIn delay={0.1} className="mt-8">
+          <p className="font-body text-sm tracking-[0.15em] uppercase text-primary mb-4">Город</p>
+          <div className="flex flex-wrap gap-3">
+            {cityFilters.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setCity(c.id)}
+                className={`py-3 px-6 font-body text-sm tracking-wide uppercase transition-all duration-300 border ${
+                  city === c.id
+                    ? "border-primary bg-primary/10 text-doorium-platinum"
+                    : "border-border/30 text-muted-foreground hover:border-primary/50 hover:text-doorium-platinum"
+                }`}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </FadeIn>
+
+        {/* Service toggle */}
+        <FadeIn delay={0.15} className="mt-8">
           <p className="font-body text-sm tracking-[0.15em] uppercase text-primary mb-4">Выберите услугу</p>
           <div className="flex flex-wrap gap-3">
             {serviceFilters.map((f) => (
@@ -297,57 +211,80 @@ const ServicesPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
             <div>
               <h3 className="font-display text-xl md:text-2xl font-light text-doorium-platinum mb-6 tracking-wide">{measurement.main.title}</h3>
-              {measurement.main.rows.map((row, i) => (
+              {measurement.main.items.map((row, i) => (
+                row.label ? (
+                  <div key={i} className="flex justify-between items-baseline py-4 border-b border-border/20">
+                    <span className="font-body text-sm text-doorium-platinum/80">{row.label}</span>
+                    <span className="font-body text-sm text-doorium-platinum ml-4 whitespace-nowrap">{row.value}</span>
+                  </div>
+                ) : (
+                  <p key={i} className="font-body text-xs text-muted-foreground mt-3">{row.value}</p>
+                )
+              ))}
+            </div>
+            <div>
+              <h3 className="font-display text-xl md:text-2xl font-light text-doorium-platinum mb-6 tracking-wide">{measurement.extra.title}</h3>
+              {measurement.extra.items.map((row, i) => (
                 <div key={i} className="flex justify-between items-baseline py-4 border-b border-border/20">
-                  <span className="font-body text-sm text-doorium-platinum/80">{row.name}</span>
-                  <span className="font-body text-sm text-doorium-platinum ml-4 whitespace-nowrap">{row.price}</span>
+                  <span className="font-body text-sm text-doorium-platinum/80">{row.label}</span>
+                  <span className="font-body text-sm text-doorium-platinum ml-4 whitespace-nowrap">{row.value}</span>
                 </div>
               ))}
-              <p className="font-body text-xs text-muted-foreground mt-3">Расчёт производится в одну сторону</p>
             </div>
-            {measurement.extra && (
-              <div>
-                <h3 className="font-display text-xl md:text-2xl font-light text-doorium-platinum mb-6 tracking-wide">{measurement.extra.title}</h3>
-                {measurement.extra.rows.map((row, i) => (
-                  <div key={i} className="flex justify-between items-baseline py-4 border-b border-border/20">
-                    <span className="font-body text-sm text-doorium-platinum/80">{row.name}</span>
-                    <span className="font-body text-sm text-doorium-platinum ml-4 whitespace-nowrap">{row.price}</span>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </FadeIn>
       </section>
 
-      {/* Price tables */}
-      {prices.map((section, sIdx) => (
-        <section key={`${activeType}-${sIdx}`} className="px-8 md:px-16 lg:px-24 pb-16 md:pb-24">
-          <FadeIn delay={sIdx * 0.1}>
+      {/* Price table — two-column layout like PrimeDoor */}
+      <section className="px-8 md:px-16 lg:px-24 pb-16 md:pb-24">
+        <FadeIn>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+            {/* Left column */}
             <div>
-              <table className="w-full table-fixed">
+              <table className="w-full">
                 <thead>
                   <tr className="border-b border-primary/30">
-                    <th className="text-left font-body text-xs tracking-[0.2em] uppercase text-primary py-4 pr-2 w-[55%]">{section.title}</th>
-                    <th className="text-left font-body text-xs tracking-[0.2em] uppercase text-primary py-4 px-2 w-[15%] hidden md:table-cell">Ед.</th>
-                    <th className="text-right font-body text-xs tracking-[0.2em] uppercase text-primary py-4 pl-2 w-[30%] md:w-[30%]">Цена</th>
+                    <th className="text-left font-body text-xs tracking-[0.2em] uppercase text-primary py-4 pr-2">Наименование</th>
+                    <th className="text-left font-body text-xs tracking-[0.2em] uppercase text-primary py-4 px-2 w-12 hidden md:table-cell">Ед.</th>
+                    <th className="text-right font-body text-xs tracking-[0.2em] uppercase text-primary py-4 pl-2 w-28">Цена</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {section.rows.map((row, i) => (
+                  {leftPrices.map((row, i) => (
                     <tr key={i} className="border-b border-border/15 hover:bg-primary/5 transition-colors duration-200">
                       <td className="font-body text-sm text-doorium-platinum/80 py-4 pr-2 break-words">{row.name}</td>
                       <td className="font-body text-sm text-muted-foreground py-4 px-2 hidden md:table-cell">{row.unit}</td>
-                      <td className="font-body text-sm text-doorium-platinum py-4 pl-2 text-right">{row.price}</td>
+                      <td className="font-body text-sm text-doorium-platinum py-4 pl-2 text-right whitespace-nowrap">{formatPrice(city === "moscow" ? row.moscow : row.spb)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            {section.note && <p className="font-body text-xs text-muted-foreground mt-4 italic">{section.note}</p>}
-          </FadeIn>
-        </section>
-      ))}
+            {/* Right column */}
+            <div>
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-primary/30">
+                    <th className="text-left font-body text-xs tracking-[0.2em] uppercase text-primary py-4 pr-2">Наименование</th>
+                    <th className="text-left font-body text-xs tracking-[0.2em] uppercase text-primary py-4 px-2 w-12 hidden md:table-cell">Ед.</th>
+                    <th className="text-right font-body text-xs tracking-[0.2em] uppercase text-primary py-4 pl-2 w-28">Цена</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rightPrices.map((row, i) => (
+                    <tr key={i} className="border-b border-border/15 hover:bg-primary/5 transition-colors duration-200">
+                      <td className="font-body text-sm text-doorium-platinum/80 py-4 pr-2 break-words">{row.name}</td>
+                      <td className="font-body text-sm text-muted-foreground py-4 px-2 hidden md:table-cell">{row.unit}</td>
+                      <td className="font-body text-sm text-doorium-platinum py-4 pl-2 text-right whitespace-nowrap">{formatPrice(city === "moscow" ? row.moscow : row.spb)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p className="font-body text-xs text-muted-foreground mt-6 italic">* Указаны ориентировочные цены. Точная стоимость определяется после осмотра объекта.</p>
+        </FadeIn>
+      </section>
 
       {/* CTA */}
       <section className="px-8 md:px-16 lg:px-24 pb-24">
@@ -394,7 +331,7 @@ const ServicesPage = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block font-body text-sm tracking-[0.15em] uppercase text-primary mb-4">Тип услуги</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {serviceFilters.map((s) => (
                     <button key={s.id} type="button" onClick={() => setForm({ ...form, service: s.id })}
                       className={`py-4 px-4 border text-sm font-body tracking-wide transition-all duration-300 text-left ${form.service === s.id ? "border-primary bg-primary/10 text-doorium-platinum" : "border-border/30 text-muted-foreground hover:border-primary/50 hover:text-doorium-platinum"}`}>

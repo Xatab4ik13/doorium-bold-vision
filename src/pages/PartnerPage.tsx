@@ -232,7 +232,6 @@ const PartnerPage = () => {
               boxShadow: "0 20px 50px -15px rgba(0,0,0,0.4)",
             }}
           >
-            <img src={logo} alt="Doorium" className="h-20 w-auto mx-auto mb-6 brightness-0 invert opacity-60" />
             <h2 className="font-display text-2xl md:text-3xl font-light text-doorium-platinum mb-8 tracking-wide text-center">
               Став нашим партнёром, вы получаете:
             </h2>
