@@ -32,6 +32,7 @@ const ContactForm = () => {
   const [form, setForm] = useState<Partial<ContactData>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sending, setSending] = useState(false);
+  const [consent, setConsent] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
