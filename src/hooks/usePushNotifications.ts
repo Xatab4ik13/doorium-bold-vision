@@ -25,9 +25,15 @@ export function usePushNotifications() {
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
 
+    // Ensure service worker is registered first
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    
     navigator.serviceWorker.ready.then(async (reg) => {
       const sub = await reg.pushManager.getSubscription();
       setIsSubscribed(!!sub);
+      console.log("[Push] Current subscription:", !!sub);
+    }).catch(err => {
+      console.error("[Push] Service worker not ready:", err);
     });
   }, []);
 

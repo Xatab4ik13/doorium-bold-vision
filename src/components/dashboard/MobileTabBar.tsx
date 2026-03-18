@@ -75,7 +75,7 @@ const tabsByRole: Record<UserRole, RoleTabConfig> = {
   },
   partner: {
     tabs: [
-      { label: "Заявки", href: "/partner", icon: Eye },
+      { label: "Заявки", href: "/partner/dashboard", icon: Eye },
       { label: "Новая", href: "/partner/new", icon: PlusCircle },
       { label: "История", href: "/partner/history", icon: History },
     ],

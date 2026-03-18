@@ -68,8 +68,14 @@ const LoadingFallback = () => (
 const CrmRedirect = () => {
   const { isAuthenticated, user } = useAuth();
   if (isAuthenticated && user) {
-    const rolePath = user.role === "admin" ? "/admin" : `/${user.role}`;
-    return <Navigate to={rolePath} replace />;
+    const rolePaths: Record<string, string> = {
+      admin: "/admin",
+      manager: "/manager",
+      measurer: "/measurer",
+      installer: "/installer",
+      partner: "/partner/dashboard",
+    };
+    return <Navigate to={rolePaths[user.role] || "/login"} replace />;
   }
   return <Navigate to="/login" replace />;
 };
