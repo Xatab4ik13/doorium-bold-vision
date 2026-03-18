@@ -137,7 +137,7 @@ const ContactForm = () => {
           </div>
 
           {/* Request type */}
-          <div>
+          <div className={`transition-opacity duration-300 ${!form.city ? "opacity-40 pointer-events-none" : ""}`}>
             <label className="block font-body text-sm tracking-[0.15em] uppercase text-doorium-platinum/60 mb-4">
               Тип заявки
             </label>
@@ -147,6 +147,7 @@ const ContactForm = () => {
                   key={t.id}
                   type="button"
                   onClick={() => update("requestType", t.id)}
+                  disabled={!form.city}
                   className={`px-6 py-3 border rounded-sm font-body text-sm tracking-wide uppercase transition-all duration-300 ${
                     form.requestType === t.id
                       ? "border-primary bg-primary/10 text-doorium-platinum"
