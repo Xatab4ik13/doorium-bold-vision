@@ -185,12 +185,40 @@ const ContactForm = () => {
           </div>
 
           <div>
-            <textarea value={form.details || ""} onChange={(e) => update("details", e.target.value)} rows={4} className={`${inputClass} resize-none`} placeholder="Что замеряем" maxLength={1000} />
+            <textarea
+              value={form.details || ""}
+              onChange={(e) => update("details", e.target.value)}
+              rows={4}
+              className={`${inputClass} resize-none`}
+              placeholder={
+                form.requestType === "installation"
+                  ? "Опишите что нужно установить"
+                  : form.requestType === "reclamation"
+                  ? "Опишите проблему"
+                  : "Что замеряем"
+              }
+              maxLength={1000}
+              disabled={!form.city}
+            />
           </div>
+
+          {/* Consent checkbox */}
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded border-border/30 accent-primary"
+            />
+            <span className="font-body text-xs text-doorium-platinum/50 leading-relaxed group-hover:text-doorium-platinum/70 transition-colors">
+              Нажимая кнопку «Отправить», я даю согласие на обработку персональных данных в соответствии с{" "}
+              <span className="text-primary/70 underline underline-offset-2">политикой конфиденциальности</span>
+            </span>
+          </label>
 
           <button
             type="submit"
-            disabled={sending}
+            disabled={sending || !consent}
             className="w-full sm:w-auto px-12 py-4 bg-primary text-primary-foreground font-body text-sm font-medium tracking-[0.15em] uppercase hover:bg-primary/80 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
           >
             {sending ? "ОТПРАВКА..." : "ОТПРАВИТЬ"}
