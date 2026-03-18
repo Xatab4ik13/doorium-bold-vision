@@ -7,6 +7,7 @@ import { lazy, Suspense } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { isCrmDomain } from "@/hooks/useCrmDomain";
+import { getRoleDashboardRoute } from "@/lib/roleRoutes";
 import NotFound from "./pages/NotFound";
 
 // Public pages (only loaded on main domain)
@@ -68,14 +69,7 @@ const LoadingFallback = () => (
 const CrmRedirect = () => {
   const { isAuthenticated, user } = useAuth();
   if (isAuthenticated && user) {
-    const rolePaths: Record<string, string> = {
-      admin: "/admin",
-      manager: "/manager",
-      measurer: "/measurer",
-      installer: "/installer",
-      partner: "/partner/dashboard",
-    };
-    return <Navigate to={rolePaths[user.role] || "/login"} replace />;
+    return <Navigate to={getRoleDashboardRoute(user.role)} replace />;
   }
   return <Navigate to="/login" replace />;
 };
@@ -95,6 +89,7 @@ const App = () => (
                   <Route path="/" element={<CrmRedirect />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/partner" element={<ProtectedRoute allowedRoles={["partner"]}><Navigate to="/partner/dashboard" replace /></ProtectedRoute>} />
                 </>
               ) : (
                 <>
