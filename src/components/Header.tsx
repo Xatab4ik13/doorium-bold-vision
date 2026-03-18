@@ -143,7 +143,7 @@ const Header = forwardRef<HTMLElement>((_, ref) => {
             <p className="font-body text-[10px] tracking-wider text-doorium-platinum/30 mb-1">Москва</p>
             <a
               href="tel:+79168191996"
-              className="block font-body text-sm tracking-wider text-doorium-platinum/40 hover:text-primary transition-colors"
+              className="block font-body text-base tracking-wide text-doorium-platinum/60 hover:text-primary transition-colors"
             >
               8 (916) 819-19-96
             </a>
@@ -152,7 +152,7 @@ const Header = forwardRef<HTMLElement>((_, ref) => {
             <p className="font-body text-[10px] tracking-wider text-doorium-platinum/30 mb-1">Санкт-Петербург</p>
             <a
               href="tel:+79268637008"
-              className="block font-body text-sm tracking-wider text-doorium-platinum/40 hover:text-primary transition-colors"
+              className="block font-body text-base tracking-wide text-doorium-platinum/60 hover:text-primary transition-colors"
             >
               +7 (926) 863-70-08
             </a>

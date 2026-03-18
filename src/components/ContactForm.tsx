@@ -161,10 +161,10 @@ const ContactForm = () => {
           </div>
 
           {/* Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 transition-opacity duration-300 ${!form.city ? "opacity-40 pointer-events-none" : ""}`}>
             <div>
-              <input type="text" value={form.name || ""} onChange={(e) => update("name", e.target.value)} className={inputClass} placeholder="ФИО" maxLength={100} />
-              <input type="tel" value={form.phone || ""} onChange={(e) => update("phone", formatPhone(e.target.value))} className={`${inputClass} mt-3`} placeholder="+7" maxLength={20} />
+              <input type="text" value={form.name || ""} onChange={(e) => update("name", e.target.value)} className={inputClass} placeholder="ФИО" maxLength={100} disabled={!form.city} />
+              <input type="tel" value={form.phone || ""} onChange={(e) => update("phone", formatPhone(e.target.value))} className={`${inputClass} mt-3`} placeholder="+7" maxLength={20} disabled={!form.city} />
               {errors.name && <p className="text-destructive text-xs mt-1 font-body">{errors.name}</p>}
               {errors.phone && <p className="text-destructive text-xs mt-1 font-body">{errors.phone}</p>}
             </div>
