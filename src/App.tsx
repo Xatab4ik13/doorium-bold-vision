@@ -17,6 +17,7 @@ const ContactsPage = lazy(() => import("./pages/ContactsPage"));
 const CareersPage = lazy(() => import("./pages/CareersPage"));
 const PartnerPage = lazy(() => import("./pages/PartnerPage"));
 const ArticlePage = lazy(() => import("./pages/ArticlePage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 
 // CRM pages (lazy loaded)
 const LoginPage = lazy(() => import("./pages/LoginPage"));
