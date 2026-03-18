@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.png"],
+      includeAssets: ["favicon.png", "android-chrome-192x192.png", "android-chrome-512x512.png", "apple-touch-icon-180x180.png"],
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => ({
         short_name: "Doorium",
         description: "CRM-система Doorium Service",
         theme_color: "#1a1a2e",
-        background_color: "#f0f1f5",
+        background_color: "#1a1a2e",
         display: "standalone",
         orientation: "portrait",
         scope: "/",
@@ -50,16 +50,28 @@ export default defineConfig(({ mode }) => ({
         categories: ["business", "productivity"],
         icons: [
           {
-            src: "/favicon.png",
+            src: "/android-chrome-192x192.png",
             sizes: "192x192",
             type: "image/png",
             purpose: "any",
           },
           {
-            src: "/favicon.png",
+            src: "/android-chrome-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/android-chrome-512x512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable",
+          },
+          {
+            src: "/apple-touch-icon-1024x1024.png",
+            sizes: "1024x1024",
+            type: "image/png",
+            purpose: "any",
           },
         ],
       },
