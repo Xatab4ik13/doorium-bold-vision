@@ -61,14 +61,14 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-6">
             <div>
-              <p className="font-body text-[10px] tracking-wider text-doorium-platinum/20 mb-0.5">Москва</p>
-              <a href="tel:+79168191996" className="font-body text-xs tracking-wider text-doorium-platinum/40 hover:text-primary transition-colors">
+              <p className="font-body text-[10px] tracking-wider text-doorium-platinum/30 mb-0.5">Москва</p>
+              <a href="tel:+79168191996" className="font-body text-base font-normal tracking-wide text-doorium-platinum/70 hover:text-primary transition-colors">
                 8 (916) 819-19-96
               </a>
             </div>
             <div>
-              <p className="font-body text-[10px] tracking-wider text-doorium-platinum/20 mb-0.5">Санкт-Петербург</p>
-              <a href="tel:+79268637008" className="font-body text-xs tracking-wider text-doorium-platinum/40 hover:text-primary transition-colors">
+              <p className="font-body text-[10px] tracking-wider text-doorium-platinum/30 mb-0.5">Санкт-Петербург</p>
+              <a href="tel:+79268637008" className="font-body text-base font-normal tracking-wide text-doorium-platinum/70 hover:text-primary transition-colors">
                 +7 (926) 863-70-08
               </a>
             </div>
