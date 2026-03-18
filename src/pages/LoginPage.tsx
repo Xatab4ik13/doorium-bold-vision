@@ -43,6 +43,11 @@ const LoginPage = () => {
 
   // Try auto-login with device token on mount
   useEffect(() => {
+    const justLoggedOut = sessionStorage.getItem("just_logged_out");
+    if (justLoggedOut) {
+      sessionStorage.removeItem("just_logged_out");
+      return;
+    }
     const deviceToken = localStorage.getItem("crm_device_token");
     const savedPhone = localStorage.getItem("crm_device_phone");
     if (deviceToken && savedPhone) {
