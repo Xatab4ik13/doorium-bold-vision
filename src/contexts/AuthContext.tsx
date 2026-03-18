@@ -44,6 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("device_phone");
     localStorage.removeItem("crm_device_token");
     localStorage.removeItem("crm_device_phone");
+    sessionStorage.setItem("just_logged_out", "1");
     setToken(null);
     setUser(null);
   };
