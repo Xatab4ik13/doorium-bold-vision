@@ -36,7 +36,7 @@ const News = () => {
           }}
         >
           <div
-            className="flex items-center justify-between px-6 md:px-16 lg:px-24 py-5 md:py-6"
+            className="flex items-center justify-between px-6 md:px-16 lg:px-24 py-8 md:py-9"
             style={{
               opacity: visible ? 1 : 0,
               transform: visible ? "translateX(0)" : "translateX(-40px)",
