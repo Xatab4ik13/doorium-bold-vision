@@ -213,7 +213,7 @@ const ContactForm = () => {
             />
             <span className="font-body text-xs text-doorium-platinum/50 leading-relaxed group-hover:text-doorium-platinum/70 transition-colors">
               Нажимая кнопку «Отправить», я даю согласие на обработку персональных данных в соответствии с{" "}
-              <span className="text-primary/70 underline underline-offset-2">политикой конфиденциальности</span>
+              <a href="/privacy" className="text-primary/70 underline underline-offset-2 hover:text-primary">политикой конфиденциальности</a>
             </span>
           </label>
 

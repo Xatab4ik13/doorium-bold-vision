@@ -275,10 +275,22 @@ const PartnerPage = () => {
               <input type="email" placeholder="Электронная почта" value={form.email || ""} onChange={(e) => update("email", e.target.value)} className={inputClass} maxLength={255} />
               {errors.email && <p className="text-destructive text-xs mt-1 font-body">{errors.email}</p>}
             </div>
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-border/30 accent-primary"
+              />
+              <span className="font-body text-xs text-doorium-platinum/50 leading-relaxed group-hover:text-doorium-platinum/70 transition-colors">
+                Нажимая кнопку «Отправить», я даю согласие на обработку персональных данных в соответствии с{" "}
+                <a href="/privacy" className="text-primary/70 underline underline-offset-2 hover:text-primary">политикой конфиденциальности</a>
+              </span>
+            </label>
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={sending}
+                disabled={sending || !consent}
                 className="w-full sm:w-auto px-12 py-4 bg-primary text-primary-foreground font-body text-sm font-medium tracking-[0.15em] uppercase hover:bg-primary/80 transition-colors duration-300 disabled:opacity-50 rounded-sm flex items-center justify-center gap-2 mx-auto"
               >
                 <Send size={14} />
