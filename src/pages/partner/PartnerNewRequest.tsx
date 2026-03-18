@@ -149,7 +149,7 @@ const PartnerNewRequest = () => {
             <button onClick={handleReset} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">
               Создать ещё
             </button>
-            <a href="/partner" className="px-5 py-2.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors inline-block">
+            <a href="/partner/dashboard" className="px-5 py-2.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors inline-block">
               К моим заявкам
             </a>
           </div>

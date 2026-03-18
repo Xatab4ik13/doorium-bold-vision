@@ -32,6 +32,7 @@ const pageTitles: Record<string, string> = {
   "/installer/history": "История",
   // Partner
   "/partner": "Мои заявки",
+  "/partner/dashboard": "Мои заявки",
   "/partner/new": "Новая заявка",
   "/partner/history": "История",
 };

@@ -7,6 +7,7 @@ import logo from "@/assets/doorium-logo-new.png";
 import { Shield, Lock, Loader2, Phone, ArrowLeft, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
+import { getRoleDashboardRoute } from "@/lib/roleRoutes";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { formatPhone } from "@/lib/formatPhone";
 import { usePwaInstall } from "@/hooks/usePwaInstall";
@@ -14,14 +15,6 @@ import { isCrmDomain } from "@/hooks/useCrmDomain";
 
 type LoginMode = "pin" | "admin";
 type PinStep = "phone" | "code";
-
-const roleRoutes: Record<string, string> = {
-  admin: "/admin",
-  manager: "/manager",
-  measurer: "/measurer",
-  installer: "/installer",
-  partner: "/partner",
-};
 
 const LoginPage = () => {
   const [mode, setMode] = useState<LoginMode>("pin");
@@ -44,7 +37,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      navigate(roleRoutes[user.role] || "/");
+      navigate(getRoleDashboardRoute(user.role), { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
 
@@ -62,7 +55,7 @@ const LoginPage = () => {
           if (data.device_token) localStorage.setItem("crm_device_token", data.device_token);
           login(data.token, data.user);
           toast.success(`С возвращением, ${data.user.name}!`);
-          navigate(roleRoutes[data.user.role] || "/", { replace: true });
+          navigate(getRoleDashboardRoute(data.user.role), { replace: true });
         })
         .catch(() => {
           localStorage.removeItem("crm_device_token");
@@ -93,7 +86,7 @@ const LoginPage = () => {
       }
       login(data.token, data.user);
       toast.success(`Добро пожаловать, ${data.user.name}!`);
-      navigate(roleRoutes[data.user.role] || "/", { replace: true });
+      navigate(getRoleDashboardRoute(data.user.role), { replace: true });
     } catch (err: any) {
       toast.error(err.message || "Ошибка авторизации");
       setPin("");
@@ -112,7 +105,7 @@ const LoginPage = () => {
       });
       login(data.token, data.user);
       toast.success(`Добро пожаловать, ${data.user.name}!`);
-      navigate("/admin");
+      navigate(getRoleDashboardRoute(data.user.role), { replace: true });
     } catch (err: any) {
       toast.error(err.message || "Ошибка авторизации");
     } finally {
