@@ -32,6 +32,7 @@ const ContactForm = () => {
   const [form, setForm] = useState<Partial<ContactData>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sending, setSending] = useState(false);
+  const [consent, setConsent] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -136,7 +137,7 @@ const ContactForm = () => {
           </div>
 
           {/* Request type */}
-          <div>
+          <div className={`transition-opacity duration-300 ${!form.city ? "opacity-40 pointer-events-none" : ""}`}>
             <label className="block font-body text-sm tracking-[0.15em] uppercase text-doorium-platinum/60 mb-4">
               Тип заявки
             </label>
@@ -146,6 +147,7 @@ const ContactForm = () => {
                   key={t.id}
                   type="button"
                   onClick={() => update("requestType", t.id)}
+                  disabled={!form.city}
                   className={`px-6 py-3 border rounded-sm font-body text-sm tracking-wide uppercase transition-all duration-300 ${
                     form.requestType === t.id
                       ? "border-primary bg-primary/10 text-doorium-platinum"
@@ -160,10 +162,10 @@ const ContactForm = () => {
           </div>
 
           {/* Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 transition-opacity duration-300 ${!form.city ? "opacity-40 pointer-events-none" : ""}`}>
             <div>
-              <input type="text" value={form.name || ""} onChange={(e) => update("name", e.target.value)} className={inputClass} placeholder="ФИО" maxLength={100} />
-              <input type="tel" value={form.phone || ""} onChange={(e) => update("phone", formatPhone(e.target.value))} className={`${inputClass} mt-3`} placeholder="+7" maxLength={20} />
+              <input type="text" value={form.name || ""} onChange={(e) => update("name", e.target.value)} className={inputClass} placeholder="ФИО" maxLength={100} disabled={!form.city} />
+              <input type="tel" value={form.phone || ""} onChange={(e) => update("phone", formatPhone(e.target.value))} className={`${inputClass} mt-3`} placeholder="+7" maxLength={20} disabled={!form.city} />
               {errors.name && <p className="text-destructive text-xs mt-1 font-body">{errors.name}</p>}
               {errors.phone && <p className="text-destructive text-xs mt-1 font-body">{errors.phone}</p>}
             </div>
@@ -184,12 +186,40 @@ const ContactForm = () => {
           </div>
 
           <div>
-            <textarea value={form.details || ""} onChange={(e) => update("details", e.target.value)} rows={4} className={`${inputClass} resize-none`} placeholder="Что замеряем" maxLength={1000} />
+            <textarea
+              value={form.details || ""}
+              onChange={(e) => update("details", e.target.value)}
+              rows={4}
+              className={`${inputClass} resize-none`}
+              placeholder={
+                form.requestType === "installation"
+                  ? "Опишите что нужно установить"
+                  : form.requestType === "reclamation"
+                  ? "Опишите проблему"
+                  : "Что замеряем"
+              }
+              maxLength={1000}
+              disabled={!form.city}
+            />
           </div>
+
+          {/* Consent checkbox */}
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded border-border/30 accent-primary"
+            />
+            <span className="font-body text-xs text-doorium-platinum/50 leading-relaxed group-hover:text-doorium-platinum/70 transition-colors">
+              Нажимая кнопку «Отправить», я даю согласие на обработку персональных данных в соответствии с{" "}
+              <span className="text-primary/70 underline underline-offset-2">политикой конфиденциальности</span>
+            </span>
+          </label>
 
           <button
             type="submit"
-            disabled={sending}
+            disabled={sending || !consent}
             className="w-full sm:w-auto px-12 py-4 bg-primary text-primary-foreground font-body text-sm font-medium tracking-[0.15em] uppercase hover:bg-primary/80 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
           >
             {sending ? "ОТПРАВКА..." : "ОТПРАВИТЬ"}

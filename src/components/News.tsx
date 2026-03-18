@@ -1,51 +1,77 @@
 import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import { articles } from "@/data/articles";
 
 const News = () => {
-  return (
-    <section
-      id="news"
-      className="relative py-20 md:py-28"
-      style={{ background: "hsl(50 14% 5%)" }}
-    >
-      <div className="px-8 md:px-16 lg:px-24 mb-10 md:mb-14">
-        <p className="font-body text-sm tracking-[0.3em] uppercase text-primary mb-3">
-          Последнее
-        </p>
-        <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-light text-doorium-platinum leading-[0.95] tracking-wide">
-          НОВОСТИ
-        </h2>
-      </div>
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  const latestArticle = articles[articles.length - 1] || articles[0];
 
-      <div className="px-4 md:px-16 lg:px-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          {articles.map((n, i) => (
-            <Link
-              key={i}
-              to={`/news/${n.slug}`}
-              className="group relative rounded-lg overflow-hidden block"
-              style={{
-                background: "linear-gradient(135deg, hsl(50 14% 12% / 0.9) 0%, hsl(50 14% 8% / 0.95) 100%)",
-                boxShadow: "0 8px 32px -8px rgba(0,0,0,0.6), 0 0 0 1px hsl(34 24% 48% / 0.15)",
-              }}
-            >
-              <div className="p-6 md:p-8">
-                <p className="font-body text-xs tracking-[0.15em] uppercase text-primary mb-3">
-                  {n.date} · {n.readTime}
-                </p>
-                <h3 className="font-display text-lg md:text-xl font-light text-doorium-platinum leading-tight mb-3 tracking-wide group-hover:text-primary transition-colors duration-300">
-                  {n.title}
-                </h3>
-                <p className="font-body text-sm text-doorium-platinum/60 leading-relaxed">
-                  {n.excerpt}
-                </p>
-                <span className="inline-block mt-4 font-body text-xs tracking-[0.15em] uppercase text-primary/60 group-hover:text-primary transition-colors">
-                  Читать →
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setVisible(true);
+          obs.unobserve(el);
+        }
+      },
+      { threshold: 0.2 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <section id="news" className="relative" style={{ background: "hsl(50 14% 5%)" }}>
+      <div ref={ref}>
+        <Link
+          to={`/news/${latestArticle.slug}`}
+          className="group block relative overflow-hidden"
+          style={{
+            background: "linear-gradient(90deg, hsl(50 14% 8%) 0%, hsl(50 14% 10%) 50%, hsl(50 14% 8%) 100%)",
+            borderTop: "1px solid hsl(34 24% 48% / 0.12)",
+            borderBottom: "1px solid hsl(34 24% 48% / 0.12)",
+          }}
+        >
+          <div
+            className="flex items-center justify-between px-6 md:px-16 lg:px-24 py-5 md:py-6"
+            style={{
+              opacity: visible ? 1 : 0,
+              transform: visible ? "translateX(0)" : "translateX(-40px)",
+              transition: "opacity 0.8s ease-out, transform 0.8s ease-out",
+            }}
+          >
+            <div className="flex items-center gap-4 md:gap-8 flex-1 min-w-0">
+              <span className="font-body text-[10px] md:text-xs tracking-[0.2em] uppercase text-primary shrink-0">
+                Новость
+              </span>
+              <div className="h-4 w-px bg-primary/30 shrink-0 hidden md:block" />
+              <h3 className="font-display text-sm md:text-lg font-light text-doorium-platinum/80 leading-tight tracking-wide truncate group-hover:text-primary transition-colors duration-300">
+                {latestArticle.title}
+              </h3>
+            </div>
+            <div className="flex items-center gap-4 shrink-0 ml-4">
+              <span className="font-body text-[10px] md:text-xs text-doorium-platinum/30 hidden md:block">
+                {latestArticle.date}
+              </span>
+              <span
+                className="font-body text-xs tracking-[0.15em] uppercase text-primary/60 group-hover:text-primary group-hover:translate-x-1 transition-all duration-300"
+              >
+                Читать →
+              </span>
+            </div>
+          </div>
+
+          {/* Animated shine effect on hover */}
+          <div
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+            style={{
+              background: "linear-gradient(90deg, transparent 0%, hsl(34 24% 48% / 0.05) 50%, transparent 100%)",
+            }}
+          />
+        </Link>
       </div>
     </section>
   );
