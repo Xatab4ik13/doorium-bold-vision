@@ -80,6 +80,7 @@ const PartnerPage = () => {
   const [form, setForm] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sending, setSending] = useState(false);
+  const [consent, setConsent] = useState(false);
 
   useEffect(() => {
     document.title = "Стать партнёром — Doorium Service | Партнёрская программа";
