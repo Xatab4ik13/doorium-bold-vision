@@ -67,7 +67,7 @@ const AdminAccounts = () => {
     return matchSearch && matchRole;
   });
 
-  const handleCreate = async (data: { name: string; role: UserRole; phone: string; pin: string; email?: string; notes?: string }) => {
+  const handleCreate = async (data: { name: string; role: UserRole; phone: string; pin: string; email?: string; notes?: string; telegram_id?: string }) => {
     try {
       const newUser = await api<UserAccount>("/api/users", {
         method: "POST",

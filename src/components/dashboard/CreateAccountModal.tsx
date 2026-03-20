@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { X, Phone, Lock, StickyNote, Mail } from "lucide-react";
+import { X, Phone, Lock, StickyNote, Mail, Send } from "lucide-react";
 import { formatPhone } from "@/lib/formatPhone";
 import { type UserRole, roleLabels } from "@/data/mockDashboard";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 interface CreateAccountModalProps {
   onClose: () => void;
-  onSave: (data: { name: string; role: UserRole; phone: string; pin: string; email?: string; notes?: string }) => void;
+  onSave: (data: { name: string; role: UserRole; phone: string; pin: string; email?: string; notes?: string; telegram_id?: string }) => void;
 }
 
 const roles: UserRole[] = ["manager", "measurer", "installer", "partner"];
@@ -18,11 +18,12 @@ const CreateAccountModal = ({ onClose, onSave }: CreateAccountModalProps) => {
   const [pin, setPin] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
+  const [telegramId, setTelegramId] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (pin.length !== 4) return;
-    onSave({ name, role, phone, pin, email: email || undefined, notes: notes || undefined });
+    onSave({ name, role, phone, pin, email: email || undefined, notes: notes || undefined, telegram_id: telegramId || undefined });
   };
 
   const inputClass = "w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring";
@@ -83,6 +84,13 @@ const CreateAccountModal = ({ onClose, onSave }: CreateAccountModalProps) => {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
+              <Send size={14} /> Telegram ID <span className="text-[10px] text-muted-foreground">(для уведомлений)</span>
+            </label>
+            <input type="text" value={telegramId} onChange={(e) => setTelegramId(e.target.value)} className={inputClass} placeholder="123456789" />
           </div>
 
           <div>
