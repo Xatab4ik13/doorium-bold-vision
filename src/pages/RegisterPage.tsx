@@ -38,7 +38,7 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !phone.trim() || pin.length !== 4 || !telegramId.trim()) {
+    if (!name.trim() || !phone.trim() || pin.length !== 4) {
       toast.error("Заполните все обязательные поля");
       return;
     }
