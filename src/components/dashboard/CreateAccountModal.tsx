@@ -88,6 +88,13 @@ const CreateAccountModal = ({ onClose, onSave }: CreateAccountModalProps) => {
 
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
+              <Send size={14} /> Telegram ID <span className="text-[10px] text-muted-foreground">(для уведомлений)</span>
+            </label>
+            <input type="text" value={telegramId} onChange={(e) => setTelegramId(e.target.value)} className={inputClass} placeholder="123456789" />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
               <Mail size={14} /> Почта
             </label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="email@example.com" />
