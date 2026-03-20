@@ -55,7 +55,7 @@ const RegisterPage = () => {
           phone: phone.trim(),
           pin,
           role,
-          telegram_id: telegramId.trim(),
+          telegram_id: telegramId.trim() || undefined,
         },
       });
       toast.success("Заявка на регистрацию отправлена! Ожидайте подтверждения администратора.");
