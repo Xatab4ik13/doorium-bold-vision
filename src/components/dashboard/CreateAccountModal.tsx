@@ -18,11 +18,12 @@ const CreateAccountModal = ({ onClose, onSave }: CreateAccountModalProps) => {
   const [pin, setPin] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
+  const [telegramId, setTelegramId] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (pin.length !== 4) return;
-    onSave({ name, role, phone, pin, email: email || undefined, notes: notes || undefined });
+    onSave({ name, role, phone, pin, email: email || undefined, notes: notes || undefined, telegram_id: telegramId || undefined });
   };
 
   const inputClass = "w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring";
