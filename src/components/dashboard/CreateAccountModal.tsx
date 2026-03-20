@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { X, Phone, Lock, StickyNote, Mail } from "lucide-react";
+import { X, Phone, Lock, StickyNote, Mail, Send } from "lucide-react";
 import { formatPhone } from "@/lib/formatPhone";
 import { type UserRole, roleLabels } from "@/data/mockDashboard";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 interface CreateAccountModalProps {
   onClose: () => void;
-  onSave: (data: { name: string; role: UserRole; phone: string; pin: string; email?: string; notes?: string }) => void;
+  onSave: (data: { name: string; role: UserRole; phone: string; pin: string; email?: string; notes?: string; telegram_id?: string }) => void;
 }
 
 const roles: UserRole[] = ["manager", "measurer", "installer", "partner"];
