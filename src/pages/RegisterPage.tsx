@@ -145,13 +145,12 @@ const RegisterPage = () => {
             <div className="flex items-center gap-2 mb-2">
               <SendIcon size={14} style={{ color: "hsl(34 24% 48% / 0.5)" }} />
               <p className="text-xs" style={{ color: "hsl(50 14% 8% / 0.5)" }}>
-                Telegram ID <span className="text-red-500">*</span>
+                Telegram ID <span className="text-[10px] text-muted-foreground">(необязательно)</span>
               </p>
             </div>
             <input
               type="text"
               placeholder="123456789"
-              required
               value={telegramId}
               onChange={(e) => setTelegramId(e.target.value.replace(/\D/g, ""))}
               className={inputClass}
