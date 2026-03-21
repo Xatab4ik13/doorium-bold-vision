@@ -1116,30 +1116,91 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   <p className="text-sm">Нет файлов по этой заявке</p>
                 </div>
               ) : photos.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {photos.map((file, i) => (
-                    <div key={i} className="group relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/40 transition-all">
-                      <a
-                        href={file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full h-full"
-                      >
-                        {file.type === "image" ? (
-                          <img src={file.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center bg-accent/50">
-                            <FileText size={24} className="text-muted-foreground" />
-                            <p className="text-[10px] text-muted-foreground mt-1">{file.url.split("/").pop()}</p>
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                          <ExternalLink size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="space-y-2">
+                  {/* Images grid */}
+                  {photos.filter(f => {
+                    const ext = (f.url.split("/").pop() || "").split(".").pop()?.toLowerCase() || "";
+                    return f.type === "image" || ["jpg","jpeg","png","gif","webp","svg"].includes(ext);
+                  }).length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {photos.filter(f => {
+                        const ext = (f.url.split("/").pop() || "").split(".").pop()?.toLowerCase() || "";
+                        return f.type === "image" || ["jpg","jpeg","png","gif","webp","svg"].includes(ext);
+                      }).map((file, i) => (
+                        <div key={i} className="group relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/40 transition-all">
+                          <a href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                            <img src={file.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                              <ExternalLink size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            <p className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 truncate">
+                              {file.uploaded_at?.split("T")[0]}
+                            </p>
+                          </a>
+                          {viewerRole === "admin" && onSave && (
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const idx = photos.indexOf(file);
+                                const updatedPhotos = photos.filter((_, j) => j !== idx);
+                                try { await onSave(request.id, { photos: updatedPhotos as any }); toast.success("Файл удалён"); } catch { toast.error("Ошибка удаления файла"); }
+                              }}
+                              className="absolute top-1 right-1 p-1.5 rounded-lg bg-black/60 text-white opacity-0 group-hover:opacity-100 hover:bg-destructive transition-all z-10"
+                              title="Удалить файл"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                         </div>
-                        <p className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 truncate">
-                          {file.uploaded_at?.split("T")[0]}
-                        </p>
-                      </a>
+                      ))}
+                    </div>
+                  )}
+                  {/* Document files list */}
+                  {photos.filter(f => {
+                    const ext = (f.url.split("/").pop() || "").split(".").pop()?.toLowerCase() || "";
+                    return f.type !== "image" && !["jpg","jpeg","png","gif","webp","svg"].includes(ext);
+                  }).map((file, i) => {
+                    const fileName = decodeURIComponent(file.url.split("/").pop() || "file");
+                    const ext = fileName.split(".").pop()?.toLowerCase() || "";
+                    const isPdf = ext === "pdf";
+                    const isExcel = ["xls","xlsx","csv"].includes(ext);
+                    const isWord = ["doc","docx"].includes(ext);
+                    const fileIcon = isPdf ? <FileText size={20} className="text-red-500" />
+                      : isExcel ? <FileSpreadsheet size={20} className="text-emerald-600" />
+                      : isWord ? <FileText size={20} className="text-blue-500" />
+                      : <File size={20} className="text-muted-foreground" />;
+                    const fileLabel = isPdf ? "PDF" : isExcel ? "Excel" : isWord ? "Word" : ext.toUpperCase();
+
+                    return (
+                      <div key={`doc-${i}`} className="group relative flex items-center gap-3 p-3 rounded-xl border border-border hover:border-primary/40 transition-all">
+                        <a href={file.url} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center shrink-0">
+                            {fileIcon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{fileName}</p>
+                            <p className="text-[10px] text-muted-foreground">{fileLabel} • {file.uploaded_at?.split("T")[0]}</p>
+                          </div>
+                          <Download size={16} className="text-muted-foreground shrink-0" />
+                        </a>
+                        {viewerRole === "admin" && onSave && (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const idx = photos.indexOf(file);
+                              const updatedPhotos = photos.filter((_, j) => j !== idx);
+                              try { await onSave(request.id, { photos: updatedPhotos as any }); toast.success("Файл удалён"); } catch { toast.error("Ошибка удаления файла"); }
+                            }}
+                            className="p-1.5 rounded-lg text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-all"
+                            title="Удалить файл"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
                       {viewerRole === "admin" && onSave && (
                         <button
                           onClick={async (e) => {
