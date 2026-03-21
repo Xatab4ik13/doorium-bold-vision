@@ -514,14 +514,44 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               {photos.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground"><Image size={40} className="mx-auto mb-3 opacity-30" /><p className="text-sm">Нет файлов</p></div>
               ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  {photos.map((file, i) => (
-                    <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-border">
-                      <a href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                        {file.type === "image" ? <img src={file.url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-accent/50"><FileText size={24} className="text-muted-foreground" /></div>}
+                <div className="grid grid-cols-1 gap-2">
+                  {photos.map((file, i) => {
+                    const fileName = decodeURIComponent(file.url.split("/").pop() || "file");
+                    const ext = fileName.split(".").pop()?.toLowerCase() || "";
+                    const isImage = file.type === "image" || ["jpg","jpeg","png","gif","webp","svg"].includes(ext);
+                    const isPdf = ext === "pdf";
+                    const isExcel = ["xls","xlsx","csv"].includes(ext);
+                    const isWord = ["doc","docx"].includes(ext);
+                    const fileIcon = isPdf ? <FileText size={24} className="text-red-500" /> 
+                      : isExcel ? <FileSpreadsheet size={24} className="text-emerald-600" /> 
+                      : isWord ? <FileText size={24} className="text-blue-500" />
+                      : <File size={24} className="text-muted-foreground" />;
+                    const fileLabel = isPdf ? "PDF" : isExcel ? "Excel" : isWord ? "Word" : ext.toUpperCase();
+
+                    if (isImage) {
+                      return (
+                        <div key={i} className="relative aspect-video rounded-2xl overflow-hidden border border-border">
+                          <a href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                            <img src={file.url} alt="" className="w-full h-full object-cover" />
+                          </a>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <a key={i} href={file.url} target="_blank" rel="noopener noreferrer" download
+                        className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-accent/30 active:bg-accent/60 transition-colors">
+                        <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center shrink-0">
+                          {fileIcon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{fileName}</p>
+                          <p className="text-[10px] text-muted-foreground">{fileLabel} • {file.uploaded_at?.split("T")[0]}</p>
+                        </div>
+                        <Download size={18} className="text-muted-foreground shrink-0" />
                       </a>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
