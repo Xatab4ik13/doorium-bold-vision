@@ -44,7 +44,7 @@ export const statusColors: Record<RequestStatus, string> = {
   measurement_done: "bg-purple-100 text-purple-700",
   closed: "bg-emerald-100 text-emerald-700",
   client_refused: "bg-red-100 text-red-600",
-  cancelled: "bg-gray-100 text-gray-500",
+  cancelled: "bg-red-100 text-red-700",
 };
 
 // Valid status flows per request type
