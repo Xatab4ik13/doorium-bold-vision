@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
-import { Download, Briefcase, Loader2, Plus, MapPin } from "lucide-react";
+import { Download, Briefcase, Loader2, Plus, MapPin, Link2 } from "lucide-react";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 import RequestFilters, { type FilterState, defaultFilters } from "@/components/dashboard/RequestFilters";
 import CreateRequestModal from "@/components/dashboard/CreateRequestModal";
@@ -191,13 +191,20 @@ const AdminRequests = () => {
                               </span>
                             </td>
                             <td className="py-3.5 pr-4 text-xs">
-                              {r.partner_id ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 text-[10px] font-medium">
-                                  <Briefcase size={10} /> {getUserName(r.partner_id) || "Партнёр"}
-                                </span>
-                              ) : (
-                                <span className="text-muted-foreground">Сайт</span>
-                              )}
+                              <div className="flex items-center gap-1.5">
+                                {r.external_system && (
+                                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg bg-violet-50 text-violet-700 text-[10px] font-medium" title={`Связана с ${r.external_system}`}>
+                                    <Link2 size={9} /> PD
+                                  </span>
+                                )}
+                                {r.partner_id ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 text-[10px] font-medium">
+                                    <Briefcase size={10} /> {getUserName(r.partner_id) || "Партнёр"}
+                                  </span>
+                                ) : !r.external_system ? (
+                                  <span className="text-muted-foreground">Сайт</span>
+                                ) : null}
+                              </div>
                             </td>
                             <td className="py-3.5 pr-4 text-xs text-muted-foreground">
                               {getUserName(r.measurer_id) || getUserName(r.installer_id) || "—"}
@@ -239,6 +246,15 @@ const AdminRequests = () => {
           onSave={handleSave}
           onDelete={handleDelete}
           viewerRole="admin"
+          onSendToPrimeDoor={async (id) => {
+            const updated = await api<ApiRequest>(`/api/bridge/send/${id}`, { method: "POST", auth: true });
+            setSelectedRequest(prev => prev ? { ...prev, ...updated } : null);
+            refetch();
+          }}
+          onSyncPrimeDoor={async (id) => {
+            await api(`/api/bridge/sync/${id}`, { method: "POST", auth: true });
+            refetch();
+          }}
           onSendToInstallation={async (req) => {
             await createRequest({
               type: "installation",

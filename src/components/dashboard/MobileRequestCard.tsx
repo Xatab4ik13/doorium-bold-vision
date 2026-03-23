@@ -1,4 +1,4 @@
-import { MapPin, Calendar, Phone, Briefcase, ChevronRight } from "lucide-react";
+import { MapPin, Calendar, Phone, Briefcase, ChevronRight, Link2 } from "lucide-react";
 import { statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import type { ApiRequest } from "@/hooks/useRequests";
 import { motion } from "framer-motion";
@@ -49,6 +49,11 @@ const MobileRequestCard = ({ request: r, index, onClick, getUserName }: MobileRe
       {/* Bottom row: executor + date + source */}
       <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-border/30">
         <div className="flex items-center gap-2 min-w-0">
+          {r.external_system && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 text-[10px] font-medium">
+              <Link2 size={10} /> {r.external_system === "primedoor" ? "PD" : r.external_system}
+            </span>
+          )}
           {r.partner_id ? (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-medium">
               <Briefcase size={10} /> {partnerLabel}

@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from "react";
-import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle, Pencil, Download, FileSpreadsheet, File } from "lucide-react";
+import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle, Pencil, Download, FileSpreadsheet, File, Link2, RefreshCw } from "lucide-react";
 import SearchableUserSelect from "./SearchableUserSelect";
 import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { useUsers, type ApiRequest } from "@/hooks/useRequests";
@@ -27,10 +27,12 @@ interface RequestDetailModalProps {
   onSave?: (id: string, updates: Partial<ApiRequest>) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
   onSendToInstallation?: (request: ApiRequest) => Promise<void>;
+  onSendToPrimeDoor?: (id: string) => Promise<void>;
+  onSyncPrimeDoor?: (id: string) => Promise<void>;
   viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
-const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, viewerRole = "admin" }: RequestDetailModalProps) => {
+const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, onSendToPrimeDoor, onSyncPrimeDoor, viewerRole = "admin" }: RequestDetailModalProps) => {
   const isMobile = useIsMobile();
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
   const canPartnerEdit = viewerRole === "partner";
@@ -52,6 +54,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [sendingToInstall, setSendingToInstall] = useState(false);
+  const [sendingToPrimeDoor, setSendingToPrimeDoor] = useState(false);
+  const [syncingPrimeDoor, setSyncingPrimeDoor] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -249,7 +253,33 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           </div>
         )}
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
+        {/* Bridge: Send to PrimeDoor */}
+        {canEdit && onSendToPrimeDoor && !request.external_id && (
+          <button
+            onClick={async () => {
+              setSendingToPrimeDoor(true);
+              try { await onSendToPrimeDoor(request.id); toast.success("Заявка передана в PrimeDoor"); } catch (err: any) { toast.error(err.message || "Ошибка"); } finally { setSendingToPrimeDoor(false); }
+            }}
+            disabled={sendingToPrimeDoor}
+            className="px-3 py-2.5 rounded-xl text-xs font-medium bg-violet-500 text-white disabled:opacity-50 flex items-center gap-1.5 active:opacity-80"
+          >
+            {sendingToPrimeDoor ? <Loader2 size={14} className="animate-spin" /> : <><Link2 size={14} /> PrimeDoor</>}
+          </button>
+        )}
+        {/* Bridge: Sync with PrimeDoor */}
+        {canEdit && onSyncPrimeDoor && request.external_id && request.external_system === "primedoor" && (
+          <button
+            onClick={async () => {
+              setSyncingPrimeDoor(true);
+              try { await onSyncPrimeDoor(request.id); toast.success("Синхронизировано"); } catch (err: any) { toast.error(err.message || "Ошибка"); } finally { setSyncingPrimeDoor(false); }
+            }}
+            disabled={syncingPrimeDoor}
+            className="px-3 py-2.5 rounded-xl text-xs font-medium bg-violet-100 text-violet-700 disabled:opacity-50 flex items-center gap-1.5 active:opacity-80"
+          >
+            {syncingPrimeDoor ? <Loader2 size={14} className="animate-spin" /> : <><RefreshCw size={14} /> Синхр.</>}
+          </button>
+        )}
         {request.type === "measurement" && (canEdit || viewerRole === "partner") && onSendToInstallation && (
           <button
             onClick={async () => {
@@ -593,6 +623,11 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         {partnerPhone}
                       </a>
                     )}
+                  </span>
+                )}
+                {request.external_system && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-violet-100 text-violet-700">
+                    <Link2 size={10} /> {request.external_system === "primedoor" ? "PrimeDoor" : request.external_system}
                   </span>
                 )}
                 {request.accepted_at && (
@@ -1240,6 +1275,32 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
             </div>
             <div className="flex gap-3 flex-wrap">
+              {/* Bridge: Send to PrimeDoor */}
+              {canEdit && onSendToPrimeDoor && !request.external_id && (
+                <button
+                  onClick={async () => {
+                    setSendingToPrimeDoor(true);
+                    try { await onSendToPrimeDoor(request.id); toast.success("Заявка передана в PrimeDoor"); } catch (err: any) { toast.error(err.message || "Ошибка"); } finally { setSendingToPrimeDoor(false); }
+                  }}
+                  disabled={sendingToPrimeDoor}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium bg-violet-500 text-white hover:bg-violet-600 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {sendingToPrimeDoor ? <Loader2 size={16} className="animate-spin" /> : <><Link2 size={16} /> В PrimeDoor</>}
+                </button>
+              )}
+              {/* Bridge: Sync */}
+              {canEdit && onSyncPrimeDoor && request.external_id && request.external_system === "primedoor" && (
+                <button
+                  onClick={async () => {
+                    setSyncingPrimeDoor(true);
+                    try { await onSyncPrimeDoor(request.id); toast.success("Синхронизировано с PrimeDoor"); } catch (err: any) { toast.error(err.message || "Ошибка"); } finally { setSyncingPrimeDoor(false); }
+                  }}
+                  disabled={syncingPrimeDoor}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium bg-violet-100 text-violet-700 hover:bg-violet-200 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {syncingPrimeDoor ? <Loader2 size={16} className="animate-spin" /> : <><RefreshCw size={16} /> Синхр.</>}
+                </button>
+              )}
               {/* Send to installation button */}
               {request.type === "measurement" && (canEdit || viewerRole === "partner") && onSendToInstallation && (
                 <button

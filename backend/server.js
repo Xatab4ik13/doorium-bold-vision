@@ -1253,6 +1253,232 @@ async function sendPushToUser(userId, payload) {
   }
 }
 
+// === Bridge API (inter-CRM exchange) ===
+const BRIDGE_API_KEY = process.env.BRIDGE_API_KEY;
+const PRIMEDOOR_API_URL = process.env.PRIMEDOOR_API_URL;
+const PRIMEDOOR_API_KEY = process.env.PRIMEDOOR_API_KEY;
+
+// Middleware for bridge auth (API key)
+const bridgeAuth = (req, res, next) => {
+  const key = req.headers['x-api-key'];
+  if (!BRIDGE_API_KEY || key !== BRIDGE_API_KEY) {
+    return res.status(401).json({ error: 'Неверный API-ключ' });
+  }
+  next();
+};
+
+// Auto-add external columns if missing
+(async () => {
+  try {
+    await pool.query(`
+      ALTER TABLE requests ADD COLUMN IF NOT EXISTS external_id TEXT;
+      ALTER TABLE requests ADD COLUMN IF NOT EXISTS external_system TEXT;
+      ALTER TABLE requests ADD COLUMN IF NOT EXISTS external_synced_at TIMESTAMPTZ;
+    `);
+    console.log('Bridge columns ensured');
+  } catch (err) {
+    console.error('Bridge columns error:', err.message);
+  }
+})();
+
+// Send request to PrimeDoor
+app.post('/api/bridge/send/:id', auth, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Доступ запрещён' });
+  }
+  if (!PRIMEDOOR_API_URL || !PRIMEDOOR_API_KEY) {
+    return res.status(500).json({ error: 'PrimeDoor не настроен (PRIMEDOOR_API_URL / PRIMEDOOR_API_KEY)' });
+  }
+  try {
+    const { rows } = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Заявка не найдена' });
+    const request = rows[0];
+
+    if (request.external_id && request.external_system === 'primedoor') {
+      return res.status(400).json({ error: 'Заявка уже передана в PrimeDoor' });
+    }
+
+    // Send to PrimeDoor
+    const payload = {
+      source_system: 'doorium',
+      source_id: request.id,
+      number: request.number,
+      type: request.type,
+      status: request.status,
+      client_name: request.client_name,
+      client_phone: request.client_phone,
+      client_address: request.client_address,
+      city: request.city,
+      extra_name: request.extra_name,
+      extra_phone: request.extra_phone,
+      work_description: request.work_description,
+      notes: request.notes,
+      photos: request.photos,
+      interior_doors: request.interior_doors,
+      entrance_doors: request.entrance_doors,
+      partitions: request.partitions,
+      agreed_date: request.agreed_date,
+      amount: request.amount,
+    };
+
+    const response = await fetch(`${PRIMEDOOR_API_URL}/api/bridge/receive`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': PRIMEDOOR_API_KEY,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Ошибка PrimeDoor');
+
+    // Save external reference
+    await pool.query(
+      'UPDATE requests SET external_id = $1, external_system = $2, external_synced_at = NOW() WHERE id = $3',
+      [data.id, 'primedoor', request.id]
+    );
+
+    const updated = await pool.query('SELECT * FROM requests WHERE id = $1', [request.id]);
+
+    await notifyManagersAndAdmins(pool,
+      `🔗 <b>Заявка передана в PrimeDoor</b>\n\nЗаявка: ${request.number}\nКлиент: ${request.client_name}\n\nДанные синхронизированы.`
+    );
+
+    res.json(updated.rows[0]);
+  } catch (err) {
+    console.error('Bridge send error:', err);
+    res.status(500).json({ error: err.message || 'Ошибка отправки в PrimeDoor' });
+  }
+});
+
+// Receive request from external system
+app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
+  try {
+    const { source_system, source_id, number: extNumber, type, status: extStatus, client_name, client_phone, client_address, city, extra_name, extra_phone, work_description, notes, photos, interior_doors, entrance_doors, partitions, agreed_date, amount } = req.body;
+
+    if (!source_system || !source_id || !client_name || !client_phone) {
+      return res.status(400).json({ error: 'Обязательные поля: source_system, source_id, client_name, client_phone' });
+    }
+
+    // Check if already exists
+    const existing = await pool.query(
+      'SELECT id FROM requests WHERE external_id = $1 AND external_system = $2',
+      [source_id, source_system]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: 'Заявка уже существует', id: existing.rows[0].id });
+    }
+
+    const countResult = await pool.query("SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 5) AS INTEGER)), 0) AS count FROM requests");
+    const newNumber = 'REQ-' + String(parseInt(countResult.rows[0].count) + 1).padStart(3, '0');
+    const normalizedPhone = normalizePhone(client_phone) || client_phone;
+
+    const { rows } = await pool.query(
+      `INSERT INTO requests (number, client_name, client_phone, client_address, city, type, status, work_description, notes, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions, agreed_date, amount, source, external_id, external_system, external_synced_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13, $14, $15, $16, $17, 'bridge', $18, $19, NOW()) RETURNING *`,
+      [newNumber, client_name, normalizedPhone, client_address || '', city || null, type || 'measurement', extStatus || 'new', work_description || null, notes || null, extra_name || null, extra_phone ? (normalizePhone(extra_phone) || extra_phone) : null, photos ? JSON.stringify(photos) : '[]', interior_doors || null, entrance_doors || null, partitions || null, agreed_date || null, amount || null, source_id, source_system]
+    );
+
+    await notifyManagersAndAdmins(pool,
+      `🔗 <b>Заявка из ${source_system === 'primedoor' ? 'PrimeDoor' : source_system}</b>\n\n№ ${newNumber}\nКлиент: ${client_name}\nТелефон: ${normalizedPhone}\nАдрес: ${client_address || '—'}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
+    );
+    await sendPushToRoles(['admin', 'manager'], {
+      title: `Заявка из ${source_system === 'primedoor' ? 'PrimeDoor' : source_system}`,
+      body: `${client_name} — ${client_address || ''}`,
+      url: `/admin/requests?search=${encodeURIComponent(newNumber)}`,
+    });
+
+    res.json({ id: rows[0].id, number: newNumber });
+  } catch (err) {
+    console.error('Bridge receive error:', err);
+    res.status(500).json({ error: 'Ошибка приёма заявки' });
+  }
+});
+
+// Receive status update from external system
+app.put('/api/bridge/status', bridgeAuth, async (req, res) => {
+  try {
+    const { source_system, source_id, status, notes, amount, agreed_date } = req.body;
+    if (!source_system || !source_id) {
+      return res.status(400).json({ error: 'source_system и source_id обязательны' });
+    }
+
+    const { rows } = await pool.query(
+      'SELECT * FROM requests WHERE external_id = $1 AND external_system = $2',
+      [source_id, source_system]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Заявка не найдена' });
+
+    const fields = ['external_synced_at = NOW()'];
+    const values = [];
+    let idx = 1;
+
+    if (status) { fields.push(`status = $${idx++}`); values.push(status); }
+    if (notes !== undefined) { fields.push(`notes = $${idx++}`); values.push(notes); }
+    if (amount !== undefined) { fields.push(`amount = $${idx++}`); values.push(amount); }
+    if (agreed_date !== undefined) { fields.push(`agreed_date = $${idx++}`); values.push(agreed_date); }
+
+    values.push(rows[0].id);
+    const updated = await pool.query(
+      `UPDATE requests SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+
+    res.json(updated.rows[0]);
+  } catch (err) {
+    console.error('Bridge status error:', err);
+    res.status(500).json({ error: 'Ошибка обновления' });
+  }
+});
+
+// Sync status back to external system (when Doorium updates a bridged request)
+app.post('/api/bridge/sync/:id', auth, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Доступ запрещён' });
+  }
+  try {
+    const { rows } = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Заявка не найдена' });
+    const request = rows[0];
+
+    if (!request.external_id || !request.external_system) {
+      return res.status(400).json({ error: 'Заявка не связана с внешней системой' });
+    }
+
+    const targetUrl = request.external_system === 'primedoor' ? PRIMEDOOR_API_URL : null;
+    const targetKey = request.external_system === 'primedoor' ? PRIMEDOOR_API_KEY : null;
+    if (!targetUrl || !targetKey) {
+      return res.status(500).json({ error: 'Внешняя система не настроена' });
+    }
+
+    const response = await fetch(`${targetUrl}/api/bridge/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': targetKey },
+      body: JSON.stringify({
+        source_system: 'doorium',
+        source_id: request.id,
+        status: request.status,
+        notes: request.notes,
+        amount: request.amount,
+        agreed_date: request.agreed_date,
+      }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Ошибка синхронизации');
+    }
+
+    await pool.query('UPDATE requests SET external_synced_at = NOW() WHERE id = $1', [request.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Bridge sync error:', err);
+    res.status(500).json({ error: err.message || 'Ошибка синхронизации' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log('Doorium API running on port ' + PORT);
 });
