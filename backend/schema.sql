@@ -49,6 +49,9 @@ CREATE TABLE IF NOT EXISTS requests (
   amount NUMERIC,
   accepted_at TIMESTAMPTZ,
   closed_at TIMESTAMPTZ,
+  external_id TEXT,
+  external_system TEXT,
+  external_synced_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
