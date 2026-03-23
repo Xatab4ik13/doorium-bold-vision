@@ -239,6 +239,15 @@ const AdminRequests = () => {
           onSave={handleSave}
           onDelete={handleDelete}
           viewerRole="admin"
+          onSendToPrimeDoor={async (id) => {
+            const updated = await api<ApiRequest>(`/api/bridge/send/${id}`, { method: "POST", auth: true });
+            setSelectedRequest(prev => prev ? { ...prev, ...updated } : null);
+            refetch();
+          }}
+          onSyncPrimeDoor={async (id) => {
+            await api(`/api/bridge/sync/${id}`, { method: "POST", auth: true });
+            refetch();
+          }}
           onSendToInstallation={async (req) => {
             await createRequest({
               type: "installation",
