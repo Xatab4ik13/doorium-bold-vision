@@ -1275,6 +1275,32 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
             </div>
             <div className="flex gap-3 flex-wrap">
+              {/* Bridge: Send to PrimeDoor */}
+              {canEdit && onSendToPrimeDoor && !request.external_id && (
+                <button
+                  onClick={async () => {
+                    setSendingToPrimeDoor(true);
+                    try { await onSendToPrimeDoor(request.id); toast.success("Заявка передана в PrimeDoor"); } catch (err: any) { toast.error(err.message || "Ошибка"); } finally { setSendingToPrimeDoor(false); }
+                  }}
+                  disabled={sendingToPrimeDoor}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium bg-violet-500 text-white hover:bg-violet-600 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {sendingToPrimeDoor ? <Loader2 size={16} className="animate-spin" /> : <><Link2 size={16} /> В PrimeDoor</>}
+                </button>
+              )}
+              {/* Bridge: Sync */}
+              {canEdit && onSyncPrimeDoor && request.external_id && request.external_system === "primedoor" && (
+                <button
+                  onClick={async () => {
+                    setSyncingPrimeDoor(true);
+                    try { await onSyncPrimeDoor(request.id); toast.success("Синхронизировано с PrimeDoor"); } catch (err: any) { toast.error(err.message || "Ошибка"); } finally { setSyncingPrimeDoor(false); }
+                  }}
+                  disabled={syncingPrimeDoor}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium bg-violet-100 text-violet-700 hover:bg-violet-200 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {syncingPrimeDoor ? <Loader2 size={16} className="animate-spin" /> : <><RefreshCw size={16} /> Синхр.</>}
+                </button>
+              )}
               {/* Send to installation button */}
               {request.type === "measurement" && (canEdit || viewerRole === "partner") && onSendToInstallation && (
                 <button
