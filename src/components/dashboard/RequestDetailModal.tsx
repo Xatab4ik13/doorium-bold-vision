@@ -54,6 +54,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [sendingToInstall, setSendingToInstall] = useState(false);
+  const [sendingToPrimeDoor, setSendingToPrimeDoor] = useState(false);
+  const [syncingPrimeDoor, setSyncingPrimeDoor] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
