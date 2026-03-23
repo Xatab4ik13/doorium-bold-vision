@@ -1260,8 +1260,26 @@ async function sendPushToUser(userId, payload) {
 
 // === Bridge API (inter-CRM exchange) ===
 const BRIDGE_API_KEY = process.env.BRIDGE_API_KEY;
-const PRIMEDOOR_API_URL = process.env.PRIMEDOOR_API_URL;
-const PRIMEDOOR_API_KEY = process.env.PRIMEDOOR_API_KEY;
+const LOCAL_SYSTEM_NAME = process.env.CRM_SYSTEM_NAME || 'doorium';
+const REMOTE_SYSTEM_NAME = process.env.BRIDGE_REMOTE_SYSTEM || (LOCAL_SYSTEM_NAME === 'doorium' ? 'primedoor' : 'doorium');
+const BRIDGE_REMOTE_API_URL = process.env.BRIDGE_REMOTE_API_URL || process.env.PRIMEDOOR_API_URL || process.env.DOORIUM_API_URL;
+const BRIDGE_REMOTE_API_KEY = process.env.BRIDGE_REMOTE_API_KEY || process.env.PRIMEDOOR_API_KEY || process.env.DOORIUM_API_KEY;
+
+function bridgeSystemLabel(system) {
+  if (system === 'doorium') return 'Doorium';
+  if (system === 'primedoor') return 'PrimeDoor';
+  return system;
+}
+
+function resolveBridgeTarget(externalSystem) {
+  if (!externalSystem || externalSystem !== REMOTE_SYSTEM_NAME) return null;
+  if (!BRIDGE_REMOTE_API_URL || !BRIDGE_REMOTE_API_KEY) return null;
+  return {
+    url: BRIDGE_REMOTE_API_URL,
+    key: BRIDGE_REMOTE_API_KEY,
+    system: REMOTE_SYSTEM_NAME,
+  };
+}
 
 // Middleware for bridge auth (API key)
 const bridgeAuth = (req, res, next) => {
@@ -1286,26 +1304,63 @@ const bridgeAuth = (req, res, next) => {
   }
 })();
 
-// Send request to PrimeDoor
+// Auto-sync local updates to remote CRM
+async function bridgeAutoSync(requestId) {
+  try {
+    const { rows } = await pool.query('SELECT * FROM requests WHERE id = $1', [requestId]);
+    if (!rows.length) return;
+
+    const request = rows[0];
+    const target = resolveBridgeTarget(request.external_system);
+    if (!target) return;
+
+    const response = await fetch(`${target.url}/api/bridge/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': target.key,
+      },
+      body: JSON.stringify({
+        source_system: LOCAL_SYSTEM_NAME,
+        source_id: request.id,
+        status: request.status,
+        notes: request.notes,
+        amount: request.amount,
+        agreed_date: request.agreed_date,
+        work_description: request.work_description,
+      }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || `HTTP ${response.status}`);
+    }
+
+    await pool.query('UPDATE requests SET external_synced_at = NOW() WHERE id = $1', [request.id]);
+  } catch (err) {
+    console.error('Bridge auto-sync error:', err.message);
+  }
+}
+
+// Send request to external CRM
 app.post('/api/bridge/send/:id', auth, async (req, res) => {
   if (!['admin', 'manager'].includes(req.user.role)) {
     return res.status(403).json({ error: 'Доступ запрещён' });
   }
-  if (!PRIMEDOOR_API_URL || !PRIMEDOOR_API_KEY) {
-    return res.status(500).json({ error: 'PrimeDoor не настроен (PRIMEDOOR_API_URL / PRIMEDOOR_API_KEY)' });
+  if (!BRIDGE_REMOTE_API_URL || !BRIDGE_REMOTE_API_KEY) {
+    return res.status(500).json({ error: 'Внешняя CRM не настроена (BRIDGE_REMOTE_API_URL / BRIDGE_REMOTE_API_KEY)' });
   }
   try {
     const { rows } = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Заявка не найдена' });
     const request = rows[0];
 
-    if (request.external_id && request.external_system === 'primedoor') {
-      return res.status(400).json({ error: 'Заявка уже передана в PrimeDoor' });
+    if (request.external_id && request.external_system === REMOTE_SYSTEM_NAME) {
+      return res.status(400).json({ error: `Заявка уже передана в ${bridgeSystemLabel(REMOTE_SYSTEM_NAME)}` });
     }
 
-    // Send to PrimeDoor
     const payload = {
-      source_system: 'doorium',
+      source_system: LOCAL_SYSTEM_NAME,
       source_id: request.id,
       number: request.number,
       type: request.type,
@@ -1326,34 +1381,33 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
       amount: request.amount,
     };
 
-    const response = await fetch(`${PRIMEDOOR_API_URL}/api/bridge/receive`, {
+    const response = await fetch(`${BRIDGE_REMOTE_API_URL}/api/bridge/receive`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': PRIMEDOOR_API_KEY,
+        'X-API-Key': BRIDGE_REMOTE_API_KEY,
       },
       body: JSON.stringify(payload),
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Ошибка PrimeDoor');
+    if (!response.ok) throw new Error(data.error || 'Ошибка внешней CRM');
 
-    // Save external reference
     await pool.query(
       'UPDATE requests SET external_id = $1, external_system = $2, external_synced_at = NOW() WHERE id = $3',
-      [data.id, 'primedoor', request.id]
+      [data.id, REMOTE_SYSTEM_NAME, request.id]
     );
 
     const updated = await pool.query('SELECT * FROM requests WHERE id = $1', [request.id]);
 
     await notifyManagersAndAdmins(pool,
-      `🔗 <b>Заявка передана в PrimeDoor</b>\n\nЗаявка: ${request.number}\nКлиент: ${request.client_name}\n\nДанные синхронизированы.`
+      `🔗 <b>Заявка передана в ${bridgeSystemLabel(REMOTE_SYSTEM_NAME)}</b>\n\nЗаявка: ${request.number}\nКлиент: ${request.client_name}\n\nДанные синхронизированы.`
     );
 
     res.json(updated.rows[0]);
   } catch (err) {
     console.error('Bridge send error:', err);
-    res.status(500).json({ error: err.message || 'Ошибка отправки в PrimeDoor' });
+    res.status(500).json({ error: err.message || 'Ошибка отправки во внешнюю CRM' });
   }
 });
 
@@ -1366,7 +1420,6 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
       return res.status(400).json({ error: 'Обязательные поля: source_system, source_id, client_name, client_phone' });
     }
 
-    // Check if already exists
     const existing = await pool.query(
       'SELECT id FROM requests WHERE external_id = $1 AND external_system = $2',
       [source_id, source_system]
@@ -1387,10 +1440,10 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
     );
 
     await notifyManagersAndAdmins(pool,
-      `🔗 <b>Заявка из ${source_system === 'primedoor' ? 'PrimeDoor' : source_system}</b>\n\n№ ${newNumber}\nКлиент: ${client_name}\nТелефон: ${normalizedPhone}\nАдрес: ${client_address || '—'}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
+      `🔗 <b>Заявка из ${bridgeSystemLabel(source_system)}</b>\n\n№ ${newNumber}\nКлиент: ${client_name}\nТелефон: ${normalizedPhone}\nАдрес: ${client_address || '—'}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
     );
     await sendPushToRoles(['admin', 'manager'], {
-      title: `Заявка из ${source_system === 'primedoor' ? 'PrimeDoor' : source_system}`,
+      title: `Заявка из ${bridgeSystemLabel(source_system)}`,
       body: `${client_name} — ${client_address || ''}`,
       url: `/admin/requests?search=${encodeURIComponent(newNumber)}`,
     });
@@ -1402,10 +1455,40 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
   }
 });
 
+// Return bridged request by source pair (for manual pull sync)
+app.get('/api/bridge/fetch', bridgeAuth, async (req, res) => {
+  try {
+    const sourceSystem = String(req.query.source_system || '');
+    const sourceId = String(req.query.source_id || '');
+    if (!sourceSystem || !sourceId) {
+      return res.status(400).json({ error: 'source_system и source_id обязательны' });
+    }
+
+    const { rows } = await pool.query(
+      'SELECT * FROM requests WHERE external_id = $1 AND external_system = $2',
+      [sourceId, sourceSystem]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Заявка не найдена' });
+
+    const request = rows[0];
+    res.json({
+      status: request.status,
+      notes: request.notes,
+      amount: request.amount,
+      agreed_date: request.agreed_date,
+      work_description: request.work_description,
+      updated_at: request.updated_at,
+    });
+  } catch (err) {
+    console.error('Bridge fetch error:', err);
+    res.status(500).json({ error: 'Ошибка получения данных' });
+  }
+});
+
 // Receive status update from external system
 app.put('/api/bridge/status', bridgeAuth, async (req, res) => {
   try {
-    const { source_system, source_id, status, notes, amount, agreed_date } = req.body;
+    const { source_system, source_id, status, notes, amount, agreed_date, work_description } = req.body;
     if (!source_system || !source_id) {
       return res.status(400).json({ error: 'source_system и source_id обязательны' });
     }
@@ -1420,10 +1503,11 @@ app.put('/api/bridge/status', bridgeAuth, async (req, res) => {
     const values = [];
     let idx = 1;
 
-    if (status) { fields.push(`status = $${idx++}`); values.push(status); }
+    if (status !== undefined && status !== null && status !== '') { fields.push(`status = $${idx++}`); values.push(status); }
     if (notes !== undefined) { fields.push(`notes = $${idx++}`); values.push(notes); }
     if (amount !== undefined) { fields.push(`amount = $${idx++}`); values.push(amount); }
     if (agreed_date !== undefined) { fields.push(`agreed_date = $${idx++}`); values.push(agreed_date); }
+    if (work_description !== undefined) { fields.push(`work_description = $${idx++}`); values.push(work_description); }
 
     values.push(rows[0].id);
     const updated = await pool.query(
@@ -1438,7 +1522,7 @@ app.put('/api/bridge/status', bridgeAuth, async (req, res) => {
   }
 });
 
-// Sync status back to external system (when Doorium updates a bridged request)
+// Pull current data from external system to local request (manual sync)
 app.post('/api/bridge/sync/:id', auth, async (req, res) => {
   if (!['admin', 'manager'].includes(req.user.role)) {
     return res.status(403).json({ error: 'Доступ запрещён' });
@@ -1452,32 +1536,43 @@ app.post('/api/bridge/sync/:id', auth, async (req, res) => {
       return res.status(400).json({ error: 'Заявка не связана с внешней системой' });
     }
 
-    const targetUrl = request.external_system === 'primedoor' ? PRIMEDOOR_API_URL : null;
-    const targetKey = request.external_system === 'primedoor' ? PRIMEDOOR_API_KEY : null;
-    if (!targetUrl || !targetKey) {
+    const target = resolveBridgeTarget(request.external_system);
+    if (!target) {
       return res.status(500).json({ error: 'Внешняя система не настроена' });
     }
 
-    const response = await fetch(`${targetUrl}/api/bridge/status`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-API-Key': targetKey },
-      body: JSON.stringify({
-        source_system: 'doorium',
-        source_id: request.id,
-        status: request.status,
-        notes: request.notes,
-        amount: request.amount,
-        agreed_date: request.agreed_date,
-      }),
-    });
+    const response = await fetch(
+      `${target.url}/api/bridge/fetch?source_system=${encodeURIComponent(LOCAL_SYSTEM_NAME)}&source_id=${encodeURIComponent(request.id)}`,
+      {
+        method: 'GET',
+        headers: { 'X-API-Key': target.key },
+      }
+    );
 
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || 'Ошибка синхронизации');
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || 'Ошибка получения данных из внешней CRM');
     }
 
-    await pool.query('UPDATE requests SET external_synced_at = NOW() WHERE id = $1', [request.id]);
-    res.json({ success: true });
+    const remote = await response.json();
+
+    const fields = ['external_synced_at = NOW()'];
+    const values = [];
+    let idx = 1;
+
+    if (remote.status !== undefined && remote.status !== null && remote.status !== '') { fields.push(`status = $${idx++}`); values.push(remote.status); }
+    if (remote.notes !== undefined) { fields.push(`notes = $${idx++}`); values.push(remote.notes); }
+    if (remote.amount !== undefined) { fields.push(`amount = $${idx++}`); values.push(remote.amount); }
+    if (remote.agreed_date !== undefined) { fields.push(`agreed_date = $${idx++}`); values.push(remote.agreed_date); }
+    if (remote.work_description !== undefined) { fields.push(`work_description = $${idx++}`); values.push(remote.work_description); }
+
+    values.push(request.id);
+    const updated = await pool.query(
+      `UPDATE requests SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+
+    res.json(updated.rows[0]);
   } catch (err) {
     console.error('Bridge sync error:', err);
     res.status(500).json({ error: err.message || 'Ошибка синхронизации' });
