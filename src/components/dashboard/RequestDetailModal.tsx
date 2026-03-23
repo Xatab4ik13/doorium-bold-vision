@@ -625,6 +625,11 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     )}
                   </span>
                 )}
+                {request.external_system && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-violet-100 text-violet-700">
+                    <Link2 size={10} /> {request.external_system === "primedoor" ? "PrimeDoor" : request.external_system}
+                  </span>
+                )}
                 {request.accepted_at && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">
                     ✓ Принято монтажником {new Date(request.accepted_at).toLocaleDateString("ru-RU")}
