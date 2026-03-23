@@ -55,29 +55,8 @@ async function bridgeAutoSync(requestId) {
   }
 }
 
-// === Monkey-patch: intercept PUT /api/requests/:id to add auto-sync ===
-const _originalPut = app.put;
-const _routeHandlers = app._router && app._router.stack;
 
-// We'll wrap the response.json to trigger auto-sync after successful update
-const originalRequestHandler = app._router ? null : null; // placeholder
 
-// Instead of monkey-patching, add a middleware that runs AFTER the update endpoint
-app.use('/api/requests/:id', (req, res, next) => {
-  if (req.method !== 'PUT') return next();
-
-  const originalJson = res.json.bind(res);
-  res.json = function(data) {
-    // Call original json first
-    const result = originalJson(data);
-    // If update was successful (has id field = it's a request object), auto-sync
-    if (data && data.id && data.external_id && data.external_system && res.statusCode < 400) {
-      bridgeAutoSync(data.id).catch(err => console.error('Auto-sync background error:', err.message));
-    }
-    return result;
-  };
-  next();
-});
 
 app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
   try {
