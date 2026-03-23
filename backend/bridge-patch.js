@@ -1,12 +1,14 @@
 
 // === Bridge API (inter-CRM exchange) ===
-const BRIDGE_API_KEY = process.env.BRIDGE_API_KEY;
-const DOORIUM_API_URL = process.env.DOORIUM_API_URL;
-const DOORIUM_API_KEY = process.env.DOORIUM_API_KEY;
+const BRIDGE_PATCH_API_KEY = process.env.BRIDGE_API_KEY;
+const LOCAL_SYSTEM_NAME = process.env.CRM_SYSTEM_NAME || 'doorium';
+const REMOTE_SYSTEM_NAME = process.env.BRIDGE_REMOTE_SYSTEM || (LOCAL_SYSTEM_NAME === 'doorium' ? 'primedoor' : 'doorium');
+const BRIDGE_REMOTE_API_URL = process.env.BRIDGE_REMOTE_API_URL || process.env.DOORIUM_API_URL || process.env.PRIMEDOOR_API_URL;
+const BRIDGE_REMOTE_API_KEY = process.env.BRIDGE_REMOTE_API_KEY || process.env.DOORIUM_API_KEY || process.env.PRIMEDOOR_API_KEY;
 
 const bridgeAuth = (req, res, next) => {
   const key = req.headers['x-api-key'];
-  if (!BRIDGE_API_KEY || key !== BRIDGE_API_KEY) {
+  if (!BRIDGE_PATCH_API_KEY || key !== BRIDGE_PATCH_API_KEY) {
     return res.status(401).json({ error: 'Invalid API key' });
   }
   next();
@@ -26,21 +28,22 @@ const bridgeAuth = (req, res, next) => {
 // === Auto-sync: push changes to remote CRM after local update ===
 async function bridgeAutoSync(requestId) {
   try {
-    if (!DOORIUM_API_URL || !DOORIUM_API_KEY) return;
+    if (!BRIDGE_REMOTE_API_URL || !BRIDGE_REMOTE_API_KEY) return;
     const { rows } = await pool.query('SELECT * FROM requests WHERE id = $1', [requestId]);
     if (!rows.length || !rows[0].external_id || !rows[0].external_system) return;
 
     const r = rows[0];
-    const response = await fetch(DOORIUM_API_URL + '/api/bridge/status', {
+    const response = await fetch(BRIDGE_REMOTE_API_URL + '/api/bridge/status', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-API-Key': DOORIUM_API_KEY },
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': BRIDGE_REMOTE_API_KEY },
       body: JSON.stringify({
-        source_system: 'doorium',
-        source_id: r.external_id,
+        source_system: LOCAL_SYSTEM_NAME,
+        source_id: r.id,
         status: r.status,
         notes: r.notes,
         amount: r.amount,
         agreed_date: r.agreed_date,
+        work_description: r.work_description,
       }),
     });
     if (response.ok) {
@@ -84,17 +87,18 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
 
 app.put('/api/bridge/status', bridgeAuth, async (req, res) => {
   try {
-    const { source_system, source_id, status, notes, amount, agreed_date } = req.body;
+    const { source_system, source_id, status, notes, amount, agreed_date, work_description } = req.body;
     const { rows } = await pool.query('SELECT id FROM requests WHERE external_id = $1 AND external_system = $2', [source_id, source_system]);
     if (!rows.length) return res.status(404).json({ error: 'Not found' });
 
     const fields = ['external_synced_at = NOW()'];
     const values = [];
     let idx = 1;
-    if (status) { fields.push('status = $' + idx++); values.push(status); }
+    if (status !== undefined && status !== null && status !== '') { fields.push('status = $' + idx++); values.push(status); }
     if (notes !== undefined) { fields.push('notes = $' + idx++); values.push(notes); }
     if (amount !== undefined) { fields.push('amount = $' + idx++); values.push(amount); }
     if (agreed_date !== undefined) { fields.push('agreed_date = $' + idx++); values.push(agreed_date); }
+    if (work_description !== undefined) { fields.push('work_description = $' + idx++); values.push(work_description); }
     values.push(rows[0].id);
 
     const updated = await pool.query('UPDATE requests SET ' + fields.join(', ') + ' WHERE id = $' + idx + ' RETURNING *', values);
@@ -138,7 +142,7 @@ app.get('/api/bridge/fetch', bridgeAuth, async (req, res) => {
 
 app.post('/api/bridge/send/:id', auth, async (req, res) => {
   if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Forbidden' });
-  if (!DOORIUM_API_URL || !DOORIUM_API_KEY) return res.status(500).json({ error: 'Remote CRM not configured' });
+  if (!BRIDGE_REMOTE_API_URL || !BRIDGE_REMOTE_API_KEY) return res.status(500).json({ error: 'Remote CRM not configured' });
 
   try {
     const { rows } = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.id]);
@@ -146,11 +150,11 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
     const request = rows[0];
     if (request.external_id) return res.status(400).json({ error: 'Already sent' });
 
-    const response = await fetch(DOORIUM_API_URL + '/api/bridge/receive', {
+    const response = await fetch(BRIDGE_REMOTE_API_URL + '/api/bridge/receive', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-API-Key': DOORIUM_API_KEY },
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': BRIDGE_REMOTE_API_KEY },
       body: JSON.stringify({
-        source_system: 'primedoor', source_id: request.id,
+        source_system: LOCAL_SYSTEM_NAME, source_id: request.id,
         number: request.number, type: request.type, status: request.status,
         client_name: request.client_name, client_phone: request.client_phone,
         client_address: request.client_address, city: request.city,
@@ -163,7 +167,7 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Remote CRM error');
 
-    await pool.query('UPDATE requests SET external_id = $1, external_system = $2, external_synced_at = NOW() WHERE id = $3', [data.id, 'doorium', request.id]);
+    await pool.query('UPDATE requests SET external_id = $1, external_system = $2, external_synced_at = NOW() WHERE id = $3', [data.id, REMOTE_SYSTEM_NAME, request.id]);
     const updated = await pool.query('SELECT * FROM requests WHERE id = $1', [request.id]);
     res.json(updated.rows[0]);
   } catch (err) {
@@ -175,7 +179,7 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
 // === SYNC: PULL changes FROM remote CRM (manual button) ===
 app.post('/api/bridge/sync/:id', auth, async (req, res) => {
   if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Forbidden' });
-  if (!DOORIUM_API_URL || !DOORIUM_API_KEY) return res.status(500).json({ error: 'Remote CRM not configured' });
+  if (!BRIDGE_REMOTE_API_URL || !BRIDGE_REMOTE_API_KEY) return res.status(500).json({ error: 'Remote CRM not configured' });
 
   try {
     const { rows } = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.id]);
@@ -184,9 +188,9 @@ app.post('/api/bridge/sync/:id', auth, async (req, res) => {
     if (!request.external_id) return res.status(400).json({ error: 'Not linked' });
 
     // Fetch current state from remote CRM
-    const response = await fetch(DOORIUM_API_URL + '/api/bridge/fetch?source_system=doorium&source_id=' + encodeURIComponent(request.external_id), {
+    const response = await fetch(BRIDGE_REMOTE_API_URL + '/api/bridge/fetch?source_system=' + encodeURIComponent(LOCAL_SYSTEM_NAME) + '&source_id=' + encodeURIComponent(request.id), {
       method: 'GET',
-      headers: { 'X-API-Key': DOORIUM_API_KEY },
+      headers: { 'X-API-Key': BRIDGE_REMOTE_API_KEY },
     });
     if (!response.ok) { const d = await response.json(); throw new Error(d.error || 'Fetch error'); }
 
@@ -196,7 +200,7 @@ app.post('/api/bridge/sync/:id', auth, async (req, res) => {
     const fields = ['external_synced_at = NOW()'];
     const values = [];
     let idx = 1;
-    if (remote.status) { fields.push('status = $' + idx++); values.push(remote.status); }
+    if (remote.status !== undefined && remote.status !== null && remote.status !== '') { fields.push('status = $' + idx++); values.push(remote.status); }
     if (remote.notes !== undefined && remote.notes !== null) { fields.push('notes = $' + idx++); values.push(remote.notes); }
     if (remote.amount !== undefined && remote.amount !== null) { fields.push('amount = $' + idx++); values.push(remote.amount); }
     if (remote.agreed_date !== undefined && remote.agreed_date !== null) { fields.push('agreed_date = $' + idx++); values.push(remote.agreed_date); }
