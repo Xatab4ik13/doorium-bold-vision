@@ -859,6 +859,11 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       });
     }
 
+    // Bridge auto-sync: push changes to remote CRM if linked
+    if (updated.external_id && updated.external_system && typeof bridgeAutoSync === 'function') {
+      bridgeAutoSync(updated.id).catch(err => console.error('Bridge auto-sync bg error:', err.message));
+    }
+
     res.json(updated);
   } catch (err) {
     console.error('Update request error:', err);
