@@ -70,9 +70,42 @@ app.put('/api/bridge/status', bridgeAuth, async (req, res) => {
   }
 });
 
+// === GET endpoint: return request data by external_id (for remote sync pull) ===
+app.get('/api/bridge/fetch', bridgeAuth, async (req, res) => {
+  try {
+    const { source_system, source_id } = req.query;
+    if (!source_system || !source_id) return res.status(400).json({ error: 'Missing source_system or source_id' });
+
+    const { rows } = await pool.query('SELECT * FROM requests WHERE external_id = $1 AND external_system = $2', [source_id, source_system]);
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+
+    const r = rows[0];
+    res.json({
+      status: r.status,
+      notes: r.notes,
+      amount: r.amount,
+      agreed_date: r.agreed_date,
+      work_description: r.work_description,
+      client_name: r.client_name,
+      client_phone: r.client_phone,
+      client_address: r.client_address,
+      measurer_id: r.measurer_id,
+      installer_id: r.installer_id,
+      interior_doors: r.interior_doors,
+      entrance_doors: r.entrance_doors,
+      partitions: r.partitions,
+      photos: r.photos,
+      updated_at: r.updated_at,
+    });
+  } catch (err) {
+    console.error('Bridge fetch:', err);
+    res.status(500).json({ error: 'Error' });
+  }
+});
+
 app.post('/api/bridge/send/:id', auth, async (req, res) => {
   if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Forbidden' });
-  if (!DOORIUM_API_URL || !DOORIUM_API_KEY) return res.status(500).json({ error: 'Doorium not configured' });
+  if (!DOORIUM_API_URL || !DOORIUM_API_KEY) return res.status(500).json({ error: 'Remote CRM not configured' });
 
   try {
     const { rows } = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.id]);
@@ -95,7 +128,7 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
       }),
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Doorium error');
+    if (!response.ok) throw new Error(data.error || 'Remote CRM error');
 
     await pool.query('UPDATE requests SET external_id = $1, external_system = $2, external_synced_at = NOW() WHERE id = $3', [data.id, 'doorium', request.id]);
     const updated = await pool.query('SELECT * FROM requests WHERE id = $1', [request.id]);
@@ -106,9 +139,10 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
   }
 });
 
+// === SYNC: PULL changes FROM remote CRM ===
 app.post('/api/bridge/sync/:id', auth, async (req, res) => {
   if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Forbidden' });
-  if (!DOORIUM_API_URL || !DOORIUM_API_KEY) return res.status(500).json({ error: 'Doorium not configured' });
+  if (!DOORIUM_API_URL || !DOORIUM_API_KEY) return res.status(500).json({ error: 'Remote CRM not configured' });
 
   try {
     const { rows } = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.id]);
@@ -116,18 +150,29 @@ app.post('/api/bridge/sync/:id', auth, async (req, res) => {
     const request = rows[0];
     if (!request.external_id) return res.status(400).json({ error: 'Not linked' });
 
-    const response = await fetch(DOORIUM_API_URL + '/api/bridge/status', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-API-Key': DOORIUM_API_KEY },
-      body: JSON.stringify({
-        source_system: 'primedoor', source_id: request.id,
-        status: request.status, notes: request.notes,
-        amount: request.amount, agreed_date: request.agreed_date,
-      }),
+    // Fetch current state from remote CRM
+    const response = await fetch(DOORIUM_API_URL + '/api/bridge/fetch?source_system=primedoor&source_id=' + encodeURIComponent(request.id), {
+      method: 'GET',
+      headers: { 'X-API-Key': DOORIUM_API_KEY },
     });
-    if (!response.ok) { const d = await response.json(); throw new Error(d.error || 'Sync error'); }
-    await pool.query('UPDATE requests SET external_synced_at = NOW() WHERE id = $1', [request.id]);
-    res.json({ ok: true });
+    if (!response.ok) { const d = await response.json(); throw new Error(d.error || 'Fetch error'); }
+
+    const remote = await response.json();
+
+    // Update local request with remote data
+    const fields = ['external_synced_at = NOW()'];
+    const values = [];
+    let idx = 1;
+    if (remote.status) { fields.push('status = $' + idx++); values.push(remote.status); }
+    if (remote.notes !== undefined && remote.notes !== null) { fields.push('notes = $' + idx++); values.push(remote.notes); }
+    if (remote.amount !== undefined && remote.amount !== null) { fields.push('amount = $' + idx++); values.push(remote.amount); }
+    if (remote.agreed_date !== undefined && remote.agreed_date !== null) { fields.push('agreed_date = $' + idx++); values.push(remote.agreed_date); }
+    if (remote.work_description !== undefined && remote.work_description !== null) { fields.push('work_description = $' + idx++); values.push(remote.work_description); }
+    values.push(request.id);
+
+    await pool.query('UPDATE requests SET ' + fields.join(', ') + ' WHERE id = $' + idx, values);
+    const updated = await pool.query('SELECT * FROM requests WHERE id = $1', [request.id]);
+    res.json(updated.rows[0]);
   } catch (err) {
     console.error('Bridge sync:', err);
     res.status(500).json({ error: err.message });
