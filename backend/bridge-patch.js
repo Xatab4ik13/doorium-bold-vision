@@ -23,6 +23,62 @@ const bridgeAuth = (req, res, next) => {
   } catch (err) { console.error('Bridge columns:', err.message); }
 })();
 
+// === Auto-sync: push changes to remote CRM after local update ===
+async function bridgeAutoSync(requestId) {
+  try {
+    if (!DOORIUM_API_URL || !DOORIUM_API_KEY) return;
+    const { rows } = await pool.query('SELECT * FROM requests WHERE id = $1', [requestId]);
+    if (!rows.length || !rows[0].external_id || !rows[0].external_system) return;
+
+    const r = rows[0];
+    const response = await fetch(DOORIUM_API_URL + '/api/bridge/status', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': DOORIUM_API_KEY },
+      body: JSON.stringify({
+        source_system: 'doorium',
+        source_id: r.external_id,
+        status: r.status,
+        notes: r.notes,
+        amount: r.amount,
+        agreed_date: r.agreed_date,
+      }),
+    });
+    if (response.ok) {
+      await pool.query('UPDATE requests SET external_synced_at = NOW() WHERE id = $1', [requestId]);
+      console.log('Bridge auto-sync OK for request', r.number);
+    } else {
+      const d = await response.json().catch(() => ({}));
+      console.error('Bridge auto-sync failed:', d.error || response.status);
+    }
+  } catch (err) {
+    console.error('Bridge auto-sync error:', err.message);
+  }
+}
+
+// === Monkey-patch: intercept PUT /api/requests/:id to add auto-sync ===
+const _originalPut = app.put;
+const _routeHandlers = app._router && app._router.stack;
+
+// We'll wrap the response.json to trigger auto-sync after successful update
+const originalRequestHandler = app._router ? null : null; // placeholder
+
+// Instead of monkey-patching, add a middleware that runs AFTER the update endpoint
+app.use('/api/requests/:id', (req, res, next) => {
+  if (req.method !== 'PUT') return next();
+
+  const originalJson = res.json.bind(res);
+  res.json = function(data) {
+    // Call original json first
+    const result = originalJson(data);
+    // If update was successful (has id field = it's a request object), auto-sync
+    if (data && data.id && data.external_id && data.external_system && res.statusCode < 400) {
+      bridgeAutoSync(data.id).catch(err => console.error('Auto-sync background error:', err.message));
+    }
+    return result;
+  };
+  next();
+});
+
 app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
   try {
     const { source_system, source_id, client_name, client_phone, client_address, city, type, status, work_description, notes, photos, interior_doors, entrance_doors, partitions, agreed_date, amount } = req.body;
@@ -70,7 +126,7 @@ app.put('/api/bridge/status', bridgeAuth, async (req, res) => {
   }
 });
 
-// === GET endpoint: return request data by external_id (for remote sync pull) ===
+// === GET endpoint: return request data by external_id (for manual sync pull) ===
 app.get('/api/bridge/fetch', bridgeAuth, async (req, res) => {
   try {
     const { source_system, source_id } = req.query;
@@ -89,8 +145,6 @@ app.get('/api/bridge/fetch', bridgeAuth, async (req, res) => {
       client_name: r.client_name,
       client_phone: r.client_phone,
       client_address: r.client_address,
-      measurer_id: r.measurer_id,
-      installer_id: r.installer_id,
       interior_doors: r.interior_doors,
       entrance_doors: r.entrance_doors,
       partitions: r.partitions,
@@ -139,7 +193,7 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
   }
 });
 
-// === SYNC: PULL changes FROM remote CRM ===
+// === SYNC: PULL changes FROM remote CRM (manual button) ===
 app.post('/api/bridge/sync/:id', auth, async (req, res) => {
   if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Forbidden' });
   if (!DOORIUM_API_URL || !DOORIUM_API_KEY) return res.status(500).json({ error: 'Remote CRM not configured' });
@@ -151,7 +205,7 @@ app.post('/api/bridge/sync/:id', auth, async (req, res) => {
     if (!request.external_id) return res.status(400).json({ error: 'Not linked' });
 
     // Fetch current state from remote CRM
-    const response = await fetch(DOORIUM_API_URL + '/api/bridge/fetch?source_system=primedoor&source_id=' + encodeURIComponent(request.id), {
+    const response = await fetch(DOORIUM_API_URL + '/api/bridge/fetch?source_system=doorium&source_id=' + encodeURIComponent(request.external_id), {
       method: 'GET',
       headers: { 'X-API-Key': DOORIUM_API_KEY },
     });
