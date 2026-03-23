@@ -248,13 +248,13 @@ app.post('/api/auth/register', async (req, res) => {
 
   const { name, phone: rawPhone, pin, role, telegram_id } = req.body;
   const phone = normalizePhone(rawPhone);
-  if (!name || !phone || !pin || !role || !telegram_id) {
+  if (!name || !phone || !pin || !role) {
     return res.status(400).json({ error: 'Заполните все обязательные поля' });
   }
   if (!/^\d{4}$/.test(pin)) {
     return res.status(400).json({ error: 'ПИН-код должен быть 4 цифры' });
   }
-  if (!/^\d+$/.test(telegram_id)) {
+  if (telegram_id && !/^\d+$/.test(telegram_id)) {
     return res.status(400).json({ error: 'Telegram ID должен содержать только цифры' });
   }
   if (!['manager', 'measurer', 'installer', 'partner'].includes(role)) {
