@@ -92,7 +92,7 @@ const ContactsPage = () => {
                     {line.label && (
                       <p className="font-body text-[10px] tracking-wider text-doorium-platinum/30">{line.label}</p>
                     )}
-                    <a href={line.href} className="font-body text-sm text-doorium-platinum/70 leading-relaxed hover:text-primary transition-colors">
+                    <a href={line.href} className="font-body text-lg font-bold text-doorium-platinum/80 leading-relaxed hover:text-primary transition-colors" style={{ fontVariantNumeric: 'lining-nums tabular-nums' }}>
                       {line.value}
                     </a>
                   </div>
