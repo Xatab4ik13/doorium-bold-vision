@@ -6,8 +6,9 @@ const REMOTE_SYSTEM_NAME = process.env.BRIDGE_REMOTE_SYSTEM || (LOCAL_SYSTEM_NAM
 const BRIDGE_REMOTE_API_URL = process.env.BRIDGE_REMOTE_API_URL || process.env.DOORIUM_API_URL || process.env.PRIMEDOOR_API_URL;
 const BRIDGE_REMOTE_API_KEY = process.env.BRIDGE_REMOTE_API_KEY || process.env.DOORIUM_API_KEY || process.env.PRIMEDOOR_API_KEY;
 
+// Accept both X-API-Key and X-Bridge-Key headers (PrimeDoor sends X-Bridge-Key)
 const bridgeAuth = (req, res, next) => {
-  const key = req.headers['x-api-key'];
+  const key = req.headers['x-api-key'] || req.headers['x-bridge-key'];
   if (!BRIDGE_PATCH_API_KEY || key !== BRIDGE_PATCH_API_KEY) {
     return res.status(401).json({ error: 'Invalid API key' });
   }
@@ -26,6 +27,7 @@ const bridgeAuth = (req, res, next) => {
 })();
 
 // === Auto-sync: push changes to remote CRM after local update ===
+// PrimeDoor's /api/bridge/receive handles updates for existing source_id+source_system
 async function bridgeAutoSync(requestId) {
   try {
     if (!BRIDGE_REMOTE_API_URL || !BRIDGE_REMOTE_API_KEY) return;
@@ -33,9 +35,14 @@ async function bridgeAutoSync(requestId) {
     if (!rows.length || !rows[0].external_id || !rows[0].external_system) return;
 
     const r = rows[0];
-    const response = await fetch(BRIDGE_REMOTE_API_URL + '/api/bridge/status', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-API-Key': BRIDGE_REMOTE_API_KEY },
+    // Use /api/bridge/receive POST — PrimeDoor updates existing if source_id+source_system match
+    const response = await fetch(BRIDGE_REMOTE_API_URL + '/api/bridge/receive', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': BRIDGE_REMOTE_API_KEY,
+        'X-Bridge-Key': BRIDGE_REMOTE_API_KEY, // PrimeDoor checks X-Bridge-Key
+      },
       body: JSON.stringify({
         source_system: LOCAL_SYSTEM_NAME,
         source_id: r.id,
@@ -44,6 +51,16 @@ async function bridgeAutoSync(requestId) {
         amount: r.amount,
         agreed_date: r.agreed_date,
         work_description: r.work_description,
+        status_comment: r.status_comment,
+        client_name: r.client_name,
+        client_phone: r.client_phone,
+        client_address: r.client_address,
+        city: r.city,
+        type: r.type,
+        interior_doors: r.interior_doors,
+        entrance_doors: r.entrance_doors,
+        partitions: r.partitions,
+        photos: r.photos,
       }),
     });
     if (response.ok) {
@@ -59,35 +76,51 @@ async function bridgeAutoSync(requestId) {
 }
 
 
-
-
+// === Receive request from remote CRM ===
 app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
   try {
-    const { source_system, source_id, client_name, client_phone, client_address, city, type, status, work_description, notes, photos, interior_doors, entrance_doors, partitions, agreed_date, amount } = req.body;
+    const { source_system, source_id, client_name, client_phone, client_address, city, type, status, work_description, notes, photos, interior_doors, entrance_doors, partitions, agreed_date, amount, status_comment } = req.body;
     if (!source_system || !source_id || !client_name || !client_phone) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    const existing = await pool.query('SELECT id FROM requests WHERE external_id = $1 AND external_system = $2', [source_id, source_system]);
-    if (existing.rows.length > 0) return res.status(409).json({ error: 'Already exists', id: existing.rows[0].id });
+
+    // Check if already exists — update instead of duplicate
+    const existing = await pool.query('SELECT id, number FROM requests WHERE external_id = $1 AND external_system = $2', [source_id, source_system]);
+    if (existing.rows.length > 0) {
+      const existingId = existing.rows[0].id;
+      const fields = ['external_synced_at = NOW()', 'updated_at = NOW()'];
+      const values = [];
+      let idx = 1;
+      if (status !== undefined && status !== null && status !== '') { fields.push('status = $' + idx++); values.push(status); }
+      if (notes !== undefined && notes !== null) { fields.push('notes = $' + idx++); values.push(notes); }
+      if (amount !== undefined && amount !== null) { fields.push('amount = $' + idx++); values.push(amount); }
+      if (agreed_date !== undefined) { fields.push('agreed_date = $' + idx++); values.push(agreed_date); }
+      if (work_description !== undefined) { fields.push('work_description = $' + idx++); values.push(work_description); }
+      if (status_comment !== undefined) { fields.push('status_comment = $' + idx++); values.push(status_comment); }
+      values.push(existingId);
+      await pool.query('UPDATE requests SET ' + fields.join(', ') + ' WHERE id = $' + idx, values);
+      return res.json({ id: existingId, number: existing.rows[0].number, updated: true });
+    }
 
     const countResult = await pool.query("SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 5) AS INTEGER)), 0) AS count FROM requests");
     const number = 'REQ-' + String(parseInt(countResult.rows[0].count) + 1).padStart(3, '0');
 
     const { rows } = await pool.query(
-      `INSERT INTO requests (number, client_name, client_phone, client_address, city, type, status, work_description, notes, photos, interior_doors, entrance_doors, partitions, agreed_date, amount, source, external_id, external_system, external_synced_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13,$14,$15,'bridge',$16,$17,NOW()) RETURNING id, number`,
-      [number, client_name, client_phone, client_address || '', city, type || 'measurement', status || 'new', work_description, notes, photos ? JSON.stringify(photos) : '[]', interior_doors, entrance_doors, partitions, agreed_date, amount, source_id, source_system]
+      `INSERT INTO requests (number, client_name, client_phone, client_address, city, type, status, work_description, notes, photos, interior_doors, entrance_doors, partitions, agreed_date, amount, status_comment, source, external_id, external_system, external_synced_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13,$14,$15,$16,'bridge',$17,$18,NOW()) RETURNING id, number`,
+      [number, client_name, client_phone, client_address || '', city, type || 'measurement', status || 'new', work_description, notes, photos ? JSON.stringify(photos) : '[]', interior_doors, entrance_doors, partitions, agreed_date, amount, status_comment || null, source_id, source_system]
     );
-    res.json({ id: rows[0].id, number: rows[0].number });
+    res.json({ id: rows[0].id, number: rows[0].number, created: true });
   } catch (err) {
     console.error('Bridge receive:', err);
     res.status(500).json({ error: 'Error' });
   }
 });
 
+// === PUT /api/bridge/status — update by source_system + source_id (legacy) ===
 app.put('/api/bridge/status', bridgeAuth, async (req, res) => {
   try {
-    const { source_system, source_id, status, notes, amount, agreed_date, work_description } = req.body;
+    const { source_system, source_id, status, notes, amount, agreed_date, work_description, status_comment } = req.body;
     const { rows } = await pool.query('SELECT id FROM requests WHERE external_id = $1 AND external_system = $2', [source_id, source_system]);
     if (!rows.length) return res.status(404).json({ error: 'Not found' });
 
@@ -99,6 +132,7 @@ app.put('/api/bridge/status', bridgeAuth, async (req, res) => {
     if (amount !== undefined) { fields.push('amount = $' + idx++); values.push(amount); }
     if (agreed_date !== undefined) { fields.push('agreed_date = $' + idx++); values.push(agreed_date); }
     if (work_description !== undefined) { fields.push('work_description = $' + idx++); values.push(work_description); }
+    if (status_comment !== undefined) { fields.push('status_comment = $' + idx++); values.push(status_comment); }
     values.push(rows[0].id);
 
     const updated = await pool.query('UPDATE requests SET ' + fields.join(', ') + ' WHERE id = $' + idx + ' RETURNING *', values);
@@ -109,7 +143,35 @@ app.put('/api/bridge/status', bridgeAuth, async (req, res) => {
   }
 });
 
-// === GET endpoint: return request data by external_id (for manual sync pull) ===
+// === GET /api/bridge/status/:externalId — PrimeDoor calls this to sync ===
+// externalId = Doorium's request.id (PrimeDoor stores it as external_id)
+app.get('/api/bridge/status/:externalId', bridgeAuth, async (req, res) => {
+  try {
+    // First try: externalId is our request ID
+    let { rows } = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.externalId]);
+    if (!rows.length) {
+      // Fallback: try as external_id
+      const alt = await pool.query('SELECT * FROM requests WHERE external_id = $1', [req.params.externalId]);
+      if (!alt.rows.length) return res.status(404).json({ error: 'Not found' });
+      rows = alt.rows;
+    }
+    const r = rows[0];
+    res.json({
+      status: r.status,
+      agreed_date: r.agreed_date,
+      amount: r.amount,
+      status_comment: r.status_comment,
+      notes: r.notes,
+      work_description: r.work_description,
+      updated_at: r.updated_at,
+    });
+  } catch (err) {
+    console.error('Bridge status GET:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// === GET /api/bridge/fetch — legacy endpoint (query params) ===
 app.get('/api/bridge/fetch', bridgeAuth, async (req, res) => {
   try {
     const { source_system, source_id } = req.query;
@@ -125,6 +187,7 @@ app.get('/api/bridge/fetch', bridgeAuth, async (req, res) => {
       amount: r.amount,
       agreed_date: r.agreed_date,
       work_description: r.work_description,
+      status_comment: r.status_comment,
       client_name: r.client_name,
       client_phone: r.client_phone,
       client_address: r.client_address,
@@ -140,6 +203,7 @@ app.get('/api/bridge/fetch', bridgeAuth, async (req, res) => {
   }
 });
 
+// === Send request to remote CRM (admin button) ===
 app.post('/api/bridge/send/:id', auth, async (req, res) => {
   if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Forbidden' });
   if (!BRIDGE_REMOTE_API_URL || !BRIDGE_REMOTE_API_KEY) return res.status(500).json({ error: 'Remote CRM not configured' });
@@ -152,16 +216,22 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
 
     const response = await fetch(BRIDGE_REMOTE_API_URL + '/api/bridge/receive', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-API-Key': BRIDGE_REMOTE_API_KEY },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': BRIDGE_REMOTE_API_KEY,
+        'X-Bridge-Key': BRIDGE_REMOTE_API_KEY, // PrimeDoor checks X-Bridge-Key
+      },
       body: JSON.stringify({
         source_system: LOCAL_SYSTEM_NAME, source_id: request.id,
         number: request.number, type: request.type, status: request.status,
         client_name: request.client_name, client_phone: request.client_phone,
         client_address: request.client_address, city: request.city,
+        extra_name: request.extra_name, extra_phone: request.extra_phone,
         work_description: request.work_description, notes: request.notes,
         photos: request.photos, interior_doors: request.interior_doors,
         entrance_doors: request.entrance_doors, partitions: request.partitions,
         agreed_date: request.agreed_date, amount: request.amount,
+        status_comment: request.status_comment,
       }),
     });
     const data = await response.json();
@@ -187,12 +257,22 @@ app.post('/api/bridge/sync/:id', auth, async (req, res) => {
     const request = rows[0];
     if (!request.external_id) return res.status(400).json({ error: 'Not linked' });
 
-    // Fetch current state from remote CRM
-    const response = await fetch(BRIDGE_REMOTE_API_URL + '/api/bridge/fetch?source_system=' + encodeURIComponent(LOCAL_SYSTEM_NAME) + '&source_id=' + encodeURIComponent(request.id), {
+    // PrimeDoor exposes GET /api/bridge/status/:externalId
+    // where externalId = the ID stored in their external_id field (= our request.id)
+    // But they may also have it as their own ID (request.external_id)
+    // Try the PrimeDoor endpoint format first
+    const response = await fetch(BRIDGE_REMOTE_API_URL + '/api/bridge/status/' + encodeURIComponent(request.external_id), {
       method: 'GET',
-      headers: { 'X-API-Key': BRIDGE_REMOTE_API_KEY },
+      headers: {
+        'X-API-Key': BRIDGE_REMOTE_API_KEY,
+        'X-Bridge-Key': BRIDGE_REMOTE_API_KEY,
+      },
     });
-    if (!response.ok) { const d = await response.json(); throw new Error(d.error || 'Fetch error'); }
+
+    if (!response.ok) {
+      const d = await response.json().catch(() => ({}));
+      throw new Error(d.error || 'Fetch error ' + response.status);
+    }
 
     const remote = await response.json();
 
@@ -205,6 +285,7 @@ app.post('/api/bridge/sync/:id', auth, async (req, res) => {
     if (remote.amount !== undefined && remote.amount !== null) { fields.push('amount = $' + idx++); values.push(remote.amount); }
     if (remote.agreed_date !== undefined && remote.agreed_date !== null) { fields.push('agreed_date = $' + idx++); values.push(remote.agreed_date); }
     if (remote.work_description !== undefined && remote.work_description !== null) { fields.push('work_description = $' + idx++); values.push(remote.work_description); }
+    if (remote.status_comment !== undefined && remote.status_comment !== null) { fields.push('status_comment = $' + idx++); values.push(remote.status_comment); }
     values.push(request.id);
 
     await pool.query('UPDATE requests SET ' + fields.join(', ') + ' WHERE id = $' + idx, values);
