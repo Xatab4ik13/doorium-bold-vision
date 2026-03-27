@@ -1283,12 +1283,74 @@ function resolveBridgeTarget(externalSystem) {
 
 // Middleware for bridge auth (API key)
 const bridgeAuth = (req, res, next) => {
-  const key = req.headers['x-api-key'];
+  const key = req.headers['x-api-key'] || req.headers['x-bridge-key'];
   if (!BRIDGE_API_KEY || key !== BRIDGE_API_KEY) {
     return res.status(401).json({ error: 'Неверный API-ключ' });
   }
   next();
 };
+
+function bridgeHeaders(apiKey, includeJson = true) {
+  const headers = {
+    'X-API-Key': apiKey,
+    'X-Bridge-Key': apiKey,
+  };
+  if (includeJson) headers['Content-Type'] = 'application/json';
+  return headers;
+}
+
+async function bridgeRequest(method, url, apiKey, payload) {
+  const response = await fetch(url, {
+    method,
+    headers: bridgeHeaders(apiKey, payload !== undefined),
+    ...(payload !== undefined ? { body: JSON.stringify(payload) } : {}),
+  });
+  const data = await response.json().catch(() => ({}));
+  return { ok: response.ok, status: response.status, data };
+}
+
+function buildBridgeUpdate(fieldsPayload = {}, includeUpdatedAt = false) {
+  const fields = ['external_synced_at = NOW()'];
+  const values = [];
+  let idx = 1;
+
+  const setField = (column, value) => {
+    fields.push(`${column} = $${idx++}`);
+    values.push(value);
+  };
+
+  if (fieldsPayload.status !== undefined && fieldsPayload.status !== null && fieldsPayload.status !== '') setField('status', fieldsPayload.status);
+  if (fieldsPayload.notes !== undefined) setField('notes', fieldsPayload.notes);
+  if (fieldsPayload.amount !== undefined) setField('amount', fieldsPayload.amount);
+  if (fieldsPayload.agreed_date !== undefined) setField('agreed_date', fieldsPayload.agreed_date);
+  if (fieldsPayload.work_description !== undefined) setField('work_description', fieldsPayload.work_description);
+  if (fieldsPayload.status_comment !== undefined) setField('status_comment', fieldsPayload.status_comment);
+  if (fieldsPayload.client_name !== undefined) setField('client_name', fieldsPayload.client_name);
+  if (fieldsPayload.client_phone !== undefined) setField('client_phone', normalizePhone(fieldsPayload.client_phone) || fieldsPayload.client_phone);
+  if (fieldsPayload.client_address !== undefined) setField('client_address', fieldsPayload.client_address);
+  if (fieldsPayload.city !== undefined) setField('city', fieldsPayload.city);
+  if (fieldsPayload.type !== undefined) setField('type', fieldsPayload.type);
+  if (fieldsPayload.interior_doors !== undefined) setField('interior_doors', fieldsPayload.interior_doors);
+  if (fieldsPayload.entrance_doors !== undefined) setField('entrance_doors', fieldsPayload.entrance_doors);
+  if (fieldsPayload.partitions !== undefined) setField('partitions', fieldsPayload.partitions);
+  if (fieldsPayload.photos !== undefined) {
+    fields.push(`photos = $${idx++}::jsonb`);
+    values.push(JSON.stringify(fieldsPayload.photos ?? []));
+  }
+  if (includeUpdatedAt) fields.push('updated_at = NOW()');
+
+  return { fields, values, nextIndex: idx };
+}
+
+async function applyBridgeUpdateToRequest(requestId, payload, includeUpdatedAt = false) {
+  const { fields, values, nextIndex } = buildBridgeUpdate(payload, includeUpdatedAt);
+  values.push(requestId);
+  const { rows } = await pool.query(
+    `UPDATE requests SET ${fields.join(', ')} WHERE id = $${nextIndex} RETURNING *`,
+    values
+  );
+  return rows[0] || null;
+}
 
 // Auto-add external columns if missing
 (async () => {
@@ -1314,26 +1376,60 @@ async function bridgeAutoSync(requestId) {
     const target = resolveBridgeTarget(request.external_system);
     if (!target) return;
 
-    const response = await fetch(`${target.url}/api/bridge/status`, {
+    const payload = {
+      source_system: LOCAL_SYSTEM_NAME,
+      source_id: request.id,
+      status: request.status,
+      notes: request.notes,
+      amount: request.amount,
+      agreed_date: request.agreed_date,
+      work_description: request.work_description,
+      status_comment: request.status_comment,
+      client_name: request.client_name,
+      client_phone: request.client_phone,
+      client_address: request.client_address,
+      city: request.city,
+      type: request.type,
+      interior_doors: request.interior_doors,
+      entrance_doors: request.entrance_doors,
+      partitions: request.partitions,
+      photos: request.photos,
+    };
+
+    const attempts = [];
+    if (request.external_id) {
+      attempts.push({
+        method: 'PUT',
+        url: `${target.url}/api/bridge/update/${encodeURIComponent(request.external_id)}`,
+        payload,
+      });
+    }
+    attempts.push({
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': target.key,
-      },
-      body: JSON.stringify({
-        source_system: LOCAL_SYSTEM_NAME,
-        source_id: request.id,
-        status: request.status,
-        notes: request.notes,
-        amount: request.amount,
-        agreed_date: request.agreed_date,
-        work_description: request.work_description,
-      }),
+      url: `${target.url}/api/bridge/status`,
+      payload,
+    });
+    attempts.push({
+      method: 'POST',
+      url: `${target.url}/api/bridge/receive`,
+      payload,
     });
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || `HTTP ${response.status}`);
+    let synced = false;
+    let lastError = null;
+    for (const attempt of attempts) {
+      const result = await bridgeRequest(attempt.method, attempt.url, target.key, attempt.payload);
+      if (result.ok) {
+        synced = true;
+        break;
+      }
+      if (![404, 405].includes(result.status)) {
+        lastError = result.data?.error || `HTTP ${result.status}`;
+      }
+    }
+
+    if (!synced) {
+      throw new Error(lastError || 'Не удалось отправить обновление во внешнюю CRM');
     }
 
     await pool.query('UPDATE requests SET external_synced_at = NOW() WHERE id = $1', [request.id]);
@@ -1383,10 +1479,7 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
 
     const response = await fetch(`${BRIDGE_REMOTE_API_URL}/api/bridge/receive`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': BRIDGE_REMOTE_API_KEY,
-      },
+      headers: bridgeHeaders(BRIDGE_REMOTE_API_KEY),
       body: JSON.stringify(payload),
     });
 
@@ -1414,19 +1507,36 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
 // Receive request from external system
 app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
   try {
-    const { source_system, source_id, number: extNumber, type, status: extStatus, client_name, client_phone, client_address, city, extra_name, extra_phone, work_description, notes, photos, interior_doors, entrance_doors, partitions, agreed_date, amount } = req.body;
+    const { source_system, source_id, number: extNumber, type, status: extStatus, client_name, client_phone, client_address, city, extra_name, extra_phone, work_description, notes, photos, interior_doors, entrance_doors, partitions, agreed_date, amount, status_comment } = req.body;
 
     if (!source_system || !source_id || !client_name || !client_phone) {
       return res.status(400).json({ error: 'Обязательные поля: source_system, source_id, client_name, client_phone' });
     }
 
     const existing = await pool.query(
-      'SELECT id FROM requests WHERE external_id = $1 AND external_system = $2',
+      'SELECT id, number FROM requests WHERE external_id = $1 AND external_system = $2',
       [source_id, source_system]
     );
 
     if (existing.rows.length > 0) {
-      return res.status(409).json({ error: 'Заявка уже существует', id: existing.rows[0].id });
+      const updated = await applyBridgeUpdateToRequest(existing.rows[0].id, {
+        status: extStatus,
+        notes,
+        amount,
+        agreed_date,
+        work_description,
+        status_comment,
+        client_name,
+        client_phone,
+        client_address,
+        city,
+        type,
+        interior_doors,
+        entrance_doors,
+        partitions,
+        photos,
+      }, true);
+      return res.json({ id: existing.rows[0].id, number: updated?.number || existing.rows[0].number, updated: true });
     }
 
     const countResult = await pool.query("SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 5) AS INTEGER)), 0) AS count FROM requests");
@@ -1434,9 +1544,9 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
     const normalizedPhone = normalizePhone(client_phone) || client_phone;
 
     const { rows } = await pool.query(
-      `INSERT INTO requests (number, client_name, client_phone, client_address, city, type, status, work_description, notes, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions, agreed_date, amount, source, external_id, external_system, external_synced_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13, $14, $15, $16, $17, 'bridge', $18, $19, NOW()) RETURNING *`,
-      [newNumber, client_name, normalizedPhone, client_address || '', city || null, type || 'measurement', extStatus || 'new', work_description || null, notes || null, extra_name || null, extra_phone ? (normalizePhone(extra_phone) || extra_phone) : null, photos ? JSON.stringify(photos) : '[]', interior_doors || null, entrance_doors || null, partitions || null, agreed_date || null, amount || null, source_id, source_system]
+      `INSERT INTO requests (number, client_name, client_phone, client_address, city, type, status, work_description, notes, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions, agreed_date, amount, status_comment, source, external_id, external_system, external_synced_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13, $14, $15, $16, $17, $18, 'bridge', $19, $20, NOW()) RETURNING *`,
+      [newNumber, client_name, normalizedPhone, client_address || '', city || null, type || 'measurement', extStatus || 'new', work_description || null, notes || null, extra_name || null, extra_phone ? (normalizePhone(extra_phone) || extra_phone) : null, photos ? JSON.stringify(photos) : '[]', interior_doors || null, entrance_doors || null, partitions || null, agreed_date || null, amount || null, status_comment || null, source_id, source_system]
     );
 
     await notifyManagersAndAdmins(pool,
@@ -1452,6 +1562,49 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
   } catch (err) {
     console.error('Bridge receive error:', err);
     res.status(500).json({ error: 'Ошибка приёма заявки' });
+  }
+});
+
+// Receive direct update by request id/external id (PrimeDoor compatibility)
+app.put('/api/bridge/update/:id', bridgeAuth, async (req, res) => {
+  try {
+    const requestedId = req.params.id;
+    let lookup = await pool.query('SELECT id FROM requests WHERE id = $1', [requestedId]);
+    if (!lookup.rows.length) {
+      lookup = await pool.query('SELECT id FROM requests WHERE external_id = $1', [requestedId]);
+    }
+    if (!lookup.rows.length) return res.status(404).json({ error: 'Заявка не найдена' });
+
+    const updated = await applyBridgeUpdateToRequest(lookup.rows[0].id, req.body, true);
+    return res.json(updated);
+  } catch (err) {
+    console.error('Bridge update error:', err);
+    return res.status(500).json({ error: 'Ошибка обновления' });
+  }
+});
+
+// Return status by local id or external id
+app.get('/api/bridge/status/:externalId', bridgeAuth, async (req, res) => {
+  try {
+    let result = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.externalId]);
+    if (!result.rows.length) {
+      result = await pool.query('SELECT * FROM requests WHERE external_id = $1', [req.params.externalId]);
+    }
+    if (!result.rows.length) return res.status(404).json({ error: 'Заявка не найдена' });
+
+    const request = result.rows[0];
+    return res.json({
+      status: request.status,
+      agreed_date: request.agreed_date,
+      amount: request.amount,
+      status_comment: request.status_comment,
+      notes: request.notes,
+      work_description: request.work_description,
+      updated_at: request.updated_at,
+    });
+  } catch (err) {
+    console.error('Bridge status GET error:', err);
+    return res.status(500).json({ error: 'Ошибка получения статуса' });
   }
 });
 
@@ -1477,6 +1630,14 @@ app.get('/api/bridge/fetch', bridgeAuth, async (req, res) => {
       amount: request.amount,
       agreed_date: request.agreed_date,
       work_description: request.work_description,
+      status_comment: request.status_comment,
+      client_name: request.client_name,
+      client_phone: request.client_phone,
+      client_address: request.client_address,
+      interior_doors: request.interior_doors,
+      entrance_doors: request.entrance_doors,
+      partitions: request.partitions,
+      photos: request.photos,
       updated_at: request.updated_at,
     });
   } catch (err) {
@@ -1488,7 +1649,7 @@ app.get('/api/bridge/fetch', bridgeAuth, async (req, res) => {
 // Receive status update from external system
 app.put('/api/bridge/status', bridgeAuth, async (req, res) => {
   try {
-    const { source_system, source_id, status, notes, amount, agreed_date, work_description } = req.body;
+    const { source_system, source_id, status, notes, amount, agreed_date, work_description, status_comment } = req.body;
     if (!source_system || !source_id) {
       return res.status(400).json({ error: 'source_system и source_id обязательны' });
     }
@@ -1499,23 +1660,16 @@ app.put('/api/bridge/status', bridgeAuth, async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ error: 'Заявка не найдена' });
 
-    const fields = ['external_synced_at = NOW()'];
-    const values = [];
-    let idx = 1;
+    const updated = await applyBridgeUpdateToRequest(rows[0].id, {
+      status,
+      notes,
+      amount,
+      agreed_date,
+      work_description,
+      status_comment,
+    }, true);
 
-    if (status !== undefined && status !== null && status !== '') { fields.push(`status = $${idx++}`); values.push(status); }
-    if (notes !== undefined) { fields.push(`notes = $${idx++}`); values.push(notes); }
-    if (amount !== undefined) { fields.push(`amount = $${idx++}`); values.push(amount); }
-    if (agreed_date !== undefined) { fields.push(`agreed_date = $${idx++}`); values.push(agreed_date); }
-    if (work_description !== undefined) { fields.push(`work_description = $${idx++}`); values.push(work_description); }
-
-    values.push(rows[0].id);
-    const updated = await pool.query(
-      `UPDATE requests SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
-      values
-    );
-
-    res.json(updated.rows[0]);
+    res.json(updated);
   } catch (err) {
     console.error('Bridge status error:', err);
     res.status(500).json({ error: 'Ошибка обновления' });
@@ -1541,38 +1695,33 @@ app.post('/api/bridge/sync/:id', auth, async (req, res) => {
       return res.status(500).json({ error: 'Внешняя система не настроена' });
     }
 
-    const response = await fetch(
-      `${target.url}/api/bridge/fetch?source_system=${encodeURIComponent(LOCAL_SYSTEM_NAME)}&source_id=${encodeURIComponent(request.id)}`,
-      {
-        method: 'GET',
-        headers: { 'X-API-Key': target.key },
-      }
-    );
-
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Ошибка получения данных из внешней CRM');
+    let statusResult = null;
+    if (request.external_id) {
+      statusResult = await bridgeRequest(
+        'GET',
+        `${target.url}/api/bridge/status/${encodeURIComponent(request.external_id)}`,
+        target.key
+      );
     }
 
-    const remote = await response.json();
+    let remote = null;
+    if (statusResult?.ok) {
+      remote = statusResult.data;
+    } else {
+      const fallback = await bridgeRequest(
+        'GET',
+        `${target.url}/api/bridge/fetch?source_system=${encodeURIComponent(LOCAL_SYSTEM_NAME)}&source_id=${encodeURIComponent(request.id)}`,
+        target.key
+      );
 
-    const fields = ['external_synced_at = NOW()'];
-    const values = [];
-    let idx = 1;
+      if (!fallback.ok) {
+        throw new Error(fallback.data?.error || statusResult?.data?.error || 'Ошибка получения данных из внешней CRM');
+      }
+      remote = fallback.data;
+    }
 
-    if (remote.status !== undefined && remote.status !== null && remote.status !== '') { fields.push(`status = $${idx++}`); values.push(remote.status); }
-    if (remote.notes !== undefined) { fields.push(`notes = $${idx++}`); values.push(remote.notes); }
-    if (remote.amount !== undefined) { fields.push(`amount = $${idx++}`); values.push(remote.amount); }
-    if (remote.agreed_date !== undefined) { fields.push(`agreed_date = $${idx++}`); values.push(remote.agreed_date); }
-    if (remote.work_description !== undefined) { fields.push(`work_description = $${idx++}`); values.push(remote.work_description); }
-
-    values.push(request.id);
-    const updated = await pool.query(
-      `UPDATE requests SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
-      values
-    );
-
-    res.json(updated.rows[0]);
+    const updated = await applyBridgeUpdateToRequest(request.id, remote, true);
+    res.json(updated);
   } catch (err) {
     console.error('Bridge sync error:', err);
     res.status(500).json({ error: err.message || 'Ошибка синхронизации' });
