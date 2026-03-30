@@ -263,14 +263,12 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
         <div class="meta" style="display:flex;gap:24px;">
           <div>
             <p style="font-weight:600;margin-bottom:2px;">Москва</p>
-            <p>+7 926 166 30 62</p>
-            <p>+7 926 166 35 02</p>
-            <p>+7 925 570 06 09</p>
+            <p>+7 (916) 819-19-96</p>
           </div>
           <div>
             <p style="font-weight:600;margin-bottom:2px;">Санкт-Петербург</p>
-            <p>+7 993 266 35 04</p>
-            <p style="margin-top:6px;">service@doorium.ru</p>
+            <p>+7 (926) 863-70-08</p>
+            <p style="margin-top:6px;">info@doorium.ru</p>
           </div>
         </div>
       </div>
