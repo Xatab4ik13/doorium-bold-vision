@@ -3,6 +3,12 @@ import type { ApiRequest } from "@/hooks/useRequests";
 
 type GetUserNameFn = (id?: string) => string | undefined;
 
+const sourceLabels: Record<string, string> = {
+  site: "Сайт",
+  partner: "Партнёр",
+  bridge: "PrimeDoor",
+};
+
 const formatRow = (r: ApiRequest, getUserName: GetUserNameFn) => ({
   "Номер": r.number,
   "Клиент": r.client_name,
@@ -11,6 +17,7 @@ const formatRow = (r: ApiRequest, getUserName: GetUserNameFn) => ({
   "Город": r.city || "",
   "Тип": requestTypeLabels[r.type] || r.type,
   "Статус": statusLabels[r.status as RequestStatus] || r.status,
+  "Источник": sourceLabels[r.source] || r.source || "",
   "Замерщик": getUserName(r.measurer_id) || "",
   "Монтажник": getUserName(r.installer_id) || "",
   "Партнёр": getUserName(r.partner_id) || "",
