@@ -179,7 +179,7 @@ const PrivacyPage = () => {
               </p>
               <ul className="space-y-1 ml-2">
                 <li>Электронная почта: <a href="mailto:info@doorium.ru" className="text-primary hover:text-primary/80 transition-colors">info@doorium.ru</a></li>
-                <li>Телефон: <a href="tel:+79168191996" className="text-primary hover:text-primary/80 transition-colors">8 (916) 819-19-96</a></li>
+                <li>Телефон: <a href="tel:+79168191996" className="text-primary hover:text-primary/80 transition-colors">+7 (916) 819-19-96</a></li>
               </ul>
             </div>
 

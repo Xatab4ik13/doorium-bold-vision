@@ -63,7 +63,7 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
             <div>
               <p className="font-body text-[10px] tracking-wider text-doorium-platinum/30 mb-0.5">Москва</p>
               <a href="tel:+79168191996" className="font-body text-lg font-bold tracking-wide text-doorium-platinum/80 hover:text-primary transition-colors" style={{ fontVariantNumeric: 'lining-nums tabular-nums' }}>
-                8 (916) 819-19-96
+                +7 (916) 819-19-96
               </a>
             </div>
             <div>
