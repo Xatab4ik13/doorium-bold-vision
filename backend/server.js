@@ -1390,6 +1390,8 @@ async function bridgeAutoSync(requestId) {
       client_address: request.client_address,
       city: request.city,
       type: request.type,
+      extra_name: request.extra_name,
+      extra_phone: request.extra_phone,
       interior_doors: request.interior_doors,
       entrance_doors: request.entrance_doors,
       partitions: request.partitions,
