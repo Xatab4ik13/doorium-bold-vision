@@ -39,6 +39,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
     if (filters.measurerId !== "all") params.set("measurer_id", filters.measurerId);
     if (filters.installerId !== "all") params.set("installer_id", filters.installerId);
     if (filters.partnerId !== "all") params.set("partner_id", filters.partnerId);
+    if (filters.source && filters.source !== "all") params.set("source", filters.source);
     if (filters.dateFrom) params.set("date_from", filters.dateFrom);
     if (filters.dateTo) params.set("date_to", filters.dateTo);
     if (filters.dateField && filters.dateField !== "created_at") params.set("date_field", filters.dateField);
@@ -76,6 +77,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
         if (filters.measurerId !== "all") filtered = filtered.filter(r => r.measurer_id === filters.measurerId);
         if (filters.installerId !== "all") filtered = filtered.filter(r => r.installer_id === filters.installerId);
         if (filters.partnerId !== "all") filtered = filtered.filter(r => r.partner_id === filters.partnerId);
+        if (filters.source && filters.source !== "all") filtered = filtered.filter(r => r.source === filters.source);
         const dateField = filters.dateField || "created_at";
         if (dateField === "closed_at") {
           filtered = filtered.filter(r => r.status === "closed");
@@ -134,7 +136,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
   useEffect(() => {
     setPage(1);
     prevTotalRef.current = null;
-  }, [filters.search, filters.status, filters.type, filters.measurerId, filters.installerId, filters.partnerId, filters.dateFrom, filters.dateTo, filters.dateField, quickFilter]);
+  }, [filters.search, filters.status, filters.type, filters.source, filters.measurerId, filters.installerId, filters.partnerId, filters.dateFrom, filters.dateTo, filters.dateField, quickFilter]);
 
   useEffect(() => {
     fetchRequests();
