@@ -9,6 +9,7 @@ export interface FilterState {
   status: string;
   type: string;
   city: string;
+  source: string;
   measurerId: string;
   installerId: string;
   partnerId: string;
@@ -22,6 +23,7 @@ export const defaultFilters: FilterState = {
   status: "all",
   type: "all",
   city: "Москва",
+  source: "all",
   measurerId: "all",
   installerId: "all",
   partnerId: "all",
@@ -50,6 +52,7 @@ const RequestFilters = ({ filters, onChange, users, onExport, resultCount }: Req
   const activeFilterCount = [
     filters.status !== "all",
     filters.type !== "all",
+    filters.source !== "all",
     filters.measurerId !== "all",
     filters.installerId !== "all",
     filters.partnerId !== "all",
@@ -121,7 +124,16 @@ const RequestFilters = ({ filters, onChange, users, onExport, resultCount }: Req
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-4 rounded-xl bg-accent/50 border border-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 p-4 rounded-xl bg-accent/50 border border-border">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Users size={11} /> Источник</label>
+                <select value={filters.source} onChange={(e) => set("source", e.target.value)} className={selectClass + " w-full"}>
+                  <option value="all">Все</option>
+                  <option value="site">Сайт</option>
+                  <option value="partner">Партнёр</option>
+                  <option value="bridge">PrimeDoor</option>
+                </select>
+              </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Users size={11} /> Замерщик</label>
                 <select value={filters.measurerId} onChange={(e) => set("measurerId", e.target.value)} className={selectClass + " w-full"}>

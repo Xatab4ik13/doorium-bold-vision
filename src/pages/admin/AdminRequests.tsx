@@ -50,6 +50,7 @@ const AdminRequests = () => {
       if (filters.measurerId !== "all") params.set("measurer_id", filters.measurerId);
       if (filters.installerId !== "all") params.set("installer_id", filters.installerId);
       if (filters.partnerId !== "all") params.set("partner_id", filters.partnerId);
+      if (filters.source && filters.source !== "all") params.set("source", filters.source);
       if (filters.dateFrom) params.set("date_from", filters.dateFrom);
       if (filters.dateTo) params.set("date_to", filters.dateTo);
       if (filters.dateField && filters.dateField !== "created_at") params.set("date_field", filters.dateField);

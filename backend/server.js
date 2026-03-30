@@ -482,7 +482,7 @@ app.get('/api/requests', auth, async (req, res) => {
   try {
     const {
       page = 1, limit = 30,
-      search, status, type, city,
+      search, status, type, city, source,
       measurer_id, installer_id, partner_id,
       date_from, date_to, quick
     } = req.query;
@@ -513,6 +513,7 @@ app.get('/api/requests', auth, async (req, res) => {
     if (installer_id && installer_id !== 'all') { conds.push(`installer_id = $${idx++}`); params.push(installer_id); }
     if (city && city !== 'all') { conds.push(`city = $${idx++}`); params.push(city); }
     if (partner_id && partner_id !== 'all') { conds.push(`partner_id = $${idx++}`); params.push(partner_id); }
+    if (source && source !== 'all') { conds.push(`source = $${idx++}`); params.push(source); }
     const requestedDateField = req.query.date_field === 'closed_at' ? 'closed_at' : 'created_at';
     if (requestedDateField === 'closed_at') {
       conds.push(`status = 'closed'`);
