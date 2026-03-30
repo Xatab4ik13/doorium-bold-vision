@@ -97,6 +97,14 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
       if (agreed_date !== undefined) { fields.push('agreed_date = $' + idx++); values.push(agreed_date); }
       if (work_description !== undefined) { fields.push('work_description = $' + idx++); values.push(work_description); }
       if (status_comment !== undefined) { fields.push('status_comment = $' + idx++); values.push(status_comment); }
+      if (client_name !== undefined && client_name !== null) { fields.push('client_name = $' + idx++); values.push(client_name); }
+      if (client_phone !== undefined && client_phone !== null) { fields.push('client_phone = $' + idx++); values.push(client_phone); }
+      if (client_address !== undefined && client_address !== null) { fields.push('client_address = $' + idx++); values.push(client_address); }
+      if (city !== undefined && city !== null) { fields.push('city = $' + idx++); values.push(city); }
+      if (interior_doors !== undefined && interior_doors !== null) { fields.push('interior_doors = $' + idx++); values.push(interior_doors); }
+      if (entrance_doors !== undefined && entrance_doors !== null) { fields.push('entrance_doors = $' + idx++); values.push(entrance_doors); }
+      if (partitions !== undefined && partitions !== null) { fields.push('partitions = $' + idx++); values.push(partitions); }
+      if (photos !== undefined && photos !== null) { fields.push('photos = $' + idx++ + '::jsonb'); values.push(JSON.stringify(photos)); }
       values.push(existingId);
       await pool.query('UPDATE requests SET ' + fields.join(', ') + ' WHERE id = $' + idx, values);
       return res.json({ id: existingId, number: existing.rows[0].number, updated: true });
