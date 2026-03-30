@@ -20,7 +20,7 @@ export interface ApiRequest {
   interior_doors?: number;
   entrance_doors?: number;
   partitions?: number;
-  source: "site" | "partner";
+  source: "site" | "partner" | "bridge";
   partner_id?: string;
   partner_name?: string;
   partner_phone?: string;

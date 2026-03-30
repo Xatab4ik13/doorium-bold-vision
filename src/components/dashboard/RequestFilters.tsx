@@ -9,6 +9,7 @@ export interface FilterState {
   status: string;
   type: string;
   city: string;
+  source: string;
   measurerId: string;
   installerId: string;
   partnerId: string;
@@ -22,6 +23,7 @@ export const defaultFilters: FilterState = {
   status: "all",
   type: "all",
   city: "Москва",
+  source: "all",
   measurerId: "all",
   installerId: "all",
   partnerId: "all",
