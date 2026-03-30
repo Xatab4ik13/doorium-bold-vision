@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
-const DADATA_API_KEY = import.meta.env.VITE_DADATA_API_KEY || "";
+const DADATA_API_KEY = "31256c5e3b7279666a4831f6d7e07c297e2e5ae5";
 const DADATA_URL = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address";
 
 interface Suggestion {
