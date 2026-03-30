@@ -146,7 +146,7 @@ const Header = forwardRef<HTMLElement>((_, ref) => {
               className="block font-body text-lg font-bold tracking-wide text-doorium-platinum/80 hover:text-primary transition-colors"
               style={{ fontVariantNumeric: 'lining-nums tabular-nums' }}
             >
-              8 (916) 819-19-96
+              +7 (916) 819-19-96
             </a>
           </div>
           <div className="mb-3">

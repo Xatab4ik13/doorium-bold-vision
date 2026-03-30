@@ -10,7 +10,7 @@ const contactInfo = [
     icon: Phone,
     title: "ТЕЛЕФОН",
     lines: [
-      { label: "Москва", value: "8 (916) 819-19-96", href: "tel:+79168191996" },
+      { label: "Москва", value: "+7 (916) 819-19-96", href: "tel:+79168191996" },
       { label: "Санкт-Петербург", value: "+7 (926) 863-70-08", href: "tel:+79268637008" },
     ],
   },
