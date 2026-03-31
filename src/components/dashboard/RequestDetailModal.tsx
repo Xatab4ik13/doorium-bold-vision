@@ -90,9 +90,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const canChangeDate = canEdit || canChangeDateInstaller || canChangeDateMeasurer;
 
   // Get valid statuses for this request type
-  const validStatuses = statusFlows[request.type as RequestType] || Object.keys(statusLabels);
-  // Add terminal statuses + pending from any non-closed
-  const allValidStatuses = [...new Set([...validStatuses, "pending", "cancelled", ...(request.type === "measurement" ? ["client_refused"] : [])])];
+  // Admin can set ANY status; others get flow-based + terminal statuses
+  const allValidStatuses = viewerRole === "admin"
+    ? Object.keys(statusLabels) as string[]
+    : [...new Set([...(statusFlows[request.type as RequestType] || Object.keys(statusLabels)), "pending", "cancelled", ...(request.type === "measurement" ? ["client_refused"] : [])])];
 
   const photos = request.photos || [];
   const hasFiles = photos.length > 0;
