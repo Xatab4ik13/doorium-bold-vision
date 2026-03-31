@@ -29,8 +29,20 @@ const AdminRequests = () => {
   const quickFromUrl = searchParams.get("quick") || undefined;
   const searchFromUrl = searchParams.get("search") || "";
   const [city, setCity] = useState<CityFilter>("Москва");
-  const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва", search: searchFromUrl });
-  const { requests, total, page, totalPages, limit, loading, setPage, refetch } = usePaginatedRequests(filters, { quickFilter: quickFromUrl });
+
+  // Map quick filter to status filter so UI reflects the active filter
+  const quickToStatus: Record<string, string> = {
+    new: "new",
+    pending: "pending",
+    in_progress: "all",
+    closed: "closed",
+    reclamation: "all",
+  };
+  const initialStatus = quickFromUrl && quickToStatus[quickFromUrl] ? quickToStatus[quickFromUrl] : "all";
+  const initialType = quickFromUrl === "reclamation" ? "reclamation" : "all";
+
+  const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва", search: searchFromUrl, status: initialStatus, type: initialType });
+  const { requests, total, page, totalPages, limit, loading, setPage, refetch } = usePaginatedRequests(filters, { quickFilter: quickFromUrl === "in_progress" ? quickFromUrl : undefined });
   const { createRequest, deleteRequest, updateRequest } = useRequests();
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
   const [showCreate, setShowCreate] = useState(false);

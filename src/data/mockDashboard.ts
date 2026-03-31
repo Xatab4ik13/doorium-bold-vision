@@ -55,7 +55,16 @@ export const statusFlows: Record<RequestType, RequestStatus[]> = {
 };
 
 // Which statuses can transition to which (for admin/manager)
-export const getNextStatuses = (currentStatus: RequestStatus, type: RequestType): RequestStatus[] => {
+export const getNextStatuses = (currentStatus: RequestStatus, type: RequestType, viewerRole?: string): RequestStatus[] => {
+  // Admin can transition to ANY status
+  if (viewerRole === "admin") {
+    const allStatuses: RequestStatus[] = [
+      ...statusFlows[type],
+      "pending", "cancelled", "client_refused",
+    ];
+    return [...new Set(allStatuses)].filter(s => s !== currentStatus);
+  }
+
   const flow = statusFlows[type];
   const currentIndex = flow.indexOf(currentStatus);
   
