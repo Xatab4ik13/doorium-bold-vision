@@ -465,6 +465,15 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-sm text-amber-900">{request.status_comment}</p>
                     </div>
                   )}
+                  {(request.interior_doors || request.entrance_doors || request.partitions) && (
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">МК</p><p className="text-lg font-bold text-foreground">{request.interior_doors || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Входные</p><p className="text-lg font-bold text-foreground">{request.entrance_doors || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Перегор.</p><p className="text-lg font-bold text-foreground">{request.partitions || 0}</p></div>
+                    </div>
+                  )}
+                </>
+              )}
 
               {/* Measurer/Installer status action buttons */}
               {(viewerRole === "measurer" || viewerRole === "installer") && !canEdit && (
