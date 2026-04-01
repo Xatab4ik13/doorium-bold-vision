@@ -475,6 +475,36 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </>
               )}
 
+              {/* Measurer/Installer status action buttons */}
+              {(viewerRole === "measurer" || viewerRole === "installer") && !canEdit && (
+                <div className="space-y-2">
+                  {!["pending", "cancelled", "client_refused", "closed"].includes(status) && (
+                    <button
+                      onClick={() => setStatus("pending")}
+                      className={`w-full py-3 rounded-2xl text-sm font-medium border-2 transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
+                        status === "pending"
+                          ? "border-yellow-400 bg-yellow-50 text-yellow-700"
+                          : "border-border text-muted-foreground hover:border-yellow-300"
+                      }`}
+                    >
+                      <AlertTriangle size={16} /> В ожидание
+                    </button>
+                  )}
+                  {!["cancelled", "client_refused", "closed"].includes(status) && (
+                    <button
+                      onClick={() => setStatus("client_refused")}
+                      className={`w-full py-3 rounded-2xl text-sm font-medium border-2 transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
+                        status === "client_refused"
+                          ? "border-red-400 bg-red-50 text-red-700"
+                          : "border-border text-muted-foreground hover:border-red-300"
+                      }`}
+                    >
+                      <X size={16} /> Отказ клиента
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Operational fields — always visible for admin/manager */}
               {canEdit && (
                 <div>
@@ -507,7 +537,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Заметки</p>
                 <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Добавьте заметку..."
-                  className="w-full px-4 py-2.5 rounded-2xl border border-border bg-background text-sm focus:outline-none resize-none" readOnly={!canEdit && !canPartnerEdit} />
+                  className="w-full px-4 py-2.5 rounded-2xl border border-border bg-background text-sm focus:outline-none resize-none" readOnly={!canEdit && !canPartnerEdit && viewerRole !== "measurer" && viewerRole !== "installer"} />
               </div>
             </div>
           )}
@@ -940,6 +970,36 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </div>
               )}
 
+              {/* Measurer/Installer status action buttons (desktop) */}
+              {(viewerRole === "measurer" || viewerRole === "installer") && !canEdit && (
+                <div className="flex flex-wrap gap-2">
+                  {!["pending", "cancelled", "client_refused", "closed"].includes(status) && (
+                    <button
+                      onClick={() => setStatus("pending")}
+                      className={`px-4 py-2.5 rounded-xl text-sm font-medium border-2 transition-all flex items-center gap-2 ${
+                        status === "pending"
+                          ? "border-yellow-400 bg-yellow-50 text-yellow-700"
+                          : "border-border text-muted-foreground hover:border-yellow-300"
+                      }`}
+                    >
+                      <AlertTriangle size={16} /> В ожидание
+                    </button>
+                  )}
+                  {!["cancelled", "client_refused", "closed"].includes(status) && (
+                    <button
+                      onClick={() => setStatus("client_refused")}
+                      className={`px-4 py-2.5 rounded-xl text-sm font-medium border-2 transition-all flex items-center gap-2 ${
+                        status === "client_refused"
+                          ? "border-red-400 bg-red-50 text-red-700"
+                          : "border-border text-muted-foreground hover:border-red-300"
+                      }`}
+                    >
+                      <X size={16} /> Отказ клиента
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Status change — only for admin/manager */}
               {canEdit && (
                 <div>
@@ -1081,7 +1141,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   rows={3}
                   placeholder="Добавьте заметку к заявке..."
                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                  readOnly={!canEdit && !canPartnerEdit}
+                  readOnly={!canEdit && !canPartnerEdit && viewerRole !== "measurer" && viewerRole !== "installer"}
                 />
               </div>
             </div>

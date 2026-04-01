@@ -97,8 +97,12 @@ const statusFlows = {
 };
 
 function isValidTransition(type, fromStatus, toStatus, role) {
-  if (['admin', 'manager'].includes(role) && toStatus === 'pending' && fromStatus !== 'closed') return true;
-  if (['admin', 'manager'].includes(role) && toStatus === 'client_refused') return true;
+  // Admin can transition to ANY status
+  if (role === 'admin') return true;
+  if (['manager'].includes(role) && toStatus === 'pending' && fromStatus !== 'closed') return true;
+  if (['manager'].includes(role) && toStatus === 'client_refused') return true;
+  // Measurer/Installer can set pending or client_refused
+  if (['measurer', 'installer'].includes(role) && ['pending', 'client_refused'].includes(toStatus)) return true;
   const flow = statusFlows[type] || statusFlows.measurement;
   if (toStatus === 'cancelled') return true;
   const fromIdx = flow.indexOf(fromStatus);
