@@ -10,6 +10,14 @@ import { formatPhone } from "@/lib/formatPhone";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileFullScreen from "./MobileFullScreen";
 
+/** Format ISO date string to DD.MM.YYYY */
+const fmtDate = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = iso.split("T")[0];
+  const [y, m, day] = d.split("-");
+  return `${day}.${m}.${y}`;
+};
+
 /** iOS-style grouped row for mobile detail view */
 const InfoRow = ({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
   <div className="flex items-start gap-3 px-4 py-3">
@@ -439,7 +447,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       </InfoRow>
                     )}
                     <InfoRow icon={<Calendar size={16} className="text-primary" />} label="Создана">
-                      <p className="text-sm font-medium text-foreground">{request.created_at?.split("T")[0]}</p>
+                      <p className="text-sm font-medium text-foreground">{fmtDate(request.created_at)}</p>
                     </InfoRow>
                     {showDateField && (
                       <InfoRow icon={<Calendar size={16} className="text-emerald-600" />} label={request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}>
@@ -452,7 +460,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     )}
                     {(request as any).closed_at && (
                       <InfoRow icon={<Calendar size={16} className="text-red-500" />} label="Дата закрытия">
-                        <p className="text-sm font-medium text-foreground">{(request as any).closed_at?.split("T")[0]}</p>
+                        <p className="text-sm font-medium text-foreground">{fmtDate((request as any).closed_at)}</p>
                       </InfoRow>
                     )}
                   </div>
@@ -612,7 +620,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{fileName}</p>
-                          <p className="text-[10px] text-muted-foreground">{fileLabel} • {file.uploaded_at?.split("T")[0]}</p>
+                          <p className="text-[10px] text-muted-foreground">{fileLabel} • {fmtDate(file.uploaded_at)}</p>
                         </div>
                         <Download size={18} className="text-muted-foreground shrink-0" />
                       </a>
@@ -898,7 +906,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <Calendar size={16} className="text-primary mt-0.5 shrink-0" />
                     <div>
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Создана</p>
-                      <p className="text-sm font-medium">{request.created_at?.split("T")[0]}</p>
+                      <p className="text-sm font-medium">{fmtDate(request.created_at)}</p>
                     </div>
                   </div>
                   {(request as any).closed_at && (
@@ -906,7 +914,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <Calendar size={16} className="text-destructive mt-0.5 shrink-0" />
                       <div>
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Дата закрытия</p>
-                        <p className="text-sm font-medium">{(request as any).closed_at?.split("T")[0]}</p>
+                        <p className="text-sm font-medium">{fmtDate((request as any).closed_at)}</p>
                       </div>
                     </div>
                   )}
@@ -1244,7 +1252,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                               <ExternalLink size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
                             <p className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 truncate">
-                              {file.uploaded_at?.split("T")[0]}
+                              {fmtDate(file.uploaded_at)}
                             </p>
                           </a>
                           {viewerRole === "admin" && onSave && (
@@ -1289,7 +1297,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{fileName}</p>
-                            <p className="text-[10px] text-muted-foreground">{fileLabel} • {file.uploaded_at?.split("T")[0]}</p>
+                            <p className="text-[10px] text-muted-foreground">{fileLabel} • {fmtDate(file.uploaded_at)}</p>
                           </div>
                           <Download size={16} className="text-muted-foreground shrink-0" />
                         </a>
