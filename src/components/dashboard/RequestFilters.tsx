@@ -15,7 +15,7 @@ export interface FilterState {
   partnerId: string;
   dateFrom: string;
   dateTo: string;
-  dateField: "created_at" | "closed_at";
+  dateField: "created_at" | "closed_at" | "agreed_date";
 }
 
 export const defaultFilters: FilterState = {
