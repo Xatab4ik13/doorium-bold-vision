@@ -1015,7 +1015,7 @@ app.delete('/api/estimates/:id', auth, async (req, res) => {
     `);
     hasClosedAtColumn = !!rows[0]?.exists;
     if (hasClosedAtColumn) {
-      await pool.query(`UPDATE requests SET closed_at = COALESCE(updated_at, created_at) WHERE status = 'closed' AND closed_at IS NULL`);
+      await pool.query(`UPDATE requests SET closed_at = COALESCE(agreed_date, updated_at, created_at) WHERE status = 'closed' AND closed_at IS NULL`);
       console.log('Startup: closed_at column ready');
     } else {
       console.warn('Startup: closed_at column missing. Using updated_at for closed requests.');
