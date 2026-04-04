@@ -901,6 +901,15 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-sm font-medium">{request.created_at?.split("T")[0]}</p>
                     </div>
                   </div>
+                  {(request as any).closed_at && (
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
+                      <Calendar size={16} className="text-destructive mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Дата закрытия</p>
+                        <p className="text-sm font-medium">{(request as any).closed_at?.split("T")[0]}</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="p-3 rounded-xl bg-accent/50">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Тип</p>
                     <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-card text-foreground border border-border">
