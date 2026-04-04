@@ -83,10 +83,9 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
           filtered = filtered.filter(r => r.status === "closed");
         }
         const getDateValue = (r: ApiRequest) => {
-          const val = dateField === "closed_at"
-            ? ((r as any).closed_at || r.updated_at)
-            : r.created_at;
-          return val?.split("T")[0] || "";
+          if (dateField === "closed_at") return ((r as any).closed_at || r.updated_at)?.split("T")[0] || "";
+          if (dateField === "agreed_date") return r.agreed_date?.split("T")[0] || "";
+          return r.created_at?.split("T")[0] || "";
         };
         if (filters.dateFrom) filtered = filtered.filter(r => getDateValue(r) >= filters.dateFrom);
         if (filters.dateTo) filtered = filtered.filter(r => getDateValue(r) <= filters.dateTo);

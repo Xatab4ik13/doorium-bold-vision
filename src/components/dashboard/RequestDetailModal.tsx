@@ -450,6 +450,11 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         )}
                       </InfoRow>
                     )}
+                    {(request as any).closed_at && (
+                      <InfoRow icon={<Calendar size={16} className="text-red-500" />} label="Дата закрытия">
+                        <p className="text-sm font-medium text-foreground">{(request as any).closed_at?.split("T")[0]}</p>
+                      </InfoRow>
+                    )}
                   </div>
 
                   {/* Work description */}
