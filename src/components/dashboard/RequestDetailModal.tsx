@@ -10,6 +10,14 @@ import { formatPhone } from "@/lib/formatPhone";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileFullScreen from "./MobileFullScreen";
 
+/** Format ISO date string to DD.MM.YYYY */
+const fmtDate = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = iso.split("T")[0];
+  const [y, m, day] = d.split("-");
+  return `${day}.${m}.${y}`;
+};
+
 /** iOS-style grouped row for mobile detail view */
 const InfoRow = ({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
   <div className="flex items-start gap-3 px-4 py-3">
