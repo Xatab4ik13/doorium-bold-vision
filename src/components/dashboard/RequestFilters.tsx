@@ -159,6 +159,7 @@ const RequestFilters = ({ filters, onChange, users, onExport, resultCount }: Req
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Calendar size={11} /> Тип даты</label>
                 <select value={filters.dateField} onChange={(e) => set("dateField", e.target.value)} className={selectClass + " w-full"}>
                   <option value="created_at">Дата создания</option>
+                  <option value="agreed_date">Дата замера/монтажа</option>
                   <option value="closed_at">Дата закрытия (только закрытые)</option>
                 </select>
               </div>
