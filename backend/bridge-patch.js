@@ -21,8 +21,14 @@ const bridgeAuth = (req, res, next) => {
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS external_id TEXT;
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS external_system TEXT;
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS external_synced_at TIMESTAMPTZ;
+      CREATE TABLE IF NOT EXISTS bridge_rejected (
+        external_id TEXT NOT NULL,
+        external_system TEXT NOT NULL DEFAULT 'primedoor',
+        rejected_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (external_id, external_system)
+      );
     `);
-    console.log('Bridge columns ensured');
+    console.log('Bridge columns & bridge_rejected ensured');
   } catch (err) { console.error('Bridge columns:', err.message); }
 })();
 
