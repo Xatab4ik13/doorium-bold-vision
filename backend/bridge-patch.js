@@ -90,6 +90,15 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    // Check blacklist
+    const rejected = await pool.query(
+      'SELECT 1 FROM bridge_rejected WHERE external_id = $1 AND external_system = $2',
+      [source_id, source_system]
+    );
+    if (rejected.rows.length > 0) {
+      return res.json({ blocked: true, reason: 'rejected', source_id });
+    }
+
     // Check if already exists — update instead of duplicate
     const existing = await pool.query('SELECT id, number FROM requests WHERE external_id = $1 AND external_system = $2', [source_id, source_system]);
     if (existing.rows.length > 0) {
