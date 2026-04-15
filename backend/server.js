@@ -1034,6 +1034,23 @@ app.delete('/api/estimates/:id', auth, async (req, res) => {
   }
 })();
 
+// === Bridge Rejected (blacklist for deleted bridged requests) ===
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS bridge_rejected (
+        external_id TEXT NOT NULL,
+        external_system TEXT NOT NULL DEFAULT 'primedoor',
+        rejected_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (external_id, external_system)
+      )
+    `);
+    console.log('bridge_rejected table ensured');
+  } catch (err) {
+    console.error('bridge_rejected table creation error:', err.message);
+  }
+})();
+
 // === Partner Forms ===
 (async () => {
   try {
