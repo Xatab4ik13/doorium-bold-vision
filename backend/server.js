@@ -884,10 +884,18 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
       return res.status(403).json({ error: "Только администратор может удалять заявки" });
     }
     const { id } = req.params;
-    const result = await pool.query("DELETE FROM requests WHERE id = $1 RETURNING id", [id]);
-    if (result.rows.length === 0) {
+    // Check if request has bridge link — add to blacklist before deleting
+    const reqData = await pool.query("SELECT external_id, external_system FROM requests WHERE id = $1", [id]);
+    if (reqData.rows.length === 0) {
       return res.status(404).json({ error: "Заявка не найдена" });
     }
+    if (reqData.rows[0].external_id && reqData.rows[0].external_system) {
+      await pool.query(
+        'INSERT INTO bridge_rejected (external_id, external_system) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+        [reqData.rows[0].external_id, reqData.rows[0].external_system]
+      );
+    }
+    await pool.query("DELETE FROM requests WHERE id = $1", [id]);
     res.json({ success: true });
   } catch (err) {
     console.error("Delete request error:", err);
@@ -1023,6 +1031,23 @@ app.delete('/api/estimates/:id', auth, async (req, res) => {
     }
   } catch (err) {
     console.error('Startup closed_at check error:', err.message);
+  }
+})();
+
+// === Bridge Rejected (blacklist for deleted bridged requests) ===
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS bridge_rejected (
+        external_id TEXT NOT NULL,
+        external_system TEXT NOT NULL DEFAULT 'primedoor',
+        rejected_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (external_id, external_system)
+      )
+    `);
+    console.log('bridge_rejected table ensured');
+  } catch (err) {
+    console.error('bridge_rejected table creation error:', err.message);
   }
 })();
 
@@ -1521,6 +1546,15 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
       return res.status(400).json({ error: 'Обязательные поля: source_system, source_id, client_name, client_phone' });
     }
 
+    // Check blacklist — don't recreate deleted bridged requests
+    const rejected = await pool.query(
+      'SELECT 1 FROM bridge_rejected WHERE external_id = $1 AND external_system = $2',
+      [source_id, source_system]
+    );
+    if (rejected.rows.length > 0) {
+      return res.json({ blocked: true, reason: 'rejected', source_id });
+    }
+
     const existing = await pool.query(
       'SELECT id, number FROM requests WHERE external_id = $1 AND external_system = $2',
       [source_id, source_system]
@@ -1577,6 +1611,12 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
 app.put('/api/bridge/update/:id', bridgeAuth, async (req, res) => {
   try {
     const requestedId = req.params.id;
+    // Check blacklist
+    const rejected = await pool.query('SELECT 1 FROM bridge_rejected WHERE external_id = $1', [requestedId]);
+    if (rejected.rows.length > 0) {
+      return res.json({ blocked: true, reason: 'rejected', external_id: requestedId });
+    }
+
     let lookup = await pool.query('SELECT id FROM requests WHERE id = $1', [requestedId]);
     if (!lookup.rows.length) {
       lookup = await pool.query('SELECT id FROM requests WHERE external_id = $1', [requestedId]);

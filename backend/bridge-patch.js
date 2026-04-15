@@ -21,8 +21,14 @@ const bridgeAuth = (req, res, next) => {
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS external_id TEXT;
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS external_system TEXT;
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS external_synced_at TIMESTAMPTZ;
+      CREATE TABLE IF NOT EXISTS bridge_rejected (
+        external_id TEXT NOT NULL,
+        external_system TEXT NOT NULL DEFAULT 'primedoor',
+        rejected_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (external_id, external_system)
+      );
     `);
-    console.log('Bridge columns ensured');
+    console.log('Bridge columns & bridge_rejected ensured');
   } catch (err) { console.error('Bridge columns:', err.message); }
 })();
 
@@ -82,6 +88,15 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
     const { source_system, source_id, client_name, client_phone, client_address, city, type, status, work_description, notes, photos, interior_doors, entrance_doors, partitions, agreed_date, amount, status_comment } = req.body;
     if (!source_system || !source_id || !client_name || !client_phone) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Check blacklist
+    const rejected = await pool.query(
+      'SELECT 1 FROM bridge_rejected WHERE external_id = $1 AND external_system = $2',
+      [source_id, source_system]
+    );
+    if (rejected.rows.length > 0) {
+      return res.json({ blocked: true, reason: 'rejected', source_id });
     }
 
     // Check if already exists — update instead of duplicate

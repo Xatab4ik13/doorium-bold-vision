@@ -107,6 +107,14 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- === Bridge Rejected (blacklist) ===
+CREATE TABLE IF NOT EXISTS bridge_rejected (
+  external_id TEXT NOT NULL,
+  external_system TEXT NOT NULL DEFAULT 'primedoor',
+  rejected_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (external_id, external_system)
+);
+
 -- === Indexes ===
 CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status);
 CREATE INDEX IF NOT EXISTS idx_requests_type ON requests(type);
