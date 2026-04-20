@@ -52,6 +52,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [installer3Id, setInstaller3Id] = useState(request.installer_3_id || "");
   const [installer4Id, setInstaller4Id] = useState(request.installer_4_id || "");
   const [notes, setNotes] = useState(request.notes || "");
+  const [partnerNotes, setPartnerNotes] = useState(request.partner_notes || "");
   const [agreedDate, setAgreedDate] = useState(request.agreed_date?.split("T")[0] || "");
   const [amount, setAmount] = useState<string>(request.amount != null ? String(request.amount) : "");
   const [interiorDoors, setInteriorDoors] = useState<string>(request.interior_doors != null ? String(request.interior_doors) : "");
@@ -140,6 +141,11 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.partitions = partitions ? parseInt(partitions) : null;
     }
     
+    if (canEdit) {
+      // admin/manager can also edit partner_notes
+      updates.partner_notes = partnerNotes || null;
+    }
+    
     if (canPartnerEdit) {
       updates.client_name = clientName;
       updates.client_phone = clientPhone;
@@ -151,6 +157,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
+      updates.partner_notes = partnerNotes || null;
       // Remove status/notes for partners
       delete updates.status;
       delete updates.notes;
@@ -552,6 +559,22 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Добавьте заметку..."
                   className="w-full px-4 py-2.5 rounded-2xl border border-border bg-background text-sm focus:outline-none resize-none" readOnly={!canEdit && !canPartnerEdit && viewerRole !== "measurer" && viewerRole !== "installer"} />
               </div>
+              {/* Partner notes — visible to all, editable by partner only */}
+              {(canPartnerEdit || (request.partner_id && (canEdit || viewerRole === "measurer" || viewerRole === "installer")) || partnerNotes) && (
+                <div>
+                  <p className="text-[10px] text-emerald-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                    <Briefcase size={11} /> Доп. информация от партнёра
+                  </p>
+                  <textarea
+                    value={partnerNotes}
+                    onChange={(e) => setPartnerNotes(e.target.value)}
+                    rows={3}
+                    placeholder={canPartnerEdit ? "Опишите детали по монтажу: материал, особенности проёма, пожелания клиента..." : "—"}
+                    readOnly={!canPartnerEdit && !canEdit}
+                    className="w-full px-4 py-2.5 rounded-2xl border border-emerald-200 bg-emerald-50/40 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/30 resize-none"
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -1166,6 +1189,26 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   readOnly={!canEdit && !canPartnerEdit && viewerRole !== "measurer" && viewerRole !== "installer"}
                 />
               </div>
+
+              {/* Partner notes — отдельное поле для информации от партнёра */}
+              {(canPartnerEdit || (request.partner_id && (canEdit || viewerRole === "measurer" || viewerRole === "installer")) || partnerNotes) && (
+                <div>
+                  <label className="text-[10px] font-medium text-emerald-700 mb-2 block uppercase tracking-wider flex items-center gap-1">
+                    <Briefcase size={12} /> Доп. информация от партнёра
+                  </label>
+                  <textarea
+                    value={partnerNotes}
+                    onChange={(e) => setPartnerNotes(e.target.value)}
+                    rows={3}
+                    placeholder={canPartnerEdit ? "Опишите детали по монтажу: материал, особенности проёма, пожелания клиента..." : "—"}
+                    readOnly={!canPartnerEdit && !canEdit}
+                    className="w-full px-4 py-2.5 rounded-xl border border-emerald-200 bg-emerald-50/40 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/30 resize-none"
+                  />
+                  {!canPartnerEdit && !canEdit && (
+                    <p className="text-[10px] text-muted-foreground mt-1">Поле редактируется партнёром</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

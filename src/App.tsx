@@ -57,6 +57,7 @@ const InstallerCalendar = lazy(() => import("./pages/installer/InstallerCalendar
 const PartnerDashboard = lazy(() => import("./pages/partner/PartnerDashboard"));
 const PartnerNewRequest = lazy(() => import("./pages/partner/PartnerNewRequest"));
 const PartnerHistory = lazy(() => import("./pages/partner/PartnerHistory"));
+const PartnerEstimates = lazy(() => import("./pages/partner/PartnerEstimates"));
 
 const queryClient = new QueryClient();
 
@@ -142,6 +143,7 @@ const App = () => (
               <Route path="/partner/dashboard" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerDashboard /></ProtectedRoute>} />
               <Route path="/partner/new" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerNewRequest /></ProtectedRoute>} />
               <Route path="/partner/history" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerHistory /></ProtectedRoute>} />
+              <Route path="/partner/estimates" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerEstimates /></ProtectedRoute>} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={isCrm ? <Navigate to="/login" replace /> : <NotFound />} />

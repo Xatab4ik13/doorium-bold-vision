@@ -537,8 +537,13 @@ app.get('/api/requests', auth, async (req, res) => {
     const where = conds.length ? 'WHERE ' + conds.join(' AND ') : '';
     const baseWhere = baseConds.length ? 'WHERE ' + baseConds.join(' AND ') : '';
 
+    // Sort by the chosen date field (closed_at / agreed_date / created_at) — fallback to created_at
+    const sortCol = requestedDateField === 'closed_at'
+      ? (hasClosedAtColumn ? 'closed_at' : 'updated_at')
+      : requestedDateField;
+    const orderBy = `ORDER BY ${sortCol} DESC NULLS LAST, created_at DESC`;
     const [dataRes, countRes, countsRes] = await Promise.all([
-      pool.query(`SELECT * FROM requests ${where} ORDER BY created_at DESC LIMIT $${idx} OFFSET $${idx+1}`, [...params, parseInt(limit), offset]),
+      pool.query(`SELECT * FROM requests ${where} ${orderBy} LIMIT $${idx} OFFSET $${idx+1}`, [...params, parseInt(limit), offset]),
       pool.query(`SELECT COUNT(*)::int as total FROM requests ${where}`, params),
       pool.query(`SELECT COUNT(*)::int as "all", COUNT(*) FILTER (WHERE status='new')::int as "new", COUNT(*) FILTER (WHERE status='pending')::int as "pending", COUNT(*) FILTER (WHERE status NOT IN ('new','closed','cancelled'))::int as "in_progress", COUNT(*) FILTER (WHERE type='reclamation')::int as "reclamation" FROM requests ${baseWhere}`, baseParams)
     ]);
@@ -657,7 +662,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       if (request.partner_id !== req.user.id) {
         return res.status(403).json({ error: 'Нет доступа к этой заявке' });
       }
-      const partnerAllowed = ['client_name', 'client_phone', 'client_address', 'city', 'extra_name', 'extra_phone', 'work_description', 'interior_doors', 'entrance_doors', 'partitions', 'photos'];
+      const partnerAllowed = ['client_name', 'client_phone', 'client_address', 'city', 'extra_name', 'extra_phone', 'work_description', 'interior_doors', 'entrance_doors', 'partitions', 'photos', 'partner_notes'];
       const forbidden = Object.keys(updates).filter(k => !partnerAllowed.includes(k));
       if (forbidden.length > 0) {
         return res.status(403).json({ error: `Партнёрам недоступно изменение: ${forbidden.join(', ')}` });
@@ -1031,6 +1036,16 @@ app.delete('/api/estimates/:id', auth, async (req, res) => {
     }
   } catch (err) {
     console.error('Startup closed_at check error:', err.message);
+  }
+})();
+
+// === Startup: ensure partner_notes column ===
+(async () => {
+  try {
+    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS partner_notes TEXT`);
+    console.log('partner_notes column ensured');
+  } catch (err) {
+    console.error('partner_notes column error:', err.message);
   }
 })();
 

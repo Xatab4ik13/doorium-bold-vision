@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS requests (
   external_id TEXT,
   external_system TEXT,
   external_synced_at TIMESTAMPTZ,
+  partner_notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
