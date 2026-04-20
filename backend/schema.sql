@@ -115,6 +115,17 @@ CREATE TABLE IF NOT EXISTS bridge_rejected (
   PRIMARY KEY (external_id, external_system)
 );
 
+-- === Employee Absences ===
+CREATE TABLE IF NOT EXISTS employee_absences (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('dayoff','vacation','sick')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, date)
+);
+CREATE INDEX IF NOT EXISTS idx_absences_user_date ON employee_absences(user_id, date);
+
 -- === Indexes ===
 CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status);
 CREATE INDEX IF NOT EXISTS idx_requests_type ON requests(type);
