@@ -195,18 +195,16 @@ const AvailabilityPage = ({ role }: Props) => {
 
   const renderRow = (u: AvailabilityUser) => (
     <tr key={u.id} className="border-b border-border/40 hover:bg-accent/20">
-      <td className="sticky left-0 z-10 bg-card px-3 py-2 min-w-[180px] border-r border-border/50">
-        <div className="text-sm font-medium truncate">{u.name}</div>
+      <td className="sticky left-0 z-10 bg-card px-3 py-1.5 min-w-[200px] border-r border-border/50">
+        <div className="text-sm truncate">{u.name}</div>
       </td>
       {days.map((d) => {
         const { reqs, cls, dk } = cellInfo(u.id, d);
         return (
-          <td key={d} className="p-1 align-middle text-center">
+          <td key={d} className="p-0.5 align-middle text-center">
             <button
               onClick={() => setPopup({ userId: u.id, day: dk })}
-              className={`w-9 h-9 rounded-md text-xs font-semibold transition-all hover:scale-105 ${cls} ${
-                isToday(d) ? "ring-1 ring-primary/40" : ""
-              }`}
+              className={`w-8 h-8 rounded text-xs font-semibold transition-all hover:opacity-80 ${cls}`}
             >
               {reqs.length > 0 ? reqs.length : ""}
             </button>
@@ -314,7 +312,7 @@ const AvailabilityPage = ({ role }: Props) => {
               <table className="w-full border-collapse">
                 <thead className="sticky top-0 z-20 bg-card">
                   <tr className="border-b border-border/50">
-                    <th className="sticky left-0 z-30 bg-card px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[180px] border-r border-border/50">
+                    <th className="sticky left-0 z-30 bg-card px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[200px] border-r border-border/50">
                       Сотрудник
                     </th>
                     {days.map((d) => {
@@ -323,12 +321,12 @@ const AvailabilityPage = ({ role }: Props) => {
                       return (
                         <th
                           key={d}
-                          className={`px-1 py-2 text-center text-[10px] font-semibold uppercase min-w-[44px] ${
+                          className={`px-0.5 py-2 text-center text-[10px] font-medium uppercase min-w-[36px] ${
                             isWeekend ? "text-rose-500" : "text-muted-foreground"
-                          } ${isToday(d) ? "bg-primary/5" : ""}`}
+                          }`}
                         >
-                          <div className="text-sm">{d}</div>
-                          <div>{WEEKDAYS_SHORT[wd]}</div>
+                          <div className="text-sm font-semibold">{d}</div>
+                          <div className="text-[9px]">{WEEKDAYS_SHORT[wd]}</div>
                         </th>
                       );
                     })}
