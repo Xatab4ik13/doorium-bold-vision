@@ -1051,6 +1051,26 @@ app.delete('/api/estimates/:id', auth, async (req, res) => {
   }
 })();
 
+// === Employee Absences (выходные / отпуск / больничный) ===
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS employee_absences (
+        id SERIAL PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        date DATE NOT NULL,
+        kind TEXT NOT NULL CHECK (kind IN ('dayoff','vacation','sick')),
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, date)
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_absences_user_date ON employee_absences(user_id, date)`);
+    console.log('employee_absences table ensured');
+  } catch (err) {
+    console.error('employee_absences table creation error:', err.message);
+  }
+})();
+
 // === Partner Forms ===
 (async () => {
   try {
@@ -1773,6 +1793,124 @@ app.post('/api/bridge/sync/:id', auth, async (req, res) => {
   } catch (err) {
     console.error('Bridge sync error:', err);
     res.status(500).json({ error: err.message || 'Ошибка синхронизации' });
+  }
+});
+
+// === Availability (employee schedule grid) ===
+app.get('/api/availability', auth, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Доступ запрещён' });
+  }
+  try {
+    const month = String(req.query.month || ''); // YYYY-MM
+    const city = req.query.city ? String(req.query.city) : null;
+    if (!/^\d{4}-\d{2}$/.test(month)) {
+      return res.status(400).json({ error: 'Неверный формат month (YYYY-MM)' });
+    }
+    const [y, m] = month.split('-').map(Number);
+    const monthStart = `${month}-01`;
+    const nextMonth = new Date(Date.UTC(y, m, 1));
+    const monthEnd = nextMonth.toISOString().slice(0, 10);
+
+    // Сотрудники: все активные installer/measurer
+    const usersRes = await pool.query(
+      `SELECT id, name, role FROM users
+       WHERE active = true AND role IN ('installer','measurer')
+       ORDER BY role, name`
+    );
+    const users = usersRes.rows;
+    const userIds = users.map(u => u.id);
+
+    const requestsByUserDay = {};
+    const absences = {};
+    for (const id of userIds) {
+      requestsByUserDay[id] = {};
+      absences[id] = {};
+    }
+
+    if (userIds.length > 0) {
+      // Заявки в этом месяце с назначенным сотрудником
+      const params = [monthStart, monthEnd];
+      let cityFilter = '';
+      if (city) {
+        params.push(city);
+        cityFilter = ` AND city = $${params.length}`;
+      }
+      const reqRes = await pool.query(
+        `SELECT id, number, type, status, client_name, client_address, city,
+                agreed_date, measurer_id, installer_id, installer_2_id, installer_3_id, installer_4_id
+         FROM requests
+         WHERE agreed_date IS NOT NULL
+           AND agreed_date >= $1 AND agreed_date < $2
+           ${cityFilter}`,
+        params
+      );
+      for (const r of reqRes.rows) {
+        const day = r.agreed_date instanceof Date
+          ? r.agreed_date.toISOString().slice(0, 10)
+          : String(r.agreed_date).slice(0, 10);
+        const dayReq = {
+          id: r.id, number: r.number, type: r.type, status: r.status,
+          client_name: r.client_name, client_address: r.client_address, city: r.city,
+        };
+        const assigned = [];
+        if (r.type === 'measurement' && r.measurer_id) assigned.push(r.measurer_id);
+        if (r.type !== 'measurement') {
+          [r.installer_id, r.installer_2_id, r.installer_3_id, r.installer_4_id]
+            .filter(Boolean).forEach(id => assigned.push(id));
+        }
+        for (const uid of assigned) {
+          if (!requestsByUserDay[uid]) continue;
+          if (!requestsByUserDay[uid][day]) requestsByUserDay[uid][day] = [];
+          requestsByUserDay[uid][day].push(dayReq);
+        }
+      }
+
+      // Отсутствия
+      const absRes = await pool.query(
+        `SELECT user_id, date, kind FROM employee_absences
+         WHERE user_id = ANY($1::uuid[]) AND date >= $2 AND date < $3`,
+        [userIds, monthStart, monthEnd]
+      );
+      for (const a of absRes.rows) {
+        const day = a.date instanceof Date ? a.date.toISOString().slice(0, 10) : String(a.date).slice(0, 10);
+        if (!absences[a.user_id]) absences[a.user_id] = {};
+        absences[a.user_id][day] = a.kind;
+      }
+    }
+
+    res.json({ users, requestsByUserDay, absences });
+  } catch (err) {
+    console.error('GET /api/availability error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/availability/absence', auth, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Доступ запрещён' });
+  }
+  try {
+    const { user_id, date, kind } = req.body || {};
+    if (!user_id || !date) return res.status(400).json({ error: 'user_id и date обязательны' });
+    if (kind === null || kind === undefined || kind === '') {
+      await pool.query('DELETE FROM employee_absences WHERE user_id = $1 AND date = $2', [user_id, date]);
+      return res.json({ ok: true, removed: true });
+    }
+    if (!['dayoff', 'vacation', 'sick'].includes(kind)) {
+      return res.status(400).json({ error: 'Неверный kind' });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO employee_absences (user_id, date, kind)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id, date) DO UPDATE SET kind = EXCLUDED.kind
+       RETURNING *`,
+      [user_id, date, kind]
+    );
+    res.json({ ok: true, absence: rows[0] });
+  } catch (err) {
+    console.error('POST /api/availability/absence error:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 

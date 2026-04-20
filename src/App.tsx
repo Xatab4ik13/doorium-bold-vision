@@ -32,6 +32,7 @@ const AdminCalendar = lazy(() => import("./pages/admin/AdminCalendar"));
 const AdminEstimates = lazy(() => import("./pages/admin/AdminEstimates"));
 const AdminPartners = lazy(() => import("./pages/admin/AdminPartners"));
 const AdminNews = lazy(() => import("./pages/admin/AdminNews"));
+const AdminAvailability = lazy(() => import("./pages/admin/AdminAvailability"));
 
 // Manager
 const ManagerDashboard = lazy(() => import("./pages/manager/ManagerDashboard"));
@@ -39,6 +40,7 @@ const ManagerAssign = lazy(() => import("./pages/manager/ManagerAssign"));
 const ManagerFiles = lazy(() => import("./pages/manager/ManagerFiles"));
 const ManagerEstimates = lazy(() => import("./pages/manager/ManagerEstimates"));
 const ManagerCalendar = lazy(() => import("./pages/manager/ManagerCalendar"));
+const ManagerAvailability = lazy(() => import("./pages/manager/ManagerAvailability"));
 
 // Measurer
 const MeasurerDashboard = lazy(() => import("./pages/measurer/MeasurerDashboard"));
@@ -115,6 +117,7 @@ const App = () => (
               <Route path="/admin/estimates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminEstimates /></ProtectedRoute>} />
               <Route path="/admin/partners" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPartners /></ProtectedRoute>} />
               <Route path="/admin/news" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNews /></ProtectedRoute>} />
+              <Route path="/admin/availability" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAvailability /></ProtectedRoute>} />
 
               {/* Manager */}
               <Route path="/manager" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerDashboard /></ProtectedRoute>} />
@@ -122,6 +125,7 @@ const App = () => (
               <Route path="/manager/files" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerFiles /></ProtectedRoute>} />
               <Route path="/manager/estimates" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerEstimates /></ProtectedRoute>} />
               <Route path="/manager/calendar" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerCalendar /></ProtectedRoute>} />
+              <Route path="/manager/availability" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerAvailability /></ProtectedRoute>} />
 
               {/* Measurer */}
               <Route path="/measurer" element={<ProtectedRoute allowedRoles={["measurer"]}><MeasurerDashboard /></ProtectedRoute>} />
