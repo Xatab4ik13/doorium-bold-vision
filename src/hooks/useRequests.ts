@@ -16,6 +16,7 @@ export interface ApiRequest {
   status_comment?: string;
   work_description?: string;
   notes?: string;
+  partner_notes?: string;
   photos?: { url: string; type: string; stage: string; uploaded_at: string }[];
   interior_doors?: number;
   entrance_doors?: number;
