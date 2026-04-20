@@ -878,7 +878,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
     res.json(updated);
   } catch (err) {
     console.error('Update request error:', err);
-    res.status(500).json({ error: 'Ошибка обновления заявки' });
+    res.status(500).json({ error: `Ошибка обновления заявки: ${err.message}` });
   }
 });
 
