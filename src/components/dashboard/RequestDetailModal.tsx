@@ -52,6 +52,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [installer3Id, setInstaller3Id] = useState(request.installer_3_id || "");
   const [installer4Id, setInstaller4Id] = useState(request.installer_4_id || "");
   const [notes, setNotes] = useState(request.notes || "");
+  const [partnerNotes, setPartnerNotes] = useState(request.partner_notes || "");
   const [agreedDate, setAgreedDate] = useState(request.agreed_date?.split("T")[0] || "");
   const [amount, setAmount] = useState<string>(request.amount != null ? String(request.amount) : "");
   const [interiorDoors, setInteriorDoors] = useState<string>(request.interior_doors != null ? String(request.interior_doors) : "");
@@ -140,6 +141,11 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.partitions = partitions ? parseInt(partitions) : null;
     }
     
+    if (canEdit) {
+      // admin/manager can also edit partner_notes
+      updates.partner_notes = partnerNotes || null;
+    }
+    
     if (canPartnerEdit) {
       updates.client_name = clientName;
       updates.client_phone = clientPhone;
@@ -151,6 +157,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
+      updates.partner_notes = partnerNotes || null;
       // Remove status/notes for partners
       delete updates.status;
       delete updates.notes;
