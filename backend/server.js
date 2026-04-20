@@ -1039,13 +1039,21 @@ app.delete('/api/estimates/:id', auth, async (req, res) => {
   }
 })();
 
-// === Startup: ensure partner_notes column ===
+// === Startup: ensure optional request columns ===
 (async () => {
   try {
     await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS partner_notes TEXT`);
-    console.log('partner_notes column ensured');
+    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS installer_2_id UUID REFERENCES users(id) ON DELETE SET NULL`);
+    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS installer_3_id UUID REFERENCES users(id) ON DELETE SET NULL`);
+    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS installer_4_id UUID REFERENCES users(id) ON DELETE SET NULL`);
+    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS interior_doors INTEGER`);
+    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS entrance_doors INTEGER`);
+    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS partitions INTEGER`);
+    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS city TEXT`);
+    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS amount NUMERIC`);
+    console.log('Optional request columns ensured');
   } catch (err) {
-    console.error('partner_notes column error:', err.message);
+    console.error('Optional request columns error:', err.message);
   }
 })();
 
