@@ -312,7 +312,7 @@ const AvailabilityPage = ({ role }: Props) => {
               <table className="w-full border-collapse">
                 <thead className="sticky top-0 z-20 bg-card">
                   <tr className="border-b border-border/50">
-                    <th className="sticky left-0 z-30 bg-card px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[180px] border-r border-border/50">
+                    <th className="sticky left-0 z-30 bg-card px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[200px] border-r border-border/50">
                       Сотрудник
                     </th>
                     {days.map((d) => {
@@ -321,12 +321,12 @@ const AvailabilityPage = ({ role }: Props) => {
                       return (
                         <th
                           key={d}
-                          className={`px-1 py-2 text-center text-[10px] font-semibold uppercase min-w-[44px] ${
+                          className={`px-0.5 py-2 text-center text-[10px] font-medium uppercase min-w-[36px] ${
                             isWeekend ? "text-rose-500" : "text-muted-foreground"
-                          } ${isToday(d) ? "bg-primary/5" : ""}`}
+                          }`}
                         >
-                          <div className="text-sm">{d}</div>
-                          <div>{WEEKDAYS_SHORT[wd]}</div>
+                          <div className="text-sm font-semibold">{d}</div>
+                          <div className="text-[9px]">{WEEKDAYS_SHORT[wd]}</div>
                         </th>
                       );
                     })}
