@@ -1051,6 +1051,26 @@ app.delete('/api/estimates/:id', auth, async (req, res) => {
   }
 })();
 
+// === Employee Absences (выходные / отпуск / больничный) ===
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS employee_absences (
+        id SERIAL PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        date DATE NOT NULL,
+        kind TEXT NOT NULL CHECK (kind IN ('dayoff','vacation','sick')),
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, date)
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_absences_user_date ON employee_absences(user_id, date)`);
+    console.log('employee_absences table ensured');
+  } catch (err) {
+    console.error('employee_absences table creation error:', err.message);
+  }
+})();
+
 // === Partner Forms ===
 (async () => {
   try {
