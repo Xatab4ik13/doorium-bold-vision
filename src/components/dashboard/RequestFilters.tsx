@@ -162,6 +162,9 @@ const RequestFilters = ({ filters, onChange, users, onExport, resultCount }: Req
                   <option value="agreed_date">Дата замера/монтажа</option>
                   <option value="closed_at">Дата закрытия (только закрытые)</option>
                 </select>
+                {filters.dateField === "closed_at" && (
+                  <p className="text-[10px] text-muted-foreground mt-1">Показаны заявки, закрытые в указанный период</p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
