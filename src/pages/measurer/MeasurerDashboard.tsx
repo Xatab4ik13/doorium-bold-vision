@@ -341,7 +341,34 @@ const MeasurerDashboard = () => {
                     </p>
                   )}
 
-                  <div className="flex justify-end gap-3 pt-2">
+                  <div className="flex flex-wrap justify-end gap-2 pt-2">
+                    <button
+                      onClick={async () => {
+                        if (!selected) return;
+                        try {
+                          await updateRequest(selected.id, { status: "pending" as any, notes: measurementNotes || selected.notes });
+                          setSelected(null);
+                          toast.success("Заявка переведена в ожидание");
+                        } catch {}
+                      }}
+                      className="px-4 py-2 rounded-lg text-sm font-medium border border-yellow-300 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-colors flex items-center gap-2"
+                    >
+                      <AlertCircle size={16} /> В ожидание
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!selected) return;
+                        if (!confirm("Подтвердите отказ клиента")) return;
+                        try {
+                          await updateRequest(selected.id, { status: "client_refused" as any, notes: measurementNotes || selected.notes });
+                          setSelected(null);
+                          toast.success("Отмечено: отказ клиента");
+                        } catch {}
+                      }}
+                      className="px-4 py-2 rounded-lg text-sm font-medium border border-red-300 bg-red-50 text-red-600 hover:bg-red-100 transition-colors flex items-center gap-2"
+                    >
+                      <X size={16} /> Отказ клиента
+                    </button>
                     <button onClick={() => setSelected(null)} className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">Отмена</button>
                     <button onClick={handleComplete} disabled={!canComplete}
                       className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 flex items-center gap-2">
