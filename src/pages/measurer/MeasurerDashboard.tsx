@@ -229,7 +229,36 @@ const MeasurerDashboard = () => {
                 </div>
               )}
 
-              {!dateConfirmed && (
+              {/* Quick status actions — always available before completion */}
+              {!["measurement_done", "closed", "cancelled", "client_refused"].includes(selected.status) && (
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await updateRequest(selected.id, { status: "pending" as any });
+                        setSelected(null);
+                        toast.success("Заявка переведена в ожидание");
+                      } catch {}
+                    }}
+                    className="flex-1 min-w-[140px] px-3 py-2.5 rounded-lg text-sm font-medium border border-yellow-300 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <AlertCircle size={16} /> В ожидание
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!confirm("Подтвердите отказ клиента")) return;
+                      try {
+                        await updateRequest(selected.id, { status: "client_refused" as any });
+                        setSelected(null);
+                        toast.success("Отмечено: отказ клиента");
+                      } catch {}
+                    }}
+                    className="flex-1 min-w-[140px] px-3 py-2.5 rounded-lg text-sm font-medium border border-red-300 bg-red-50 text-red-600 hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <X size={16} /> Отказ клиента
+                  </button>
+                </div>
+              )}
                 <div className="border border-amber-300 bg-amber-50 rounded-lg p-4 space-y-3">
                   <div className="flex items-start gap-2">
                     <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
