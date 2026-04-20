@@ -259,6 +259,8 @@ const MeasurerDashboard = () => {
                   </button>
                 </div>
               )}
+
+              {!dateConfirmed && (
                 <div className="border border-amber-300 bg-amber-50 rounded-lg p-4 space-y-3">
                   <div className="flex items-start gap-2">
                     <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
