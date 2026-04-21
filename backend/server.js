@@ -121,18 +121,25 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, etc.)
+    // Allow requests with no origin (mobile apps, curl, native PWA, etc.)
     if (!origin) return callback(null, true);
-    const allowed = [
-      'https://doorium.ru',
-      'https://www.doorium.ru',
-      'https://crm.doorium.ru',
-    ];
-    // Also allow Lovable preview URLs
-    if (origin.includes('lovable.app') || allowed.includes(origin)) {
-      return callback(null, true);
-    }
-    callback(new Error('Not allowed by CORS'));
+    try {
+      const host = new URL(origin).hostname;
+      // Allow doorium.ru and ALL its subdomains
+      if (host === 'doorium.ru' || host.endsWith('.doorium.ru')) {
+        return callback(null, true);
+      }
+      // Allow Lovable preview / sandbox URLs
+      if (host.endsWith('.lovable.app') || host.endsWith('.lovableproject.com') || host.endsWith('.lovable.dev')) {
+        return callback(null, true);
+      }
+      // Allow localhost for dev
+      if (host === 'localhost' || host === '127.0.0.1') {
+        return callback(null, true);
+      }
+    } catch (_) {}
+    console.warn('CORS blocked origin:', origin);
+    callback(new Error('Not allowed by CORS: ' + origin));
   },
   credentials: true,
 }));
