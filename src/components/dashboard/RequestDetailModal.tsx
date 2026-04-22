@@ -297,7 +297,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
             {syncingPrimeDoor ? <Loader2 size={14} className="animate-spin" /> : <><RefreshCw size={14} /> Синхр.</>}
           </button>
         )}
-        {request.type === "measurement" && (canEdit || viewerRole === "partner") && onSendToInstallation && (
+        {request.type === "measurement" && (canEdit || canPartnerEdit) && onSendToInstallation && (
           <button
             onClick={async () => {
               setSendingToInstall(true);
@@ -309,7 +309,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
             {sendingToInstall ? <Loader2 size={16} className="animate-spin" /> : <><ArrowRight size={16} /> На монтаж</>}
           </button>
         )}
-        {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || canPartnerEdit) && (
+        {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || (canPartnerEdit && isEditing)) && (
           <button
             onClick={handleSave}
             disabled={saving}
@@ -1421,7 +1421,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </button>
               )}
               {/* Send to installation button */}
-              {request.type === "measurement" && (canEdit || viewerRole === "partner") && onSendToInstallation && (
+              {request.type === "measurement" && (canEdit || canPartnerEdit) && onSendToInstallation && (
                 <button
                   onClick={async () => {
                     setSendingToInstall(true);
@@ -1441,7 +1441,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   Отмена
                 </button>
               )}
-              {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || canPartnerEdit) && (
+              {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || (canPartnerEdit && isEditing)) && (
                 <button
                   onClick={handleSave}
                   disabled={saving}

@@ -669,6 +669,9 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       if (request.partner_id !== req.user.id) {
         return res.status(403).json({ error: 'Нет доступа к этой заявке' });
       }
+      if (request.status === 'closed') {
+        return res.status(403).json({ error: 'Закрытые заявки нельзя редактировать' });
+      }
       const partnerAllowed = ['client_name', 'client_phone', 'client_address', 'city', 'extra_name', 'extra_phone', 'work_description', 'interior_doors', 'entrance_doors', 'partitions', 'photos', 'partner_notes'];
       const forbidden = Object.keys(updates).filter(k => !partnerAllowed.includes(k));
       if (forbidden.length > 0) {
