@@ -798,8 +798,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </div>
               )}
 
-              {/* Editable client data — only with pencil for admin/manager, always for partner */}
-              {((canEdit && isEditing) || canPartnerEdit) ? (
+              {/* Editable client data — only with pencil */}
+              {((canEdit || canPartnerEdit) && isEditing) ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
@@ -979,7 +979,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
               {/* Work description (read-only when not editing) */}
-              {(!(canEdit && isEditing) && !canPartnerEdit) && request.work_description && (
+              {!((canEdit || canPartnerEdit) && isEditing) && request.work_description && (
                 <div className="p-4 rounded-xl bg-accent/30 border border-border">
                   <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider flex items-center gap-1">
                     <MessageSquare size={12} /> Описание работ
@@ -1187,7 +1187,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   rows={3}
                   placeholder="Добавьте заметку к заявке..."
                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                  readOnly={!canEdit && !canPartnerEdit && viewerRole !== "measurer" && viewerRole !== "installer"}
+                  readOnly={!canEdit && viewerRole !== "measurer" && viewerRole !== "installer"}
                 />
               </div>
 
@@ -1202,7 +1202,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     onChange={(e) => setPartnerNotes(e.target.value)}
                     rows={3}
                     placeholder={canPartnerEdit ? "Опишите детали по монтажу: материал, особенности проёма, пожелания клиента..." : "—"}
-                    readOnly={!canPartnerEdit && !canEdit}
+                    readOnly={!(canEdit || (canPartnerEdit && isEditing))}
                     className="w-full px-4 py-2.5 rounded-xl border border-emerald-200 bg-emerald-50/40 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/30 resize-none"
                   />
                   {!canPartnerEdit && !canEdit && (
