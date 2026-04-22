@@ -581,7 +581,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
           {activeTab === "files" && (
             <div className="p-4 space-y-4">
-              {(canEdit || viewerRole === "partner") && onSave && (
+              {(canEdit || canPartnerEdit) && onSave && (
                 <div>
                   <input ref={fileInputRef} type="file" multiple className="hidden" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx"
                     onChange={async (e) => {
@@ -1299,7 +1299,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                               {fmtDate(file.uploaded_at)}
                             </p>
                           </a>
-                          {viewerRole === "admin" && onSave && (
+                          {(viewerRole === "admin" || canPartnerEdit) && onSave && (
                             <button
                               onClick={async (e) => {
                                 e.stopPropagation();
@@ -1345,7 +1345,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                           </div>
                           <Download size={16} className="text-muted-foreground shrink-0" />
                         </a>
-                        {viewerRole === "admin" && onSave && (
+                        {(viewerRole === "admin" || canPartnerEdit) && onSave && (
                           <button
                             onClick={async (e) => {
                               e.stopPropagation();
