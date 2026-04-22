@@ -707,15 +707,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               <h2 className="text-lg font-heading font-bold mt-1">{request.client_name}</h2>
             </div>
             <div className="flex items-center gap-1">
-              {canEdit && (
-                <button
-                  onClick={() => setIsEditing(!isEditing)}
-                  className={`p-2 rounded-xl transition-colors ${isEditing ? "bg-primary/10 text-primary" : "hover:bg-accent text-muted-foreground"}`}
-                  title={isEditing ? "Отключить редактирование" : "Редактировать"}
-                >
-                  <Pencil size={18} />
-                </button>
-              )}
+              {editButton}
               <button onClick={onClose} className="p-2 rounded-xl hover:bg-accent transition-colors text-muted-foreground">
                 <X size={20} />
               </button>
