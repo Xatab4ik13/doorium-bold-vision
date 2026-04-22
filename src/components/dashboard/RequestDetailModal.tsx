@@ -348,8 +348,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
           {activeTab === "details" && (
             <div className="p-4 space-y-4">
-              {/* Editable client data — when pencil is active or partner */}
-              {((canEdit && isEditing) || canPartnerEdit) ? (
+              {/* Editable client data — when pencil is active */}
+              {((canEdit || canPartnerEdit) && isEditing) ? (
                 <div className="space-y-3">
                   <div className="rounded-2xl bg-accent/30 overflow-hidden divide-y divide-border/30">
                     <div className="px-4 py-3">
@@ -558,7 +558,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Заметки</p>
                 <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Добавьте заметку..."
-                  className="w-full px-4 py-2.5 rounded-2xl border border-border bg-background text-sm focus:outline-none resize-none" readOnly={!canEdit && !canPartnerEdit && viewerRole !== "measurer" && viewerRole !== "installer"} />
+                  className="w-full px-4 py-2.5 rounded-2xl border border-border bg-background text-sm focus:outline-none resize-none" readOnly={!canEdit && viewerRole !== "measurer" && viewerRole !== "installer"} />
               </div>
               {/* Partner notes — visible to all, editable by partner only */}
               {(canPartnerEdit || (request.partner_id && (canEdit || viewerRole === "measurer" || viewerRole === "installer")) || partnerNotes) && (
@@ -571,7 +571,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     onChange={(e) => setPartnerNotes(e.target.value)}
                     rows={3}
                     placeholder={canPartnerEdit ? "Опишите детали по монтажу: материал, особенности проёма, пожелания клиента..." : "—"}
-                    readOnly={!canPartnerEdit && !canEdit}
+                    readOnly={!(canEdit || (canPartnerEdit && isEditing))}
                     className="w-full px-4 py-2.5 rounded-2xl border border-emerald-200 bg-emerald-50/40 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/30 resize-none"
                   />
                 </div>
