@@ -43,7 +43,8 @@ interface RequestDetailModalProps {
 const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, onSendToPrimeDoor, onSyncPrimeDoor, viewerRole = "admin" }: RequestDetailModalProps) => {
   const isMobile = useIsMobile();
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
-  const canPartnerEdit = viewerRole === "partner";
+  const isClosedRequest = request.status === "closed";
+  const canPartnerEdit = viewerRole === "partner" && !isClosedRequest;
   const { getByRole, getUserName, getUser } = useUsers(!canEdit);
   const [status, setStatus] = useState<string>(request.status);
   const [measurerId, setMeasurerId] = useState(request.measurer_id || "");
@@ -80,7 +81,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [partnerId, setPartnerId] = useState<string>(request.partner_id || "");
   const [requestType, setRequestType] = useState<string>(request.type || "measurement");
   
-  // Edit mode toggle for admin/manager
+  // Edit mode toggle for admin/manager/partner
   const [isEditing, setIsEditing] = useState(false);
   
   // Confirmation dialog
@@ -205,7 +206,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
   const inputClass = "w-full px-3 py-2 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
 
-  const editButton = canEdit ? (
+  const editButton = (canEdit || canPartnerEdit) ? (
     <button
       onClick={() => setIsEditing(!isEditing)}
       className={`p-2 rounded-xl transition-colors ${isEditing ? "bg-primary/10 text-primary" : "hover:bg-accent text-muted-foreground"}`}
@@ -296,7 +297,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
             {syncingPrimeDoor ? <Loader2 size={14} className="animate-spin" /> : <><RefreshCw size={14} /> Синхр.</>}
           </button>
         )}
-        {request.type === "measurement" && (canEdit || viewerRole === "partner") && onSendToInstallation && (
+        {request.type === "measurement" && (canEdit || canPartnerEdit) && onSendToInstallation && (
           <button
             onClick={async () => {
               setSendingToInstall(true);
@@ -308,7 +309,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
             {sendingToInstall ? <Loader2 size={16} className="animate-spin" /> : <><ArrowRight size={16} /> На монтаж</>}
           </button>
         )}
-        {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || canPartnerEdit) && (
+        {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || (canPartnerEdit && isEditing)) && (
           <button
             onClick={handleSave}
             disabled={saving}
@@ -347,8 +348,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
           {activeTab === "details" && (
             <div className="p-4 space-y-4">
-              {/* Editable client data — when pencil is active or partner */}
-              {((canEdit && isEditing) || canPartnerEdit) ? (
+              {/* Editable client data — when pencil is active */}
+              {((canEdit || canPartnerEdit) && isEditing) ? (
                 <div className="space-y-3">
                   <div className="rounded-2xl bg-accent/30 overflow-hidden divide-y divide-border/30">
                     <div className="px-4 py-3">
@@ -557,7 +558,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Заметки</p>
                 <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Добавьте заметку..."
-                  className="w-full px-4 py-2.5 rounded-2xl border border-border bg-background text-sm focus:outline-none resize-none" readOnly={!canEdit && !canPartnerEdit && viewerRole !== "measurer" && viewerRole !== "installer"} />
+                  className="w-full px-4 py-2.5 rounded-2xl border border-border bg-background text-sm focus:outline-none resize-none" readOnly={!canEdit && viewerRole !== "measurer" && viewerRole !== "installer"} />
               </div>
               {/* Partner notes — visible to all, editable by partner only */}
               {(canPartnerEdit || (request.partner_id && (canEdit || viewerRole === "measurer" || viewerRole === "installer")) || partnerNotes) && (
@@ -570,7 +571,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     onChange={(e) => setPartnerNotes(e.target.value)}
                     rows={3}
                     placeholder={canPartnerEdit ? "Опишите детали по монтажу: материал, особенности проёма, пожелания клиента..." : "—"}
-                    readOnly={!canPartnerEdit && !canEdit}
+                    readOnly={!(canEdit || (canPartnerEdit && isEditing))}
                     className="w-full px-4 py-2.5 rounded-2xl border border-emerald-200 bg-emerald-50/40 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/30 resize-none"
                   />
                 </div>
@@ -580,7 +581,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
           {activeTab === "files" && (
             <div className="p-4 space-y-4">
-              {(canEdit || viewerRole === "partner") && onSave && (
+              {(canEdit || canPartnerEdit) && onSave && (
                 <div>
                   <input ref={fileInputRef} type="file" multiple className="hidden" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx"
                     onChange={async (e) => {
@@ -706,15 +707,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               <h2 className="text-lg font-heading font-bold mt-1">{request.client_name}</h2>
             </div>
             <div className="flex items-center gap-1">
-              {canEdit && (
-                <button
-                  onClick={() => setIsEditing(!isEditing)}
-                  className={`p-2 rounded-xl transition-colors ${isEditing ? "bg-primary/10 text-primary" : "hover:bg-accent text-muted-foreground"}`}
-                  title={isEditing ? "Отключить редактирование" : "Редактировать"}
-                >
-                  <Pencil size={18} />
-                </button>
-              )}
+              {editButton}
               <button onClick={onClose} className="p-2 rounded-xl hover:bg-accent transition-colors text-muted-foreground">
                 <X size={20} />
               </button>
@@ -797,8 +790,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </div>
               )}
 
-              {/* Editable client data — only with pencil for admin/manager, always for partner */}
-              {((canEdit && isEditing) || canPartnerEdit) ? (
+              {/* Editable client data — only with pencil */}
+              {((canEdit || canPartnerEdit) && isEditing) ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
@@ -978,7 +971,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
               {/* Work description (read-only when not editing) */}
-              {(!(canEdit && isEditing) && !canPartnerEdit) && request.work_description && (
+              {!((canEdit || canPartnerEdit) && isEditing) && request.work_description && (
                 <div className="p-4 rounded-xl bg-accent/30 border border-border">
                   <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider flex items-center gap-1">
                     <MessageSquare size={12} /> Описание работ
@@ -1186,7 +1179,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   rows={3}
                   placeholder="Добавьте заметку к заявке..."
                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                  readOnly={!canEdit && !canPartnerEdit && viewerRole !== "measurer" && viewerRole !== "installer"}
+                  readOnly={!canEdit && viewerRole !== "measurer" && viewerRole !== "installer"}
                 />
               </div>
 
@@ -1201,7 +1194,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     onChange={(e) => setPartnerNotes(e.target.value)}
                     rows={3}
                     placeholder={canPartnerEdit ? "Опишите детали по монтажу: материал, особенности проёма, пожелания клиента..." : "—"}
-                    readOnly={!canPartnerEdit && !canEdit}
+                    readOnly={!(canEdit || (canPartnerEdit && isEditing))}
                     className="w-full px-4 py-2.5 rounded-xl border border-emerald-200 bg-emerald-50/40 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/30 resize-none"
                   />
                   {!canPartnerEdit && !canEdit && (
@@ -1215,7 +1208,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           {activeTab === "files" && (
             <div className="p-5 space-y-4">
               {/* Upload button */}
-              {(canEdit || viewerRole === "partner") && onSave && (
+              {(canEdit || canPartnerEdit) && onSave && (
                 <div>
                   <input
                     ref={fileInputRef}
@@ -1298,7 +1291,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                               {fmtDate(file.uploaded_at)}
                             </p>
                           </a>
-                          {viewerRole === "admin" && onSave && (
+                          {(viewerRole === "admin" || canPartnerEdit) && onSave && (
                             <button
                               onClick={async (e) => {
                                 e.stopPropagation();
@@ -1344,7 +1337,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                           </div>
                           <Download size={16} className="text-muted-foreground shrink-0" />
                         </a>
-                        {viewerRole === "admin" && onSave && (
+                        {(viewerRole === "admin" || canPartnerEdit) && onSave && (
                           <button
                             onClick={async (e) => {
                               e.stopPropagation();
@@ -1428,7 +1421,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </button>
               )}
               {/* Send to installation button */}
-              {request.type === "measurement" && (canEdit || viewerRole === "partner") && onSendToInstallation && (
+              {request.type === "measurement" && (canEdit || canPartnerEdit) && onSendToInstallation && (
                 <button
                   onClick={async () => {
                     setSendingToInstall(true);
@@ -1448,7 +1441,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   Отмена
                 </button>
               )}
-              {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || canPartnerEdit) && (
+              {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || (canPartnerEdit && isEditing)) && (
                 <button
                   onClick={handleSave}
                   disabled={saving}
