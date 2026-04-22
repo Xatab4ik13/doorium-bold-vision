@@ -43,7 +43,8 @@ interface RequestDetailModalProps {
 const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, onSendToPrimeDoor, onSyncPrimeDoor, viewerRole = "admin" }: RequestDetailModalProps) => {
   const isMobile = useIsMobile();
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
-  const canPartnerEdit = viewerRole === "partner";
+  const isClosedRequest = request.status === "closed";
+  const canPartnerEdit = viewerRole === "partner" && !isClosedRequest;
   const { getByRole, getUserName, getUser } = useUsers(!canEdit);
   const [status, setStatus] = useState<string>(request.status);
   const [measurerId, setMeasurerId] = useState(request.measurer_id || "");
@@ -80,7 +81,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [partnerId, setPartnerId] = useState<string>(request.partner_id || "");
   const [requestType, setRequestType] = useState<string>(request.type || "measurement");
   
-  // Edit mode toggle for admin/manager
+  // Edit mode toggle for admin/manager/partner
   const [isEditing, setIsEditing] = useState(false);
   
   // Confirmation dialog
@@ -205,7 +206,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
   const inputClass = "w-full px-3 py-2 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
 
-  const editButton = canEdit ? (
+  const editButton = (canEdit || canPartnerEdit) ? (
     <button
       onClick={() => setIsEditing(!isEditing)}
       className={`p-2 rounded-xl transition-colors ${isEditing ? "bg-primary/10 text-primary" : "hover:bg-accent text-muted-foreground"}`}
