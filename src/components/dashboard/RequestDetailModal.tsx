@@ -1208,7 +1208,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           {activeTab === "files" && (
             <div className="p-5 space-y-4">
               {/* Upload button */}
-              {(canEdit || viewerRole === "partner") && onSave && (
+              {(canEdit || canPartnerEdit) && onSave && (
                 <div>
                   <input
                     ref={fileInputRef}
