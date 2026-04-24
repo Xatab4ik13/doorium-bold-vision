@@ -158,10 +158,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
+      updates.notes = notes || null;
       updates.partner_notes = partnerNotes || null;
-      // Remove status/notes for partners
+      // Remove status for partners
       delete updates.status;
-      delete updates.notes;
     }
     
     // Only send agreed_date if it actually changed to prevent backend from triggering 'installation_rescheduled'
@@ -555,10 +555,29 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className={inputClass} placeholder="0" />
                 </div>
               )}
+              {canPartnerEdit && isEditing && request.type === "installation" && (
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Количество изделий</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1 text-center">Межкомнатные</p>
+                      <input type="number" min="0" value={interiorDoors} onChange={(e) => setInteriorDoors(e.target.value)} className={inputClass + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1 text-center">Входные</p>
+                      <input type="number" min="0" value={entranceDoors} onChange={(e) => setEntranceDoors(e.target.value)} className={inputClass + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1 text-center">Перегородка</p>
+                      <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)} className={inputClass + " text-center"} placeholder="0" />
+                    </div>
+                  </div>
+                </div>
+              )}
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Заметки</p>
                 <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Добавьте заметку..."
-                  className="w-full px-4 py-2.5 rounded-2xl border border-border bg-background text-sm focus:outline-none resize-none" readOnly={!canEdit && viewerRole !== "measurer" && viewerRole !== "installer"} />
+                  className="w-full px-4 py-2.5 rounded-2xl border border-border bg-background text-sm focus:outline-none resize-none" readOnly={!(canEdit || (canPartnerEdit && isEditing) || viewerRole === "measurer" || viewerRole === "installer")} />
               </div>
               {/* Partner notes — visible to all, editable by partner only */}
               {(canPartnerEdit || (request.partner_id && (canEdit || viewerRole === "measurer" || viewerRole === "installer")) || partnerNotes) && (
@@ -1124,7 +1143,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
               {/* Partner editable quantities */}
-              {canPartnerEdit && request.type === "installation" && (
+              {canPartnerEdit && isEditing && request.type === "installation" && (
                 <div>
                   <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Количество изделий</label>
                   <div className="grid grid-cols-3 gap-2">
@@ -1179,7 +1198,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   rows={3}
                   placeholder="Добавьте заметку к заявке..."
                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                  readOnly={!canEdit && viewerRole !== "measurer" && viewerRole !== "installer"}
+                  readOnly={!(canEdit || (canPartnerEdit && isEditing) || viewerRole === "measurer" || viewerRole === "installer")}
                 />
               </div>
 

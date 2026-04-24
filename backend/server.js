@@ -664,7 +664,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
     if (current.rows.length === 0) return res.status(404).json({ error: 'Заявка не найдена' });
     const request = current.rows[0];
 
-    // Partners can edit their own requests (client info only)
+    // Partners can edit their own open requests
     if (role === 'partner') {
       if (request.partner_id !== req.user.id) {
         return res.status(403).json({ error: 'Нет доступа к этой заявке' });
@@ -672,7 +672,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       if (request.status === 'closed') {
         return res.status(403).json({ error: 'Закрытые заявки нельзя редактировать' });
       }
-      const partnerAllowed = ['client_name', 'client_phone', 'client_address', 'city', 'extra_name', 'extra_phone', 'work_description', 'interior_doors', 'entrance_doors', 'partitions', 'photos', 'partner_notes'];
+      const partnerAllowed = ['client_name', 'client_phone', 'client_address', 'city', 'extra_name', 'extra_phone', 'work_description', 'interior_doors', 'entrance_doors', 'partitions', 'notes', 'photos', 'partner_notes'];
       const forbidden = Object.keys(updates).filter(k => !partnerAllowed.includes(k));
       if (forbidden.length > 0) {
         return res.status(403).json({ error: `Партнёрам недоступно изменение: ${forbidden.join(', ')}` });
