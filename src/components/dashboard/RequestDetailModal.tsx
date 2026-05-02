@@ -5,7 +5,7 @@ import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLa
 import { useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { uploadFile } from "@/lib/api";
+import { uploadFile, fileUrl } from "@/lib/api";
 import { formatPhone } from "@/lib/formatPhone";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileFullScreen from "./MobileFullScreen";
