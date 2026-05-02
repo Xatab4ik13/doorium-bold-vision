@@ -3,7 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
-const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 const webpush = require('web-push');
 const multer = require('multer');
 const crypto = require('crypto');
@@ -198,11 +198,54 @@ app.post('/api/upload', auth, upload.single('file'), async (req, res) => {
       ContentType: req.file.mimetype,
       ACL: 'public-read',
     }));
-    const url = process.env.S3_ENDPOINT + '/' + process.env.S3_BUCKET + '/' + key;
+    const url = '/api/files/' + key;
     res.json({ url, key });
   } catch (err) {
     console.error('Upload error:', err);
     res.status(500).json({ error: 'Ошибка загрузки' });
+  }
+});
+
+// === File proxy: streams S3 objects through our domain ===
+// Public access (matches previous S3 ACL: public-read)
+// Supports HTTP Range for video/PDF seeking
+app.get('/api/files/*', async (req, res) => {
+  try {
+    const key = req.params[0];
+    if (!key) return res.status(400).send('Key required');
+
+    const range = req.headers.range;
+    const cmd = new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET,
+      Key: key,
+      ...(range ? { Range: range } : {}),
+    });
+    const s3Res = await s3.send(cmd);
+
+    if (s3Res.ContentType) res.setHeader('Content-Type', s3Res.ContentType);
+    if (s3Res.ContentLength != null) res.setHeader('Content-Length', s3Res.ContentLength);
+    if (s3Res.ETag) res.setHeader('ETag', s3Res.ETag);
+    if (s3Res.LastModified) res.setHeader('Last-Modified', s3Res.LastModified.toUTCString());
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+
+    if (range && s3Res.ContentRange) {
+      res.status(206);
+      res.setHeader('Content-Range', s3Res.ContentRange);
+    }
+
+    s3Res.Body.on('error', (err) => {
+      console.error('S3 stream error:', err.message);
+      if (!res.headersSent) res.status(500).end();
+      else res.destroy();
+    });
+    s3Res.Body.pipe(res);
+  } catch (err) {
+    if (err.$metadata?.httpStatusCode === 404 || err.name === 'NoSuchKey') {
+      return res.status(404).send('Not found');
+    }
+    console.error('File proxy error:', err.message);
+    res.status(500).send('Server error');
   }
 });
 
@@ -480,7 +523,7 @@ app.post('/api/upload/reclamation', upload.single('file'), async (req, res) => {
       ContentType: req.file.mimetype,
       ACL: 'public-read',
     }));
-    const url = process.env.S3_ENDPOINT + '/' + process.env.S3_BUCKET + '/' + key;
+    const url = '/api/files/' + key;
     res.json({ url, key });
   } catch (err) {
     console.error('Public reclamation upload error:', err);
