@@ -5,7 +5,7 @@ import { statusLabels, statusColors, requestTypeLabels, type RequestStatus } fro
 import { Phone, MapPin, Calendar, Upload, CheckCircle2, Camera, X, ChevronRight, AlertCircle, ClipboardCheck, Loader2 } from "lucide-react";
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
-import { uploadFile } from "@/lib/api";
+import { uploadFile, fileUrl } from "@/lib/api";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -274,13 +274,13 @@ const InstallerDashboard = () => {
                     {selected.photos.map((file: any, i: number) => (
                       <a
                         key={i}
-                        href={file.url}
+                        href={fileUrl(file.url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary/40 transition-all"
                       >
                         {file.type === "image" ? (
-                          <img src={file.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <img src={fileUrl(file.url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center bg-accent/50">
                             <Upload size={20} className="text-muted-foreground" />
