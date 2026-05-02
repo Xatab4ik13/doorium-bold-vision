@@ -648,15 +648,15 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     if (isImage) {
                       return (
                         <div key={i} className="relative aspect-video rounded-2xl overflow-hidden border border-border">
-                          <a href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                            <img src={file.url} alt="" className="w-full h-full object-cover" />
+                           <a href={fileUrl(file.url)} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                            <img src={fileUrl(file.url)} alt="" className="w-full h-full object-cover" />
                           </a>
                         </div>
                       );
                     }
 
                     return (
-                      <a key={i} href={file.url} target="_blank" rel="noopener noreferrer" download
+                      <a key={i} href={fileUrl(file.url)} target="_blank" rel="noopener noreferrer" download
                         className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-accent/30 active:bg-accent/60 transition-colors">
                         <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center shrink-0">
                           {fileIcon}
@@ -1301,8 +1301,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         return f.type === "image" || ["jpg","jpeg","png","gif","webp","svg"].includes(ext);
                       }).map((file, i) => (
                         <div key={i} className="group relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/40 transition-all">
-                          <a href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                            <img src={file.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <a href={fileUrl(file.url)} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                            <img src={fileUrl(file.url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                               <ExternalLink size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
@@ -1346,7 +1346,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
                     return (
                       <div key={`doc-${i}`} className="group relative flex items-center gap-3 p-3 rounded-xl border border-border hover:border-primary/40 transition-all">
-                        <a href={file.url} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 flex-1 min-w-0">
+                        <a href={fileUrl(file.url)} target="_blank" rel="noopener noreferrer" download className="flex items-center gap-3 flex-1 min-w-0">
                           <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center shrink-0">
                             {fileIcon}
                           </div>
