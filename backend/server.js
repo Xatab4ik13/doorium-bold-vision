@@ -209,7 +209,8 @@ app.post('/api/upload', auth, upload.single('file'), async (req, res) => {
 // === File proxy: streams S3 objects through our domain ===
 // Public access (matches previous S3 ACL: public-read)
 // Supports HTTP Range for video/PDF seeking
-app.get('/api/files/*', async (req, res) => {
+// RegExp route is compatible with Express 5/path-to-regexp v8 wildcards
+app.get(/^\/api\/files\/(.+)$/, async (req, res) => {
   try {
     const key = req.params[0];
     if (!key) return res.status(400).send('Key required');
