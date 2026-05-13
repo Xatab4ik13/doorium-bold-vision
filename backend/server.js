@@ -19,48 +19,15 @@ function normalizePhone(phone) {
   return '+7' + d.slice(1, 11);
 }
 
-// === Telegram уведомления ===
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+// === Уведомления (Telegram + SMS) ===
 const SITE_URL = process.env.SITE_URL || 'https://doorium.ru';
-
-async function sendTelegram(telegramId, message) {
-  if (!telegramId || !TELEGRAM_BOT_TOKEN) return;
-  try {
-    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: telegramId, text: message, parse_mode: 'HTML' }),
-    });
-  } catch (err) {
-    console.error('Telegram notify error:', err.message);
-  }
-}
-
-async function notifyManagersAndAdmins(pool, message) {
-  try {
-    const { rows } = await pool.query(
-      "SELECT telegram_id FROM users WHERE role IN ('manager', 'admin') AND active = true AND telegram_id IS NOT NULL"
-    );
-    for (const row of rows) {
-      await sendTelegram(row.telegram_id, message);
-    }
-  } catch (err) {
-    console.error('Notify managers error:', err.message);
-  }
-}
-
-async function notifyPartner(pool, partnerId, message) {
-  if (!partnerId) return;
-  try {
-    const { rows } = await pool.query(
-      'SELECT telegram_id FROM users WHERE id = $1 AND active = true AND telegram_id IS NOT NULL',
-      [partnerId]
-    );
-    if (rows[0]) await sendTelegram(rows[0].telegram_id, message);
-  } catch (err) {
-    console.error('Notify partner error:', err.message);
-  }
-}
+const {
+  sendTelegram,
+  notifyUser,
+  notifyUserById,
+  notifyManagersAndAdmins,
+  notifyPartner,
+} = require('./notify');
 
 const statusLabels = {
   new: 'Новая',
@@ -814,24 +781,18 @@ app.put('/api/requests/:id', auth, async (req, res) => {
 
     // 1. Measurer assigned
     if (updates.measurer_id && updates.measurer_id !== request.measurer_id) {
-      const executor = await pool.query('SELECT telegram_id, name FROM users WHERE id = $1', [updates.measurer_id]);
-      if (executor.rows[0]?.telegram_id) {
-        await sendTelegram(executor.rows[0].telegram_id,
-          `🔔 <b>Новая заявка на замер</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\n\nПерейдите в личный кабинет.\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
-        );
-      }
+      await notifyUserById(pool, updates.measurer_id,
+        `🔔 <b>Новая заявка на замер</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\n\nПерейдите в личный кабинет.\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
+      );
       await sendPushToUser(updates.measurer_id, {
         title: 'Новая заявка на замер',
         body: `${updated.client_name} — ${updated.client_address}`,
         url: `/measurer?highlight=${updated.id}`,
       });
       if (request.measurer_id && request.measurer_id !== updates.measurer_id) {
-        const prev = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [request.measurer_id]);
-        if (prev.rows[0]?.telegram_id) {
-          await sendTelegram(prev.rows[0].telegram_id,
-            `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
-          );
-        }
+        await notifyUserById(pool, request.measurer_id,
+          `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
+        );
         await sendPushToUser(request.measurer_id, {
           title: 'Вы сняты с заявки',
           body: `Заявка ${updated.number} передана другому исполнителю.`,
@@ -842,25 +803,19 @@ app.put('/api/requests/:id', auth, async (req, res) => {
 
     // 2. Installer assigned
     if (updates.installer_id && updates.installer_id !== request.installer_id) {
-      const executor = await pool.query('SELECT telegram_id, name FROM users WHERE id = $1', [updates.installer_id]);
       const dateStr = updated.agreed_date ? new Date(updated.agreed_date).toLocaleDateString('ru-RU') : 'не назначена';
-      if (executor.rows[0]?.telegram_id) {
-        await sendTelegram(executor.rows[0].telegram_id,
-          `🔔 <b>Новый монтаж</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\nДата: ${dateStr}\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
-        );
-      }
+      await notifyUserById(pool, updates.installer_id,
+        `🔔 <b>Новый монтаж</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\nДата: ${dateStr}\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
+      );
       await sendPushToUser(updates.installer_id, {
         title: 'Новый монтаж',
         body: `${updated.client_name} — ${updated.client_address}, дата: ${dateStr}`,
         url: `/installer?highlight=${updated.id}`,
       });
       if (request.installer_id && request.installer_id !== updates.installer_id) {
-        const prev = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [request.installer_id]);
-        if (prev.rows[0]?.telegram_id) {
-          await sendTelegram(prev.rows[0].telegram_id,
-            `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
-          );
-        }
+        await notifyUserById(pool, request.installer_id,
+          `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
+        );
         await sendPushToUser(request.installer_id, {
           title: 'Вы сняты с заявки',
           body: `Заявка ${updated.number} передана другому исполнителю.`,
@@ -899,12 +854,9 @@ app.put('/api/requests/:id', auth, async (req, res) => {
     if (updates.status === 'cancelled' && request.status !== 'cancelled') {
       const executorIds = [updated.measurer_id, updated.installer_id].filter(Boolean);
       for (const execId of executorIds) {
-        const exec = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [execId]);
-        if (exec.rows[0]?.telegram_id) {
-          await sendTelegram(exec.rows[0].telegram_id,
-            `❌ <b>Заявка отменена</b>\n\nЗаявка ${updated.number} была отменена.`
-          );
-        }
+        await notifyUserById(pool, execId,
+          `❌ <b>Заявка отменена</b>\n\nЗаявка ${updated.number} была отменена.`
+        );
         await sendPushToUser(execId, {
           title: 'Заявка отменена',
           body: `Заявка ${updated.number} была отменена.`,
