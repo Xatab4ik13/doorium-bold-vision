@@ -19,48 +19,15 @@ function normalizePhone(phone) {
   return '+7' + d.slice(1, 11);
 }
 
-// === Telegram уведомления ===
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+// === Уведомления (Telegram + SMS) ===
 const SITE_URL = process.env.SITE_URL || 'https://doorium.ru';
-
-async function sendTelegram(telegramId, message) {
-  if (!telegramId || !TELEGRAM_BOT_TOKEN) return;
-  try {
-    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: telegramId, text: message, parse_mode: 'HTML' }),
-    });
-  } catch (err) {
-    console.error('Telegram notify error:', err.message);
-  }
-}
-
-async function notifyManagersAndAdmins(pool, message) {
-  try {
-    const { rows } = await pool.query(
-      "SELECT telegram_id FROM users WHERE role IN ('manager', 'admin') AND active = true AND telegram_id IS NOT NULL"
-    );
-    for (const row of rows) {
-      await sendTelegram(row.telegram_id, message);
-    }
-  } catch (err) {
-    console.error('Notify managers error:', err.message);
-  }
-}
-
-async function notifyPartner(pool, partnerId, message) {
-  if (!partnerId) return;
-  try {
-    const { rows } = await pool.query(
-      'SELECT telegram_id FROM users WHERE id = $1 AND active = true AND telegram_id IS NOT NULL',
-      [partnerId]
-    );
-    if (rows[0]) await sendTelegram(rows[0].telegram_id, message);
-  } catch (err) {
-    console.error('Notify partner error:', err.message);
-  }
-}
+const {
+  sendTelegram,
+  notifyUser,
+  notifyUserById,
+  notifyManagersAndAdmins,
+  notifyPartner,
+} = require('./notify');
 
 const statusLabels = {
   new: 'Новая',
