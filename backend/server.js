@@ -674,6 +674,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
     const current = await pool.query('SELECT * FROM requests WHERE id = $1', [id]);
     if (current.rows.length === 0) return res.status(404).json({ error: 'Заявка не найдена' });
     const request = current.rows[0];
+    console.info(`Request update: id=${id}, number=${request.number}, role=${role}, fields=${Object.keys(updates).join(',') || '-'}`);
 
     // Partners can edit their own open requests
     if (role === 'partner') {
@@ -804,6 +805,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
     // 2. Installer assigned
     if (updates.installer_id && updates.installer_id !== request.installer_id) {
       const dateStr = updated.agreed_date ? new Date(updated.agreed_date).toLocaleDateString('ru-RU') : 'не назначена';
+      console.info(`Installer notify trigger: request=${updated.number}, old=${request.installer_id || '-'}, new=${updates.installer_id}, date=${dateStr}`);
       await notifyUserById(pool, updates.installer_id,
         `🔔 <b>Новый монтаж</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\nДата: ${dateStr}\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
       );
