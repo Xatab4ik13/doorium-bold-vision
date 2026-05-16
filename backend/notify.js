@@ -11,6 +11,13 @@ const SMS_DIAGNOSTIC_DELAY_MS = parseInt(process.env.SMS_DIAGNOSTIC_DELAY_MS || 
 const useTg = NOTIFY_DRIVER === 'telegram' || NOTIFY_DRIVER === 'both';
 const useSms = NOTIFY_DRIVER === 'sms' || NOTIFY_DRIVER === 'both';
 
+function maskPhone(phone) {
+  const s = String(phone || '');
+  return s.length > 4 ? `${s.slice(0, 3)}***${s.slice(-4)}` : s;
+}
+
+console.info(`Notify config: driver=${NOTIFY_DRIVER}, telegram=${useTg ? 'on' : 'off'}, sms=${useSms ? 'on' : 'off'}, sms_credentials=${SMS_GATEWAY_LOGIN && SMS_GATEWAY_PASSWORD ? 'ok' : 'missing'}`);
+
 // === HTML → SMS ===
 // SMS are billed per segment; we strip emoji (otherwise UCS-2 → 70 chars/segment)
 // and we drop URLs that follow words like «войти/открыть/подробнее» — no links in SMS.
@@ -72,14 +79,21 @@ function smsGatewayHint(errorText) {
 
 // === SMS ===
 async function sendSms(phone, text, options = {}) {
-  if (!useSms) return { skipped: true };
-  if (!phone || !text) return { skipped: true };
+  if (!useSms) {
+    console.warn('SMS notify skipped: NOTIFY_DRIVER disables sms');
+    return { skipped: true };
+  }
+  if (!phone || !text) {
+    console.warn(`SMS notify skipped: ${!phone ? 'no phone' : 'empty text'}`);
+    return { skipped: true };
+  }
   if (!SMS_GATEWAY_LOGIN || !SMS_GATEWAY_PASSWORD) {
     console.error('SMS: gateway credentials missing');
     return { ok: false, error: 'no credentials' };
   }
   const auth = Buffer.from(`${SMS_GATEWAY_LOGIN}:${SMS_GATEWAY_PASSWORD}`).toString('base64');
   try {
+    console.info(`SMS notify send: to=${maskPhone(phone)}, chars=${String(text).length}`);
     const res = await fetch(SMS_GATEWAY_URL, {
       method: 'POST',
       headers: {
@@ -115,6 +129,7 @@ async function sendSms(phone, text, options = {}) {
       }
     }
 
+    console.info(`SMS notify ok: to=${maskPhone(phone)}, response=${bodyText.slice(0, 500)}`);
     return { ok: true, body };
   } catch (err) {
     const hint = smsGatewayHint(err.message);
@@ -139,10 +154,15 @@ async function notifyUserById(pool, userId, htmlMessage, options = {}) {
   if (!userId) return;
   try {
     const { rows } = await pool.query(
-      'SELECT telegram_id, phone FROM users WHERE id = $1 AND active = true',
+      'SELECT id, name, telegram_id, phone FROM users WHERE id = $1 AND active = true',
       [userId]
     );
-    if (rows[0]) await notifyUser(rows[0], htmlMessage, options);
+    if (rows[0]) {
+      console.info(`Notify user: id=${rows[0].id}, name=${rows[0].name || '-'}, phone=${maskPhone(rows[0].phone)}, tg=${rows[0].telegram_id ? 'yes' : 'no'}`);
+      await notifyUser(rows[0], htmlMessage, options);
+    } else {
+      console.warn(`Notify user skipped: active user not found, id=${userId}`);
+    }
   } catch (err) {
     console.error('notifyUserById error:', err.message);
   }
