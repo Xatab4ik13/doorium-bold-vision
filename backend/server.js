@@ -23,6 +23,7 @@ function normalizePhone(phone) {
 const SITE_URL = process.env.SITE_URL || 'https://doorium.ru';
 const {
   sendTelegram,
+  sendSms,
   notifyUser,
   notifyUserById,
   notifyManagersAndAdmins,
@@ -149,6 +150,15 @@ app.get('/health', async (req, res) => {
   } catch (err) {
     res.status(500).json({ status: 'error', db: err.message });
   }
+});
+
+app.post('/api/notify/test-sms', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Только администратор может отправить тестовую SMS' });
+  const phone = normalizePhone(req.body.phone) || req.body.phone;
+  if (!phone) return res.status(400).json({ error: 'Укажите phone' });
+  const message = req.body.message || `Doorium SMS test ${new Date().toLocaleString('ru-RU')}`;
+  const result = await sendSms(phone, message, { diagnose: true });
+  res.json(result);
 });
 
 // === Upload / Delete files ===
