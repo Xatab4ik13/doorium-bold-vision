@@ -813,17 +813,23 @@ app.put('/api/requests/:id', auth, async (req, res) => {
     }
 
     // 2. Installer assigned
-    if (updates.installer_id && updates.installer_id !== request.installer_id) {
+    const installerFields = ['installer_id', 'installer_2_id', 'installer_3_id', 'installer_4_id'];
+    const newlyAssignedInstallers = installerFields
+      .filter((field) => updates[field] && updates[field] !== request[field])
+      .map((field) => ({ field, id: updates[field] }));
+    if (newlyAssignedInstallers.length > 0) {
       const dateStr = updated.agreed_date ? new Date(updated.agreed_date).toLocaleDateString('ru-RU') : 'не назначена';
-      console.info(`Installer notify trigger: request=${updated.number}, old=${request.installer_id || '-'}, new=${updates.installer_id}, date=${dateStr}`);
-      await notifyUserById(pool, updates.installer_id,
-        `🔔 <b>Новый монтаж</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\nДата: ${dateStr}\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
-      );
-      await sendPushToUser(updates.installer_id, {
-        title: 'Новый монтаж',
-        body: `${updated.client_name} — ${updated.client_address}, дата: ${dateStr}`,
-        url: `/installer?highlight=${updated.id}`,
-      });
+      for (const assigned of newlyAssignedInstallers) {
+        console.info(`Installer notify trigger: request=${updated.number}, field=${assigned.field}, old=${request[assigned.field] || '-'}, new=${assigned.id}, date=${dateStr}`);
+        await notifyUserById(pool, assigned.id,
+          `🔔 <b>Новый монтаж</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\nДата: ${dateStr}\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
+        );
+        await sendPushToUser(assigned.id, {
+          title: 'Новый монтаж',
+          body: `${updated.client_name} — ${updated.client_address}, дата: ${dateStr}`,
+          url: `/installer?highlight=${updated.id}`,
+        });
+      }
       if (request.installer_id && request.installer_id !== updates.installer_id) {
         await notifyUserById(pool, request.installer_id,
           `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
