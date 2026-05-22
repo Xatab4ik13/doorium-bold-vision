@@ -1362,6 +1362,23 @@ const LOCAL_SYSTEM_NAME = process.env.CRM_SYSTEM_NAME || 'doorium';
 const REMOTE_SYSTEM_NAME = process.env.BRIDGE_REMOTE_SYSTEM || (LOCAL_SYSTEM_NAME === 'doorium' ? 'primedoor' : 'doorium');
 const BRIDGE_REMOTE_API_URL = process.env.BRIDGE_REMOTE_API_URL || process.env.PRIMEDOOR_API_URL || process.env.DOORIUM_API_URL;
 const BRIDGE_REMOTE_API_KEY = process.env.BRIDGE_REMOTE_API_KEY || process.env.PRIMEDOOR_API_KEY || process.env.DOORIUM_API_KEY;
+const OWN_PUBLIC_API_URL = (process.env.PUBLIC_API_URL || process.env.OWN_API_URL || (LOCAL_SYSTEM_NAME === 'doorium' ? 'https://api.doorium.ru' : 'https://api.primedoor.ru')).replace(/\/$/, '');
+
+function absolutizeBridgePhotos(photos, baseUrl) {
+  if (!photos || !Array.isArray(photos) || !baseUrl) return photos;
+  const base = String(baseUrl).replace(/\/$/, '');
+  return photos.map((photo) => {
+    const normalizeUrl = (url) => {
+      if (!url || typeof url !== 'string') return url;
+      if (/^https?:\/\//i.test(url)) return url;
+      return url.startsWith('/') ? `${base}${url}` : url;
+    };
+
+    if (typeof photo === 'string') return normalizeUrl(photo);
+    if (!photo || typeof photo !== 'object') return photo;
+    return { ...photo, url: normalizeUrl(photo.url) };
+  });
+}
 
 function bridgeSystemLabel(system) {
   if (system === 'doorium') return 'Doorium';
@@ -1493,7 +1510,7 @@ async function bridgeAutoSync(requestId) {
       interior_doors: request.interior_doors,
       entrance_doors: request.entrance_doors,
       partitions: request.partitions,
-      photos: request.photos,
+      photos: absolutizeBridgePhotos(request.photos, OWN_PUBLIC_API_URL),
     };
 
     const attempts = [];
@@ -1569,7 +1586,7 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
       extra_phone: request.extra_phone,
       work_description: request.work_description,
       notes: request.notes,
-      photos: request.photos,
+      photos: absolutizeBridgePhotos(request.photos, OWN_PUBLIC_API_URL),
       interior_doors: request.interior_doors,
       entrance_doors: request.entrance_doors,
       partitions: request.partitions,
@@ -1607,11 +1624,16 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
 // Receive request from external system
 app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
   try {
-    const { source_system, source_id, number: extNumber, type, status: extStatus, client_name, client_phone, client_address, city, extra_name, extra_phone, work_description, notes, photos, interior_doors, entrance_doors, partitions, agreed_date, amount, status_comment } = req.body;
+    const { source_system, source_id, number: extNumber, type, status: extStatus, client_name, client_phone, client_address, city, extra_name, extra_phone, work_description, notes, photos: rawPhotos, interior_doors, entrance_doors, partitions, agreed_date, amount, status_comment } = req.body;
 
     if (!source_system || !source_id || !client_name || !client_phone) {
       return res.status(400).json({ error: 'Обязательные поля: source_system, source_id, client_name, client_phone' });
     }
+
+    const remoteBase = (source_system === 'primedoor'
+      ? (process.env.PRIMEDOOR_API_URL || 'https://api.primedoor.ru')
+      : (process.env.DOORIUM_API_URL || 'https://api.doorium.ru')).replace(/\/$/, '');
+    const photos = absolutizeBridgePhotos(rawPhotos, remoteBase);
 
     // Check blacklist — don't recreate deleted bridged requests
     const rejected = await pool.query(
@@ -1752,7 +1774,7 @@ app.get('/api/bridge/fetch', bridgeAuth, async (req, res) => {
       interior_doors: request.interior_doors,
       entrance_doors: request.entrance_doors,
       partitions: request.partitions,
-      photos: request.photos,
+      photos: absolutizeBridgePhotos(request.photos, OWN_PUBLIC_API_URL),
       updated_at: request.updated_at,
     });
   } catch (err) {
