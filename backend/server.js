@@ -1510,7 +1510,7 @@ async function bridgeAutoSync(requestId) {
       interior_doors: request.interior_doors,
       entrance_doors: request.entrance_doors,
       partitions: request.partitions,
-      photos: request.photos,
+      photos: absolutizeBridgePhotos(request.photos, OWN_PUBLIC_API_URL),
     };
 
     const attempts = [];
@@ -1586,7 +1586,7 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
       extra_phone: request.extra_phone,
       work_description: request.work_description,
       notes: request.notes,
-      photos: request.photos,
+      photos: absolutizeBridgePhotos(request.photos, OWN_PUBLIC_API_URL),
       interior_doors: request.interior_doors,
       entrance_doors: request.entrance_doors,
       partitions: request.partitions,
