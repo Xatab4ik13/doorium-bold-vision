@@ -1362,6 +1362,23 @@ const LOCAL_SYSTEM_NAME = process.env.CRM_SYSTEM_NAME || 'doorium';
 const REMOTE_SYSTEM_NAME = process.env.BRIDGE_REMOTE_SYSTEM || (LOCAL_SYSTEM_NAME === 'doorium' ? 'primedoor' : 'doorium');
 const BRIDGE_REMOTE_API_URL = process.env.BRIDGE_REMOTE_API_URL || process.env.PRIMEDOOR_API_URL || process.env.DOORIUM_API_URL;
 const BRIDGE_REMOTE_API_KEY = process.env.BRIDGE_REMOTE_API_KEY || process.env.PRIMEDOOR_API_KEY || process.env.DOORIUM_API_KEY;
+const OWN_PUBLIC_API_URL = (process.env.PUBLIC_API_URL || process.env.OWN_API_URL || (LOCAL_SYSTEM_NAME === 'doorium' ? 'https://api.doorium.ru' : 'https://api.primedoor.ru')).replace(/\/$/, '');
+
+function absolutizeBridgePhotos(photos, baseUrl) {
+  if (!photos || !Array.isArray(photos) || !baseUrl) return photos;
+  const base = String(baseUrl).replace(/\/$/, '');
+  return photos.map((photo) => {
+    const normalizeUrl = (url) => {
+      if (!url || typeof url !== 'string') return url;
+      if (/^https?:\/\//i.test(url)) return url;
+      return url.startsWith('/') ? `${base}${url}` : url;
+    };
+
+    if (typeof photo === 'string') return normalizeUrl(photo);
+    if (!photo || typeof photo !== 'object') return photo;
+    return { ...photo, url: normalizeUrl(photo.url) };
+  });
+}
 
 function bridgeSystemLabel(system) {
   if (system === 'doorium') return 'Doorium';
