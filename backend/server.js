@@ -1774,7 +1774,7 @@ app.get('/api/bridge/fetch', bridgeAuth, async (req, res) => {
       interior_doors: request.interior_doors,
       entrance_doors: request.entrance_doors,
       partitions: request.partitions,
-      photos: request.photos,
+      photos: absolutizeBridgePhotos(request.photos, OWN_PUBLIC_API_URL),
       updated_at: request.updated_at,
     });
   } catch (err) {
