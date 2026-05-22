@@ -1624,11 +1624,16 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
 // Receive request from external system
 app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
   try {
-    const { source_system, source_id, number: extNumber, type, status: extStatus, client_name, client_phone, client_address, city, extra_name, extra_phone, work_description, notes, photos, interior_doors, entrance_doors, partitions, agreed_date, amount, status_comment } = req.body;
+    const { source_system, source_id, number: extNumber, type, status: extStatus, client_name, client_phone, client_address, city, extra_name, extra_phone, work_description, notes, photos: rawPhotos, interior_doors, entrance_doors, partitions, agreed_date, amount, status_comment } = req.body;
 
     if (!source_system || !source_id || !client_name || !client_phone) {
       return res.status(400).json({ error: 'Обязательные поля: source_system, source_id, client_name, client_phone' });
     }
+
+    const remoteBase = (source_system === 'primedoor'
+      ? (process.env.PRIMEDOOR_API_URL || 'https://api.primedoor.ru')
+      : (process.env.DOORIUM_API_URL || 'https://api.doorium.ru')).replace(/\/$/, '');
+    const photos = absolutizeBridgePhotos(rawPhotos, remoteBase);
 
     // Check blacklist — don't recreate deleted bridged requests
     const rejected = await pool.query(
