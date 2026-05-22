@@ -82,7 +82,8 @@ async function bridgeAutoSync(requestId) {
         interior_doors: r.interior_doors,
         entrance_doors: r.entrance_doors,
         partitions: r.partitions,
-        photos: r.photos,
+        photos: absolutizePhotos(r.photos, OWN_PUBLIC_API_URL),
+
       }),
     });
     if (response.ok) {
