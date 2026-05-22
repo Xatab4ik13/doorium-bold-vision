@@ -5,6 +5,22 @@ const LOCAL_SYSTEM_NAME = process.env.CRM_SYSTEM_NAME || 'doorium';
 const REMOTE_SYSTEM_NAME = process.env.BRIDGE_REMOTE_SYSTEM || (LOCAL_SYSTEM_NAME === 'doorium' ? 'primedoor' : 'doorium');
 const BRIDGE_REMOTE_API_URL = process.env.BRIDGE_REMOTE_API_URL || process.env.DOORIUM_API_URL || process.env.PRIMEDOOR_API_URL;
 const BRIDGE_REMOTE_API_KEY = process.env.BRIDGE_REMOTE_API_KEY || process.env.DOORIUM_API_KEY || process.env.PRIMEDOOR_API_KEY;
+const OWN_PUBLIC_API_URL = (process.env.PUBLIC_API_URL || process.env.OWN_API_URL || (LOCAL_SYSTEM_NAME === 'doorium' ? 'https://api.doorium.ru' : 'https://api.primedoor.ru')).replace(/\/$/, '');
+
+// Convert relative photo URLs ("/api/files/xxx") to absolute against a given base.
+// Already-absolute URLs (http://, https://) are returned unchanged.
+function absolutizePhotos(photos, baseUrl) {
+  if (!photos || !Array.isArray(photos) || !baseUrl) return photos;
+  const base = String(baseUrl).replace(/\/$/, '');
+  return photos.map((p) => {
+    if (!p || typeof p !== 'object' || !p.url) return p;
+    const url = String(p.url);
+    if (/^https?:\/\//i.test(url)) return p;
+    if (url.startsWith('/')) return { ...p, url: base + url };
+    return p;
+  });
+}
+
 
 // Accept both X-API-Key and X-Bridge-Key headers (PrimeDoor sends X-Bridge-Key)
 const bridgeAuth = (req, res, next) => {
@@ -66,7 +82,8 @@ async function bridgeAutoSync(requestId) {
         interior_doors: r.interior_doors,
         entrance_doors: r.entrance_doors,
         partitions: r.partitions,
-        photos: r.photos,
+        photos: absolutizePhotos(r.photos, OWN_PUBLIC_API_URL),
+
       }),
     });
     if (response.ok) {
@@ -85,10 +102,14 @@ async function bridgeAutoSync(requestId) {
 // === Receive request from remote CRM ===
 app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
   try {
-    const { source_system, source_id, client_name, client_phone, client_address, city, type, status, work_description, notes, photos, interior_doors, entrance_doors, partitions, agreed_date, amount, status_comment } = req.body;
+    const { source_system, source_id, client_name, client_phone, client_address, city, type, status, work_description, notes, photos: rawPhotos, interior_doors, entrance_doors, partitions, agreed_date, amount, status_comment } = req.body;
     if (!source_system || !source_id || !client_name || !client_phone) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
+    // Absolutize photo URLs against the remote CRM (sender) so they remain fetchable from our side.
+    const remoteBase = (source_system === 'primedoor' ? (process.env.PRIMEDOOR_API_URL || 'https://api.primedoor.ru') : (process.env.DOORIUM_API_URL || 'https://api.doorium.ru')).replace(/\/$/, '');
+    const photos = absolutizePhotos(rawPhotos, remoteBase);
+
 
     // Check blacklist
     const rejected = await pool.query(
@@ -251,7 +272,7 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
         client_address: request.client_address, city: request.city,
         extra_name: request.extra_name, extra_phone: request.extra_phone,
         work_description: request.work_description, notes: request.notes,
-        photos: request.photos, interior_doors: request.interior_doors,
+        photos: absolutizePhotos(request.photos, OWN_PUBLIC_API_URL), interior_doors: request.interior_doors,
         entrance_doors: request.entrance_doors, partitions: request.partitions,
         agreed_date: request.agreed_date, amount: request.amount,
         status_comment: request.status_comment,
