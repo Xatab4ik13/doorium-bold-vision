@@ -102,10 +102,14 @@ async function bridgeAutoSync(requestId) {
 // === Receive request from remote CRM ===
 app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
   try {
-    const { source_system, source_id, client_name, client_phone, client_address, city, type, status, work_description, notes, photos, interior_doors, entrance_doors, partitions, agreed_date, amount, status_comment } = req.body;
+    const { source_system, source_id, client_name, client_phone, client_address, city, type, status, work_description, notes, photos: rawPhotos, interior_doors, entrance_doors, partitions, agreed_date, amount, status_comment } = req.body;
     if (!source_system || !source_id || !client_name || !client_phone) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
+    // Absolutize photo URLs against the remote CRM (sender) so they remain fetchable from our side.
+    const remoteBase = (source_system === 'primedoor' ? (process.env.PRIMEDOOR_API_URL || 'https://api.primedoor.ru') : (process.env.DOORIUM_API_URL || 'https://api.doorium.ru')).replace(/\/$/, '');
+    const photos = absolutizePhotos(rawPhotos, remoteBase);
+
 
     // Check blacklist
     const rejected = await pool.query(
