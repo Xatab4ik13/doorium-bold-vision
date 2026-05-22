@@ -268,7 +268,7 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
         client_address: request.client_address, city: request.city,
         extra_name: request.extra_name, extra_phone: request.extra_phone,
         work_description: request.work_description, notes: request.notes,
-        photos: request.photos, interior_doors: request.interior_doors,
+        photos: absolutizePhotos(request.photos, OWN_PUBLIC_API_URL), interior_doors: request.interior_doors,
         entrance_doors: request.entrance_doors, partitions: request.partitions,
         agreed_date: request.agreed_date, amount: request.amount,
         status_comment: request.status_comment,
