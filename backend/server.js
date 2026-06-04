@@ -1470,7 +1470,19 @@ function buildBridgeUpdate(fieldsPayload = {}, includeUpdatedAt = false) {
 }
 
 async function applyBridgeUpdateToRequest(requestId, payload, includeUpdatedAt = false) {
-  const { fields, values, nextIndex } = buildBridgeUpdate(payload, includeUpdatedAt);
+  // Fetch current status to handle closed_at transitions on bridge-driven status changes
+  const cur = await pool.query('SELECT status, closed_at FROM requests WHERE id = $1', [requestId]);
+  const prev = cur.rows[0];
+  const enriched = { ...payload };
+  if (prev && hasClosedAtColumn && enriched.status !== undefined && enriched.status !== null && enriched.status !== '') {
+    if (enriched.status === 'closed' && prev.status !== 'closed' && !Object.prototype.hasOwnProperty.call(enriched, 'closed_at')) {
+      enriched.closed_at = new Date().toISOString();
+    }
+    if (enriched.status !== 'closed' && prev.status === 'closed') {
+      enriched.closed_at = null;
+    }
+  }
+  const { fields, values, nextIndex } = buildBridgeUpdate(enriched, includeUpdatedAt);
   values.push(requestId);
   const { rows } = await pool.query(
     `UPDATE requests SET ${fields.join(', ')} WHERE id = $${nextIndex} RETURNING *`,
