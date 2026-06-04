@@ -141,6 +141,13 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
+      // Admin can edit closed_at when request is closed
+      if (viewerRole === "admin" && status === "closed") {
+        const originalClosed = ((request as any).closed_at || "").split("T")[0] || "";
+        if (closedAt !== originalClosed) {
+          updates.closed_at = closedAt || null;
+        }
+      }
     }
     
     if (canEdit) {
