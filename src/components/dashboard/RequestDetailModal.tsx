@@ -59,6 +59,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [interiorDoors, setInteriorDoors] = useState<string>(request.interior_doors != null ? String(request.interior_doors) : "");
   const [entranceDoors, setEntranceDoors] = useState<string>(request.entrance_doors != null ? String(request.entrance_doors) : "");
   const [partitions, setPartitions] = useState<string>(request.partitions != null ? String(request.partitions) : "");
+  const [closedAt, setClosedAt] = useState<string>(((request as any).closed_at || "").split("T")[0] || "");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "files">("details");
   const [confirmDelete, setConfirmDelete] = useState(false);
