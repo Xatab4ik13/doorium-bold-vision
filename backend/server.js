@@ -753,15 +753,27 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       updates.extra_phone = normalizePhone(updates.extra_phone) || updates.extra_phone;
     }
 
-    // Auto: closed_at
+    // Auto: closed_at (do not override admin-supplied value)
+    const closedAtProvided = Object.prototype.hasOwnProperty.call(updates, 'closed_at');
     if (hasClosedAtColumn) {
-      if (updates.status === 'closed' && request.status !== 'closed') {
-        updates.closed_at = new Date().toISOString();
+      if (closedAtProvided) {
+        // Only admin/manager can manually set closed_at
+        if (!['admin', 'manager'].includes(role)) {
+          delete updates.closed_at;
+        } else if (updates.closed_at) {
+          // Normalize: accept YYYY-MM-DD or ISO string
+          const v = String(updates.closed_at);
+          updates.closed_at = v.length === 10 ? new Date(v + 'T12:00:00Z').toISOString() : new Date(v).toISOString();
+        }
+      } else {
+        if (updates.status === 'closed' && request.status !== 'closed') {
+          updates.closed_at = new Date().toISOString();
+        }
+        if (updates.status && updates.status !== 'closed' && request.status === 'closed') {
+          updates.closed_at = null;
+        }
       }
-      if (updates.status && updates.status !== 'closed' && request.status === 'closed') {
-        updates.closed_at = null;
-      }
-    } else if (Object.prototype.hasOwnProperty.call(updates, 'closed_at')) {
+    } else if (closedAtProvided) {
       delete updates.closed_at;
     }
 
@@ -1452,13 +1464,26 @@ function buildBridgeUpdate(fieldsPayload = {}, includeUpdatedAt = false) {
     fields.push(`photos = $${idx++}::jsonb`);
     values.push(JSON.stringify(fieldsPayload.photos ?? []));
   }
+  if (fieldsPayload.closed_at !== undefined) setField('closed_at', fieldsPayload.closed_at);
   if (includeUpdatedAt) fields.push('updated_at = NOW()');
 
   return { fields, values, nextIndex: idx };
 }
 
 async function applyBridgeUpdateToRequest(requestId, payload, includeUpdatedAt = false) {
-  const { fields, values, nextIndex } = buildBridgeUpdate(payload, includeUpdatedAt);
+  // Fetch current status to handle closed_at transitions on bridge-driven status changes
+  const cur = await pool.query('SELECT status, closed_at FROM requests WHERE id = $1', [requestId]);
+  const prev = cur.rows[0];
+  const enriched = { ...payload };
+  if (prev && hasClosedAtColumn && enriched.status !== undefined && enriched.status !== null && enriched.status !== '') {
+    if (enriched.status === 'closed' && prev.status !== 'closed' && !Object.prototype.hasOwnProperty.call(enriched, 'closed_at')) {
+      enriched.closed_at = new Date().toISOString();
+    }
+    if (enriched.status !== 'closed' && prev.status === 'closed') {
+      enriched.closed_at = null;
+    }
+  }
+  const { fields, values, nextIndex } = buildBridgeUpdate(enriched, includeUpdatedAt);
   values.push(requestId);
   const { rows } = await pool.query(
     `UPDATE requests SET ${fields.join(', ')} WHERE id = $${nextIndex} RETURNING *`,
@@ -1510,6 +1535,7 @@ async function bridgeAutoSync(requestId) {
       interior_doors: request.interior_doors,
       entrance_doors: request.entrance_doors,
       partitions: request.partitions,
+      closed_at: request.closed_at,
       photos: absolutizeBridgePhotos(request.photos, OWN_PUBLIC_API_URL),
     };
 

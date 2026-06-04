@@ -59,6 +59,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [interiorDoors, setInteriorDoors] = useState<string>(request.interior_doors != null ? String(request.interior_doors) : "");
   const [entranceDoors, setEntranceDoors] = useState<string>(request.entrance_doors != null ? String(request.entrance_doors) : "");
   const [partitions, setPartitions] = useState<string>(request.partitions != null ? String(request.partitions) : "");
+  const [closedAt, setClosedAt] = useState<string>(((request as any).closed_at || "").split("T")[0] || "");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "files">("details");
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -140,6 +141,13 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
+      // Admin can edit closed_at when request is closed
+      if (viewerRole === "admin" && status === "closed") {
+        const originalClosed = ((request as any).closed_at || "").split("T")[0] || "";
+        if (closedAt !== originalClosed) {
+          updates.closed_at = closedAt || null;
+        }
+      }
     }
     
     if (canEdit) {
@@ -466,9 +474,13 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         )}
                       </InfoRow>
                     )}
-                    {(request as any).closed_at && (
+                    {((request as any).closed_at || (viewerRole === "admin" && status === "closed")) && (
                       <InfoRow icon={<Calendar size={16} className="text-red-500" />} label="Дата закрытия">
-                        <p className="text-sm font-medium text-foreground">{fmtDate((request as any).closed_at)}</p>
+                        {viewerRole === "admin" ? (
+                          <input type="date" value={closedAt} onChange={(e) => setClosedAt(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-primary" />
+                        ) : (
+                          <p className="text-sm font-medium text-foreground">{fmtDate((request as any).closed_at)}</p>
+                        )}
                       </InfoRow>
                     )}
                   </div>
@@ -944,12 +956,16 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-sm font-medium">{fmtDate(request.created_at)}</p>
                     </div>
                   </div>
-                  {(request as any).closed_at && (
+                  {((request as any).closed_at || (viewerRole === "admin" && status === "closed")) && (
                     <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
                       <Calendar size={16} className="text-destructive mt-0.5 shrink-0" />
-                      <div>
+                      <div className="flex-1">
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Дата закрытия</p>
-                        <p className="text-sm font-medium">{fmtDate((request as any).closed_at)}</p>
+                        {viewerRole === "admin" ? (
+                          <input type="date" value={closedAt} onChange={(e) => setClosedAt(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-primary w-full" />
+                        ) : (
+                          <p className="text-sm font-medium">{fmtDate((request as any).closed_at)}</p>
+                        )}
                       </div>
                     </div>
                   )}
