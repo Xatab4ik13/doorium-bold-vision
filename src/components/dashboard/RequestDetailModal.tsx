@@ -474,9 +474,13 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         )}
                       </InfoRow>
                     )}
-                    {(request as any).closed_at && (
+                    {((request as any).closed_at || (viewerRole === "admin" && status === "closed")) && (
                       <InfoRow icon={<Calendar size={16} className="text-red-500" />} label="Дата закрытия">
-                        <p className="text-sm font-medium text-foreground">{fmtDate((request as any).closed_at)}</p>
+                        {viewerRole === "admin" ? (
+                          <input type="date" value={closedAt} onChange={(e) => setClosedAt(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-primary" />
+                        ) : (
+                          <p className="text-sm font-medium text-foreground">{fmtDate((request as any).closed_at)}</p>
+                        )}
                       </InfoRow>
                     )}
                   </div>
