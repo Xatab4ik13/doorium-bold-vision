@@ -1535,6 +1535,7 @@ async function bridgeAutoSync(requestId) {
       interior_doors: request.interior_doors,
       entrance_doors: request.entrance_doors,
       partitions: request.partitions,
+      closed_at: request.closed_at,
       photos: absolutizeBridgePhotos(request.photos, OWN_PUBLIC_API_URL),
     };
 
