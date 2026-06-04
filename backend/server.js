@@ -1464,6 +1464,7 @@ function buildBridgeUpdate(fieldsPayload = {}, includeUpdatedAt = false) {
     fields.push(`photos = $${idx++}::jsonb`);
     values.push(JSON.stringify(fieldsPayload.photos ?? []));
   }
+  if (fieldsPayload.closed_at !== undefined) setField('closed_at', fieldsPayload.closed_at);
   if (includeUpdatedAt) fields.push('updated_at = NOW()');
 
   return { fields, values, nextIndex: idx };
