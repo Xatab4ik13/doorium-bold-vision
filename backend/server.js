@@ -753,15 +753,27 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       updates.extra_phone = normalizePhone(updates.extra_phone) || updates.extra_phone;
     }
 
-    // Auto: closed_at
+    // Auto: closed_at (do not override admin-supplied value)
+    const closedAtProvided = Object.prototype.hasOwnProperty.call(updates, 'closed_at');
     if (hasClosedAtColumn) {
-      if (updates.status === 'closed' && request.status !== 'closed') {
-        updates.closed_at = new Date().toISOString();
+      if (closedAtProvided) {
+        // Only admin/manager can manually set closed_at
+        if (!['admin', 'manager'].includes(role)) {
+          delete updates.closed_at;
+        } else if (updates.closed_at) {
+          // Normalize: accept YYYY-MM-DD or ISO string
+          const v = String(updates.closed_at);
+          updates.closed_at = v.length === 10 ? new Date(v + 'T12:00:00Z').toISOString() : new Date(v).toISOString();
+        }
+      } else {
+        if (updates.status === 'closed' && request.status !== 'closed') {
+          updates.closed_at = new Date().toISOString();
+        }
+        if (updates.status && updates.status !== 'closed' && request.status === 'closed') {
+          updates.closed_at = null;
+        }
       }
-      if (updates.status && updates.status !== 'closed' && request.status === 'closed') {
-        updates.closed_at = null;
-      }
-    } else if (Object.prototype.hasOwnProperty.call(updates, 'closed_at')) {
+    } else if (closedAtProvided) {
       delete updates.closed_at;
     }
 
