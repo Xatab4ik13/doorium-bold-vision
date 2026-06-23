@@ -25,6 +25,25 @@ const MeasurerDashboard = () => {
 
   useEffect(() => { document.title = "Мои заявки — Замерщик"; }, []);
 
+  // Prompt for a reason and append it as a timestamped note to existing notes.
+  // Returns the merged notes string, or null if user cancelled.
+  const promptReasonNotes = (existing: string | null | undefined, label: string, extra?: string): string | null => {
+    const reason = window.prompt(`Укажите причину (${label}):`, "");
+    if (reason === null) return null; // cancelled
+    const trimmed = reason.trim();
+    if (!trimmed && !extra) {
+      // empty reason and no extra notes — still allow, return existing
+      return (existing || "") || null as any;
+    }
+    const d = new Date();
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const stamp = `${dd}.${mm}.${yyyy}`;
+    const line = `[${stamp}] ${label}${trimmed ? `: ${trimmed}` : ""}${extra ? ` | ${extra}` : ""}`;
+    return existing && existing.trim() ? `${existing.trim()}\n${line}` : line;
+  };
+
   const handleSelectRequest = (r: ApiRequest) => {
     setSelected(r);
     setMeasurementNotes("");
@@ -234,8 +253,10 @@ const MeasurerDashboard = () => {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={async () => {
+                      const merged = promptReasonNotes(selected.notes, "В ожидание");
+                      if (merged === null) return;
                       try {
-                        await updateRequest(selected.id, { status: "pending" as any });
+                        await updateRequest(selected.id, { status: "pending" as any, notes: merged });
                         setSelected(null);
                         toast.success("Заявка переведена в ожидание");
                       } catch {}
@@ -246,9 +267,10 @@ const MeasurerDashboard = () => {
                   </button>
                   <button
                     onClick={async () => {
-                      if (!confirm("Подтвердите отказ клиента")) return;
+                      const merged = promptReasonNotes(selected.notes, "Отказ клиента");
+                      if (merged === null) return;
                       try {
-                        await updateRequest(selected.id, { status: "client_refused" as any });
+                        await updateRequest(selected.id, { status: "client_refused" as any, notes: merged });
                         setSelected(null);
                         toast.success("Отмечено: отказ клиента");
                       } catch {}
@@ -376,8 +398,10 @@ const MeasurerDashboard = () => {
                     <button
                       onClick={async () => {
                         if (!selected) return;
+                        const merged = promptReasonNotes(selected.notes, "В ожидание", measurementNotes?.trim() || undefined);
+                        if (merged === null) return;
                         try {
-                          await updateRequest(selected.id, { status: "pending" as any, notes: measurementNotes || selected.notes });
+                          await updateRequest(selected.id, { status: "pending" as any, notes: merged });
                           setSelected(null);
                           toast.success("Заявка переведена в ожидание");
                         } catch {}
@@ -389,9 +413,10 @@ const MeasurerDashboard = () => {
                     <button
                       onClick={async () => {
                         if (!selected) return;
-                        if (!confirm("Подтвердите отказ клиента")) return;
+                        const merged = promptReasonNotes(selected.notes, "Отказ клиента", measurementNotes?.trim() || undefined);
+                        if (merged === null) return;
                         try {
-                          await updateRequest(selected.id, { status: "client_refused" as any, notes: measurementNotes || selected.notes });
+                          await updateRequest(selected.id, { status: "client_refused" as any, notes: merged });
                           setSelected(null);
                           toast.success("Отмечено: отказ клиента");
                         } catch {}

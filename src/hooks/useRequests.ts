@@ -52,7 +52,7 @@ export interface ApiUser {
 }
 
 const POLL_INTERVAL = 10000; // 10 seconds
-const FULL_FETCH_LIMIT = 1000;
+const FULL_FETCH_LIMIT = 10000;
 
 export function useRequests() {
   const [requests, setRequests] = useState<ApiRequest[]>([]);
