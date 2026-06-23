@@ -398,8 +398,10 @@ const MeasurerDashboard = () => {
                     <button
                       onClick={async () => {
                         if (!selected) return;
+                        const merged = promptReasonNotes(selected.notes, "В ожидание", measurementNotes?.trim() || undefined);
+                        if (merged === null) return;
                         try {
-                          await updateRequest(selected.id, { status: "pending" as any, notes: measurementNotes || selected.notes });
+                          await updateRequest(selected.id, { status: "pending" as any, notes: merged });
                           setSelected(null);
                           toast.success("Заявка переведена в ожидание");
                         } catch {}
@@ -411,9 +413,10 @@ const MeasurerDashboard = () => {
                     <button
                       onClick={async () => {
                         if (!selected) return;
-                        if (!confirm("Подтвердите отказ клиента")) return;
+                        const merged = promptReasonNotes(selected.notes, "Отказ клиента", measurementNotes?.trim() || undefined);
+                        if (merged === null) return;
                         try {
-                          await updateRequest(selected.id, { status: "client_refused" as any, notes: measurementNotes || selected.notes });
+                          await updateRequest(selected.id, { status: "client_refused" as any, notes: merged });
                           setSelected(null);
                           toast.success("Отмечено: отказ клиента");
                         } catch {}
