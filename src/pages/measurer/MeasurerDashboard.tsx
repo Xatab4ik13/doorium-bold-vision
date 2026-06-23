@@ -25,6 +25,25 @@ const MeasurerDashboard = () => {
 
   useEffect(() => { document.title = "Мои заявки — Замерщик"; }, []);
 
+  // Prompt for a reason and append it as a timestamped note to existing notes.
+  // Returns the merged notes string, or null if user cancelled.
+  const promptReasonNotes = (existing: string | null | undefined, label: string, extra?: string): string | null => {
+    const reason = window.prompt(`Укажите причину (${label}):`, "");
+    if (reason === null) return null; // cancelled
+    const trimmed = reason.trim();
+    if (!trimmed && !extra) {
+      // empty reason and no extra notes — still allow, return existing
+      return (existing || "") || null as any;
+    }
+    const d = new Date();
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const stamp = `${dd}.${mm}.${yyyy}`;
+    const line = `[${stamp}] ${label}${trimmed ? `: ${trimmed}` : ""}${extra ? ` | ${extra}` : ""}`;
+    return existing && existing.trim() ? `${existing.trim()}\n${line}` : line;
+  };
+
   const handleSelectRequest = (r: ApiRequest) => {
     setSelected(r);
     setMeasurementNotes("");
