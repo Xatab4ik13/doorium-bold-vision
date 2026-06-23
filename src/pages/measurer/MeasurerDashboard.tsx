@@ -253,8 +253,10 @@ const MeasurerDashboard = () => {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={async () => {
+                      const merged = promptReasonNotes(selected.notes, "В ожидание");
+                      if (merged === null) return;
                       try {
-                        await updateRequest(selected.id, { status: "pending" as any });
+                        await updateRequest(selected.id, { status: "pending" as any, notes: merged });
                         setSelected(null);
                         toast.success("Заявка переведена в ожидание");
                       } catch {}
@@ -265,9 +267,10 @@ const MeasurerDashboard = () => {
                   </button>
                   <button
                     onClick={async () => {
-                      if (!confirm("Подтвердите отказ клиента")) return;
+                      const merged = promptReasonNotes(selected.notes, "Отказ клиента");
+                      if (merged === null) return;
                       try {
-                        await updateRequest(selected.id, { status: "client_refused" as any });
+                        await updateRequest(selected.id, { status: "client_refused" as any, notes: merged });
                         setSelected(null);
                         toast.success("Отмечено: отказ клиента");
                       } catch {}
