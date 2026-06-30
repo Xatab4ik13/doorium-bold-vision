@@ -126,6 +126,11 @@ const s3 = new S3Client({
     secretAccessKey: process.env.S3_SECRET_KEY,
   },
   forcePathStyle: true,
+  requestHandler: new NodeHttpHandler({
+    httpsAgent: new https.Agent({ keepAlive: true, maxSockets: 500 }),
+    connectionTimeout: 5000,
+    socketTimeout: 60000,
+  }),
 });
 
 const upload = multer({
