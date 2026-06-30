@@ -4,6 +4,8 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
+const { NodeHttpHandler } = require('@smithy/node-http-handler');
+const https = require('https');
 const webpush = require('web-push');
 const multer = require('multer');
 const crypto = require('crypto');
@@ -124,6 +126,11 @@ const s3 = new S3Client({
     secretAccessKey: process.env.S3_SECRET_KEY,
   },
   forcePathStyle: true,
+  requestHandler: new NodeHttpHandler({
+    httpsAgent: new https.Agent({ keepAlive: true, maxSockets: 500 }),
+    connectionTimeout: 5000,
+    socketTimeout: 60000,
+  }),
 });
 
 const upload = multer({
