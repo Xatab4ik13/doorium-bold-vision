@@ -127,7 +127,12 @@ const s3 = new S3Client({
   },
   forcePathStyle: true,
   requestHandler: new NodeHttpHandler({
-    httpsAgent: new https.Agent({ keepAlive: true, maxSockets: 500 }),
+    httpsAgent: new https.Agent({
+      keepAlive: true,
+      maxSockets: parseInt(process.env.S3_MAX_SOCKETS, 10) || 2500,
+      maxFreeSockets: 100,
+      freeSocketTimeout: 30000,
+    }),
     connectionTimeout: 5000,
     socketTimeout: 60000,
   }),
