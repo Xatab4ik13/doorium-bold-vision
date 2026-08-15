@@ -1267,8 +1267,8 @@ app.put('/api/estimates/:id', auth, async (req, res) => {
 app.post('/api/estimates', auth, async (req, res) => {
   try {
     const { client_name, client_phone, client_address, city, items, discount, total, request_id } = req.body;
-    const countResult = await pool.query('SELECT COUNT(*) FROM estimates');
-    const number = 'EST-' + String(parseInt(countResult.rows[0].count) + 1).padStart(3, '0');
+    const maxResult = await pool.query("SELECT COALESCE(MAX(NULLIF(regexp_replace(number, '\\D', '', 'g'), '')::int), 0) AS max FROM estimates");
+    const number = 'EST-' + String(parseInt(maxResult.rows[0].max) + 1).padStart(3, '0');
     const { rows } = await pool.query(
       `INSERT INTO estimates (number, client_name, client_phone, client_address, city, items, discount, total, created_by, request_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
