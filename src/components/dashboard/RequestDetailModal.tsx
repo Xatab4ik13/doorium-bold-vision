@@ -64,6 +64,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [interiorDoors, setInteriorDoors] = useState<string>(request.interior_doors != null ? String(request.interior_doors) : "");
   const [entranceDoors, setEntranceDoors] = useState<string>(request.entrance_doors != null ? String(request.entrance_doors) : "");
   const [partitions, setPartitions] = useState<string>(request.partitions != null ? String(request.partitions) : "");
+  const [entrancePanels, setEntrancePanels] = useState<string>(request.entrance_panels != null ? String(request.entrance_panels) : "");
+  const [baseboardMeters, setBaseboardMeters] = useState<string>(request.baseboard_meters != null ? String(request.baseboard_meters) : "");
+  const [portals, setPortals] = useState<string>(request.portals != null ? String(request.portals) : "");
   const [closedAt, setClosedAt] = useState<string>(((request as any).closed_at || "").split("T")[0] || "");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "files">("details");
@@ -172,6 +175,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
+      updates.entrance_panels = entrancePanels ? parseInt(entrancePanels) : null;
+      updates.baseboard_meters = baseboardMeters ? parseFloat(baseboardMeters) : null;
+      updates.portals = portals ? parseInt(portals) : null;
       // Admin can edit closed_at when request is closed
       if (viewerRole === "admin" && status === "closed") {
         const originalClosed = ((request as any).closed_at || "").split("T")[0] || "";
@@ -197,6 +203,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
+      updates.entrance_panels = entrancePanels ? parseInt(entrancePanels) : null;
+      updates.baseboard_meters = baseboardMeters ? parseFloat(baseboardMeters) : null;
+      updates.portals = portals ? parseInt(portals) : null;
       updates.notes = notes || null;
       updates.partner_notes = partnerNotes || null;
       // Remove status for partners
@@ -472,6 +481,18 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-[10px] text-muted-foreground mb-1">Перегор.</p>
                       <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
                     </div>
+                    <div className="text-center p-3 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground mb-1">Вх. панели</p>
+                      <input type="number" min="0" value={entrancePanels} onChange={(e) => setEntrancePanels(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
+                    </div>
+                    <div className="text-center p-3 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground mb-1">Плинтус, м</p>
+                      <input type="number" min="0" step="0.01" value={baseboardMeters} onChange={(e) => setBaseboardMeters(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
+                    </div>
+                    <div className="text-center p-3 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground mb-1">Порталы</p>
+                      <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -529,11 +550,14 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-sm text-amber-900">{request.status_comment}</p>
                     </div>
                   )}
-                  {(request.interior_doors || request.entrance_doors || request.partitions) && (
+                  {(request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals) && (
                     <div className="grid grid-cols-3 gap-2">
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">МК</p><p className="text-lg font-bold text-foreground">{request.interior_doors || 0}</p></div>
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Входные</p><p className="text-lg font-bold text-foreground">{request.entrance_doors || 0}</p></div>
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Перегор.</p><p className="text-lg font-bold text-foreground">{request.partitions || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Вх. панели</p><p className="text-lg font-bold text-foreground">{request.entrance_panels || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Плинтус, м</p><p className="text-lg font-bold text-foreground">{request.baseboard_meters || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Порталы</p><p className="text-lg font-bold text-foreground">{request.portals || 0}</p></div>
                     </div>
                   )}
                 </>
@@ -613,6 +637,18 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-1 text-center">Перегородка</p>
                       <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)} className={inputClass + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1 text-center">Вх. панели</p>
+                      <input type="number" min="0" value={entrancePanels} onChange={(e) => setEntrancePanels(e.target.value)} className={inputClass + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1 text-center">Плинтус, м</p>
+                      <input type="number" min="0" step="0.01" value={baseboardMeters} onChange={(e) => setBaseboardMeters(e.target.value)} className={inputClass + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1 text-center">Порталы</p>
+                      <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)} className={inputClass + " text-center"} placeholder="0" />
                     </div>
                   </div>
                 </div>
@@ -1195,6 +1231,21 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
                       </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Вх. панели</label>
+                        <input type="number" min="0" value={entrancePanels} onChange={(e) => setEntrancePanels(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Плинтус, м</label>
+                        <input type="number" min="0" step="0.01" value={baseboardMeters} onChange={(e) => setBaseboardMeters(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Порталы</label>
+                        <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1225,7 +1276,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
               {/* Door counts read-only for executors */}
-              {!canEdit && !canPartnerEdit && (request.interior_doors || request.entrance_doors || request.partitions) && (
+              {!canEdit && !canPartnerEdit && (request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals) && (
                 <div className="p-4 rounded-xl bg-accent/30 border border-border">
                   <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Количество изделий</label>
                   <div className="grid grid-cols-3 gap-2 text-sm text-center">
@@ -1240,6 +1291,18 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <div>
                       <p className="text-[10px] text-muted-foreground">Перегородка (кол-во створок)</p>
                       <p className="font-semibold">{request.partitions || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Вх. панели</p>
+                      <p className="font-semibold">{request.entrance_panels || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Плинтус, м</p>
+                      <p className="font-semibold">{request.baseboard_meters || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Порталы</p>
+                      <p className="font-semibold">{request.portals || 0}</p>
                     </div>
                   </div>
                 </div>
