@@ -1351,20 +1351,22 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </div>
               )}
 
-              {photos.length === 0 && !uploadingFile ? (
+              {hasFiles && stageFilterBar}
+
+              {visiblePhotos.length === 0 && !uploadingFile ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Image size={40} className="mx-auto mb-3 opacity-30" />
                   <p className="text-sm">Нет файлов по этой заявке</p>
                 </div>
-              ) : photos.length > 0 ? (
+              ) : visiblePhotos.length > 0 ? (
                 <div className="space-y-2">
                   {/* Images grid */}
-                  {photos.filter(f => {
+                  {visiblePhotos.filter(f => {
                     const ext = (f.url.split("/").pop() || "").split(".").pop()?.toLowerCase() || "";
                     return f.type === "image" || ["jpg","jpeg","png","gif","webp","svg"].includes(ext);
                   }).length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {photos.filter(f => {
+                      {visiblePhotos.filter(f => {
                         const ext = (f.url.split("/").pop() || "").split(".").pop()?.toLowerCase() || "";
                         return f.type === "image" || ["jpg","jpeg","png","gif","webp","svg"].includes(ext);
                       }).map((file, i) => (
@@ -1397,7 +1399,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     </div>
                   )}
                   {/* Document files list */}
-                  {photos.filter(f => {
+                  {visiblePhotos.filter(f => {
                     const ext = (f.url.split("/").pop() || "").split(".").pop()?.toLowerCase() || "";
                     return f.type !== "image" && !["jpg","jpeg","png","gif","webp","svg"].includes(ext);
                   }).map((file, i) => {
