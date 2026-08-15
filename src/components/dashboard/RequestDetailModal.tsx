@@ -1271,6 +1271,21 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)}
                         className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
                     </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Вх. панели</label>
+                      <input type="number" min="0" value={entrancePanels} onChange={(e) => setEntrancePanels(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Плинтус, м</label>
+                      <input type="number" min="0" step="0.01" value={baseboardMeters} onChange={(e) => setBaseboardMeters(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Порталы</label>
+                      <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                    </div>
                   </div>
                 </div>
               )}
