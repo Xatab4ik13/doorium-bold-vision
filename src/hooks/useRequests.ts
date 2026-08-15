@@ -21,6 +21,11 @@ export interface ApiRequest {
   interior_doors?: number;
   entrance_doors?: number;
   partitions?: number;
+  entrance_panels?: number;
+  baseboard_meters?: number;
+  portals?: number;
+  parent_request_id?: string;
+  closed_at?: string;
   source: "site" | "partner" | "bridge";
   partner_id?: string;
   partner_name?: string;
@@ -54,7 +59,8 @@ export interface ApiUser {
 const POLL_INTERVAL = 10000; // 10 seconds
 const FULL_FETCH_LIMIT = 10000;
 
-export function useRequests() {
+export function useRequests(options?: { scheduled?: boolean }) {
+  const scheduled = options?.scheduled ?? false;
   const [requests, setRequests] = useState<ApiRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const prevCountRef = useRef<number | null>(null);
@@ -63,7 +69,8 @@ export function useRequests() {
   const fetchRequests = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const response = await api<ApiRequest[] | { data: ApiRequest[] }>(`/api/requests?page=1&limit=${FULL_FETCH_LIMIT}`, { auth: true });
+      const query = scheduled ? `scheduled=1&limit=${FULL_FETCH_LIMIT}` : `page=1&limit=${FULL_FETCH_LIMIT}`;
+      const response = await api<ApiRequest[] | { data: ApiRequest[] }>(`/api/requests?${query}`, { auth: true });
       const data = Array.isArray(response) ? response : response.data;
       
       // Notify about new requests
@@ -82,7 +89,7 @@ export function useRequests() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scheduled]);
 
   useEffect(() => {
     fetchRequests();
