@@ -25,7 +25,6 @@ export interface ApiRequest {
   baseboard_meters?: number;
   portals?: number;
   parent_request_id?: string;
-  closed_at?: string;
   source: "site" | "partner" | "bridge";
   partner_id?: string;
   partner_name?: string;
