@@ -232,6 +232,7 @@ const ManagerDashboard = () => {
               photos: req.photos,
               source: req.source,
               partner_id: req.partner_id,
+              parent_request_id: req.id,
             });
           }}
         />

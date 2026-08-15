@@ -11,6 +11,10 @@ const SMS_DIAGNOSTIC_DELAY_MS = parseInt(process.env.SMS_DIAGNOSTIC_DELAY_MS || 
 const useTg = NOTIFY_DRIVER === 'telegram' || NOTIFY_DRIVER === 'both';
 const useSms = NOTIFY_DRIVER === 'sms' || NOTIFY_DRIVER === 'both';
 
+// SMS отправляем только исполнителям (замерщики и монтажники).
+// Менеджеры, админы и партнёры получают только Telegram.
+const SMS_ROLES = ['measurer', 'installer'];
+
 function maskPhone(phone) {
   const s = String(phone || '');
   return s.length > 4 ? `${s.slice(0, 3)}***${s.slice(-4)}` : s;
@@ -143,7 +147,7 @@ async function notifyUser(user, htmlMessage, options = {}) {
   if (!user) return;
   const tasks = [];
   if (useTg && user.telegram_id) tasks.push(sendTelegram(user.telegram_id, htmlMessage));
-  if (useSms && user.phone) {
+  if (useSms && user.phone && SMS_ROLES.includes(user.role)) {
     const text = htmlToSms(htmlMessage);
     if (text) tasks.push(sendSms(user.phone, text, options));
   }
@@ -154,7 +158,7 @@ async function notifyUserById(pool, userId, htmlMessage, options = {}) {
   if (!userId) return;
   try {
     const { rows } = await pool.query(
-      'SELECT id, name, telegram_id, phone FROM users WHERE id = $1 AND active = true',
+      'SELECT id, name, role, telegram_id, phone FROM users WHERE id = $1 AND active = true',
       [userId]
     );
     if (rows[0]) {
@@ -171,7 +175,7 @@ async function notifyUserById(pool, userId, htmlMessage, options = {}) {
 async function notifyManagersAndAdmins(pool, htmlMessage, options = {}) {
   try {
     const { rows } = await pool.query(
-      "SELECT telegram_id, phone FROM users WHERE role IN ('manager', 'admin') AND active = true"
+      "SELECT role, telegram_id, phone FROM users WHERE role IN ('manager', 'admin') AND active = true"
     );
     await Promise.all(rows.map((u) => notifyUser(u, htmlMessage, options)));
   } catch (err) {
@@ -183,7 +187,7 @@ async function notifyPartner(pool, partnerId, htmlMessage, options = {}) {
   if (!partnerId) return;
   try {
     const { rows } = await pool.query(
-      'SELECT telegram_id, phone FROM users WHERE id = $1 AND active = true',
+      'SELECT role, telegram_id, phone FROM users WHERE id = $1 AND active = true',
       [partnerId]
     );
     if (rows[0]) await notifyUser(rows[0], htmlMessage, options);

@@ -1,3 +1,5 @@
+import RequestComments from "./RequestComments";
+import { useAuth } from "@/contexts/AuthContext";
 import { useState, useRef, useMemo } from "react";
 import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle, Pencil, Download, FileSpreadsheet, File, Link2, RefreshCw } from "lucide-react";
 import SearchableUserSelect from "./SearchableUserSelect";
@@ -40,8 +42,11 @@ interface RequestDetailModalProps {
   viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
+const stageForType = (t?: string): "measurement" | "installation" => (t === "measurement" ? "measurement" : "installation");
+
 const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, onSendToPrimeDoor, onSyncPrimeDoor, viewerRole = "admin" }: RequestDetailModalProps) => {
   const isMobile = useIsMobile();
+  const { user: currentUser } = useAuth();
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
   const isClosedRequest = request.status === "closed";
   const canPartnerEdit = viewerRole === "partner" && !isClosedRequest;
@@ -59,9 +64,13 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [interiorDoors, setInteriorDoors] = useState<string>(request.interior_doors != null ? String(request.interior_doors) : "");
   const [entranceDoors, setEntranceDoors] = useState<string>(request.entrance_doors != null ? String(request.entrance_doors) : "");
   const [partitions, setPartitions] = useState<string>(request.partitions != null ? String(request.partitions) : "");
+  const [entrancePanels, setEntrancePanels] = useState<string>(request.entrance_panels != null ? String(request.entrance_panels) : "");
+  const [baseboardMeters, setBaseboardMeters] = useState<string>(request.baseboard_meters != null ? String(request.baseboard_meters) : "");
+  const [portals, setPortals] = useState<string>(request.portals != null ? String(request.portals) : "");
   const [closedAt, setClosedAt] = useState<string>(((request as any).closed_at || "").split("T")[0] || "");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "files">("details");
+  const [fileStage, setFileStage] = useState<"all" | "measurement" | "installation">("all");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [sendingToInstall, setSendingToInstall] = useState(false);
@@ -108,6 +117,31 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
   const photos = request.photos || [];
   const hasFiles = photos.length > 0;
+  const photoStage = (f: { stage?: string }) => (f.stage === "measurement" || f.stage === "installation" ? f.stage : stageForType(request.type));
+  const visiblePhotos = fileStage === "all" ? photos : photos.filter((f) => photoStage(f) === fileStage);
+  const stageCounts = {
+    measurement: photos.filter((f) => photoStage(f) === "measurement").length,
+    installation: photos.filter((f) => photoStage(f) === "installation").length,
+  };
+  const stageFilterBar = (
+    <div className="flex gap-2">
+      {([
+        { key: "all", label: `Все (${photos.length})` },
+        { key: "measurement", label: `Замер (${stageCounts.measurement})` },
+        { key: "installation", label: `Монтаж (${stageCounts.installation})` },
+      ] as const).map((t) => (
+        <button
+          key={t.key}
+          onClick={() => setFileStage(t.key)}
+          className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+            fileStage === t.key ? "bg-primary text-primary-foreground shadow-sm" : "bg-accent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
 
   // Determine which assignment fields to show based on request type
   const showMeasurerField = request.type === "measurement";
@@ -141,6 +175,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
+      updates.entrance_panels = entrancePanels ? parseInt(entrancePanels) : null;
+      updates.baseboard_meters = baseboardMeters ? parseFloat(baseboardMeters) : null;
+      updates.portals = portals ? parseInt(portals) : null;
       // Admin can edit closed_at when request is closed
       if (viewerRole === "admin" && status === "closed") {
         const originalClosed = ((request as any).closed_at || "").split("T")[0] || "";
@@ -166,6 +203,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
+      updates.entrance_panels = entrancePanels ? parseInt(entrancePanels) : null;
+      updates.baseboard_meters = baseboardMeters ? parseFloat(baseboardMeters) : null;
+      updates.portals = portals ? parseInt(portals) : null;
       updates.notes = notes || null;
       updates.partner_notes = partnerNotes || null;
       // Remove status for partners
@@ -441,6 +481,18 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-[10px] text-muted-foreground mb-1">Перегор.</p>
                       <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
                     </div>
+                    <div className="text-center p-3 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground mb-1">Вх. панели</p>
+                      <input type="number" min="0" value={entrancePanels} onChange={(e) => setEntrancePanels(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
+                    </div>
+                    <div className="text-center p-3 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground mb-1">Плинтус, м</p>
+                      <input type="number" min="0" step="0.01" value={baseboardMeters} onChange={(e) => setBaseboardMeters(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
+                    </div>
+                    <div className="text-center p-3 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground mb-1">Порталы</p>
+                      <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -498,11 +550,14 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-sm text-amber-900">{request.status_comment}</p>
                     </div>
                   )}
-                  {(request.interior_doors || request.entrance_doors || request.partitions) && (
+                  {(request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals) && (
                     <div className="grid grid-cols-3 gap-2">
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">МК</p><p className="text-lg font-bold text-foreground">{request.interior_doors || 0}</p></div>
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Входные</p><p className="text-lg font-bold text-foreground">{request.entrance_doors || 0}</p></div>
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Перегор.</p><p className="text-lg font-bold text-foreground">{request.partitions || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Вх. панели</p><p className="text-lg font-bold text-foreground">{request.entrance_panels || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Плинтус, м</p><p className="text-lg font-bold text-foreground">{request.baseboard_meters || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Порталы</p><p className="text-lg font-bold text-foreground">{request.portals || 0}</p></div>
                     </div>
                   )}
                 </>
@@ -583,6 +638,18 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-[10px] text-muted-foreground mb-1 text-center">Перегородка</p>
                       <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)} className={inputClass + " text-center"} placeholder="0" />
                     </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1 text-center">Вх. панели</p>
+                      <input type="number" min="0" value={entrancePanels} onChange={(e) => setEntrancePanels(e.target.value)} className={inputClass + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1 text-center">Плинтус, м</p>
+                      <input type="number" min="0" step="0.01" value={baseboardMeters} onChange={(e) => setBaseboardMeters(e.target.value)} className={inputClass + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1 text-center">Порталы</p>
+                      <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)} className={inputClass + " text-center"} placeholder="0" />
+                    </div>
                   </div>
                 </div>
               )}
@@ -607,6 +674,16 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   />
                 </div>
               )}
+              {/* Комментарии по этапам */}
+              <div className="space-y-2">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Комментарии</p>
+                <RequestComments
+                  requestId={request.id}
+                  currentUserId={currentUser?.id}
+                  currentUserRole={viewerRole}
+                  defaultStage={stageForType(request.type)}
+                />
+              </div>
             </div>
           )}
 
@@ -622,7 +699,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       try {
                         const uploaded: typeof photos = [];
                         for (const f of selectedFiles) {
-                          try { const result = await uploadFile(f, "requests"); uploaded.push({ url: result.url, type: f.type.startsWith("image/") ? "image" : "document", stage: "general", uploaded_at: new Date().toISOString() }); }
+                          try { const result = await uploadFile(f, "requests"); uploaded.push({ url: result.url, type: f.type.startsWith("image/") ? "image" : "document", stage: stageForType(request.type), uploaded_at: new Date().toISOString() }); }
                           catch { toast.error(`Не удалось: ${f.name}`); }
                         }
                         if (uploaded.length > 0) {
@@ -640,11 +717,12 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   </button>
                 </div>
               )}
-              {photos.length === 0 ? (
+              {hasFiles && stageFilterBar}
+              {visiblePhotos.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground"><Image size={40} className="mx-auto mb-3 opacity-30" /><p className="text-sm">Нет файлов</p></div>
               ) : (
                 <div className="grid grid-cols-1 gap-2">
-                  {photos.map((file, i) => {
+                  {visiblePhotos.map((file, i) => {
                     const fileName = decodeURIComponent(file.url.split("/").pop() || "file");
                     const ext = fileName.split(".").pop()?.toLowerCase() || "";
                     const isImage = file.type === "image" || ["jpg","jpeg","png","gif","webp","svg"].includes(ext);
@@ -1153,6 +1231,21 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
                       </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Вх. панели</label>
+                        <input type="number" min="0" value={entrancePanels} onChange={(e) => setEntrancePanels(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Плинтус, м</label>
+                        <input type="number" min="0" step="0.01" value={baseboardMeters} onChange={(e) => setBaseboardMeters(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Порталы</label>
+                        <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1178,12 +1271,27 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)}
                         className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
                     </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Вх. панели</label>
+                      <input type="number" min="0" value={entrancePanels} onChange={(e) => setEntrancePanels(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Плинтус, м</label>
+                      <input type="number" min="0" step="0.01" value={baseboardMeters} onChange={(e) => setBaseboardMeters(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Порталы</label>
+                      <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Door counts read-only for executors */}
-              {!canEdit && !canPartnerEdit && (request.interior_doors || request.entrance_doors || request.partitions) && (
+              {!canEdit && !canPartnerEdit && (request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals) && (
                 <div className="p-4 rounded-xl bg-accent/30 border border-border">
                   <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Количество изделий</label>
                   <div className="grid grid-cols-3 gap-2 text-sm text-center">
@@ -1198,6 +1306,18 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <div>
                       <p className="text-[10px] text-muted-foreground">Перегородка (кол-во створок)</p>
                       <p className="font-semibold">{request.partitions || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Вх. панели</p>
+                      <p className="font-semibold">{request.entrance_panels || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Плинтус, м</p>
+                      <p className="font-semibold">{request.baseboard_meters || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Порталы</p>
+                      <p className="font-semibold">{request.portals || 0}</p>
                     </div>
                   </div>
                 </div>
@@ -1237,6 +1357,16 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   )}
                 </div>
               )}
+              {/* Комментарии по этапам */}
+              <div className="space-y-2">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Комментарии</p>
+                <RequestComments
+                  requestId={request.id}
+                  currentUserId={currentUser?.id}
+                  currentUserRole={viewerRole}
+                  defaultStage={stageForType(request.type)}
+                />
+              </div>
             </div>
           )}
 
@@ -1299,20 +1429,22 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </div>
               )}
 
-              {photos.length === 0 && !uploadingFile ? (
+              {hasFiles && stageFilterBar}
+
+              {visiblePhotos.length === 0 && !uploadingFile ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Image size={40} className="mx-auto mb-3 opacity-30" />
                   <p className="text-sm">Нет файлов по этой заявке</p>
                 </div>
-              ) : photos.length > 0 ? (
+              ) : visiblePhotos.length > 0 ? (
                 <div className="space-y-2">
                   {/* Images grid */}
-                  {photos.filter(f => {
+                  {visiblePhotos.filter(f => {
                     const ext = (f.url.split("/").pop() || "").split(".").pop()?.toLowerCase() || "";
                     return f.type === "image" || ["jpg","jpeg","png","gif","webp","svg"].includes(ext);
                   }).length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {photos.filter(f => {
+                      {visiblePhotos.filter(f => {
                         const ext = (f.url.split("/").pop() || "").split(".").pop()?.toLowerCase() || "";
                         return f.type === "image" || ["jpg","jpeg","png","gif","webp","svg"].includes(ext);
                       }).map((file, i) => (
@@ -1345,7 +1477,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     </div>
                   )}
                   {/* Document files list */}
-                  {photos.filter(f => {
+                  {visiblePhotos.filter(f => {
                     const ext = (f.url.split("/").pop() || "").split(".").pop()?.toLowerCase() || "";
                     return f.type !== "image" && !["jpg","jpeg","png","gif","webp","svg"].includes(ext);
                   }).map((file, i) => {

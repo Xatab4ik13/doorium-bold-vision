@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, Download, Plus, Search, Loader2 } from "lucide-react";
@@ -36,6 +37,10 @@ const parsePercent = (priceStr: string): number => {
 const hasPercentVariants = (priceStr: string): boolean => priceStr.includes("/") && isPercentPrice(priceStr.split("/")[0]);
 
 const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("id");
+  const [editNumber, setEditNumber] = useState<string | null>(null);
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("+7 ");
   const [clientAddress, setClientAddress] = useState("");
@@ -57,6 +62,23 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       setActiveCategory("interior");
     }
   }, [city, activeCategory]);
+  // Загрузка сметы для редактирования
+  useEffect(() => {
+    if (!editId) { setEditNumber(null); return; }
+    api<any>(`/api/estimates/${editId}`, { auth: true })
+      .then((e) => {
+        setEditNumber(e.number || null);
+        setClientName(e.client_name || "");
+        setClientPhone(e.client_phone ? formatPhone(e.client_phone) : "+7 ");
+        setClientAddress(e.client_address || "");
+        setCity(e.city === "spb" ? "spb" : "moscow");
+        setItems(Array.isArray(e.items) ? e.items : []);
+        setDiscount(Number(e.discount) || 0);
+        setIsSaved(true);
+      })
+      .catch((err: any) => toast.error(err.message || "Ошибка загрузки сметы"));
+  }, [editId]);
+
   useEffect(() => {
     api<any[]>("/api/estimates", { auth: true })
       .then((data) => {
@@ -213,17 +235,16 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
     if (!clientName) { toast.error("Укажите имя клиента"); return; }
     if (items.length === 0) { toast.error("Добавьте хотя бы одну позицию"); return; }
     try {
-      const saved = await api<any>("/api/estimates", {
-        method: "POST",
-        body: { client_name: clientName, client_address: clientAddress, city, items, discount, total },
-        auth: true,
+      const body = { client_name: clientName, client_phone: clientPhone, client_address: clientAddress, city, items, discount, total };
+      const saved = editId
+        ? await api<any>(`/api/estimates/${editId}`, { method: "PUT", body, auth: true })
+        : await api<any>("/api/estimates", { method: "POST", body, auth: true });
+      setSavedEstimates(prev => {
+        const entry = { id: saved.id, number: saved.number, client: saved.client_name, total: saved.total, date: saved.created_at?.split("T")[0] || "" };
+        return editId ? prev.map(e => (e.id === saved.id ? entry : e)) : [entry, ...prev];
       });
-      setSavedEstimates(prev => [
-        { id: saved.id, number: saved.number, client: saved.client_name, total: saved.total, date: saved.created_at?.split("T")[0] || "" },
-        ...prev,
-      ]);
       setIsSaved(true);
-      toast.success("Смета сохранена");
+      toast.success(editId ? "Смета обновлена" : "Смета сохранена");
     } catch (err: any) {
       toast.error(err.message || "Ошибка сохранения");
     }
@@ -500,6 +521,13 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
               <Download size={18} /> Скачать смету
             </button>
 
+            <button
+              onClick={() => navigate(role === "partner" ? "/partner/saved-estimates" : `/${role}/saved-estimates`)}
+              className="w-full px-4 py-3 rounded-xl text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-all"
+            >
+              Все сохранённые сметы
+            </button>
+
             {savedEstimates.length > 0 && (
               <Card className="border-0 shadow-lg">
                 <CardHeader className="pb-3">
@@ -508,7 +536,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                 <CardContent>
                   <div className="space-y-2">
                     {savedEstimates.map((est) => (
-                      <div key={est.id} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+                      <button key={est.id} onClick={() => navigate(`${role === "partner" ? "/partner" : `/${role}`}/estimates?id=${est.id}`)} className="w-full text-left flex items-center justify-between py-2.5 border-b border-border/50 last:border-0 hover:bg-accent/40 transition-colors">
                         <div>
                           <p className="text-xs font-mono text-primary">{est.number}</p>
                           <p className="text-sm font-medium">{est.client}</p>
@@ -517,7 +545,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                           <p className="text-sm font-bold">{est.total.toLocaleString("ru")} ₽</p>
                           <p className="text-[10px] text-muted-foreground">{est.date}</p>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </CardContent>

@@ -30,6 +30,7 @@ const AdminRequests = lazy(() => import("./pages/admin/AdminRequests"));
 const AdminAccounts = lazy(() => import("./pages/admin/AdminAccounts"));
 const AdminCalendar = lazy(() => import("./pages/admin/AdminCalendar"));
 const AdminEstimates = lazy(() => import("./pages/admin/AdminEstimates"));
+const AdminSavedEstimates = lazy(() => import("./pages/admin/AdminSavedEstimates"));
 const AdminPartners = lazy(() => import("./pages/admin/AdminPartners"));
 const AdminNews = lazy(() => import("./pages/admin/AdminNews"));
 const AdminAvailability = lazy(() => import("./pages/admin/AdminAvailability"));
@@ -39,6 +40,7 @@ const ManagerDashboard = lazy(() => import("./pages/manager/ManagerDashboard"));
 const ManagerAssign = lazy(() => import("./pages/manager/ManagerAssign"));
 const ManagerFiles = lazy(() => import("./pages/manager/ManagerFiles"));
 const ManagerEstimates = lazy(() => import("./pages/manager/ManagerEstimates"));
+const ManagerSavedEstimates = lazy(() => import("./pages/manager/ManagerSavedEstimates"));
 const ManagerCalendar = lazy(() => import("./pages/manager/ManagerCalendar"));
 const ManagerAvailability = lazy(() => import("./pages/manager/ManagerAvailability"));
 
@@ -51,6 +53,7 @@ const MeasurerCalendar = lazy(() => import("./pages/measurer/MeasurerCalendar"))
 const InstallerDashboard = lazy(() => import("./pages/installer/InstallerDashboard"));
 const InstallerHistory = lazy(() => import("./pages/installer/InstallerHistory"));
 const InstallerEstimates = lazy(() => import("./pages/installer/InstallerEstimates"));
+const InstallerSavedEstimates = lazy(() => import("./pages/installer/InstallerSavedEstimates"));
 const InstallerCalendar = lazy(() => import("./pages/installer/InstallerCalendar"));
 
 // Partner
@@ -58,6 +61,7 @@ const PartnerDashboard = lazy(() => import("./pages/partner/PartnerDashboard"));
 const PartnerNewRequest = lazy(() => import("./pages/partner/PartnerNewRequest"));
 const PartnerHistory = lazy(() => import("./pages/partner/PartnerHistory"));
 const PartnerEstimates = lazy(() => import("./pages/partner/PartnerEstimates"));
+const PartnerSavedEstimates = lazy(() => import("./pages/partner/PartnerSavedEstimates"));
 
 const queryClient = new QueryClient();
 
@@ -116,6 +120,7 @@ const App = () => (
               <Route path="/admin/accounts" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAccounts /></ProtectedRoute>} />
               <Route path="/admin/calendar" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCalendar /></ProtectedRoute>} />
               <Route path="/admin/estimates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminEstimates /></ProtectedRoute>} />
+              <Route path="/admin/saved-estimates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSavedEstimates /></ProtectedRoute>} />
               <Route path="/admin/partners" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPartners /></ProtectedRoute>} />
               <Route path="/admin/news" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNews /></ProtectedRoute>} />
               <Route path="/admin/availability" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAvailability /></ProtectedRoute>} />
@@ -125,6 +130,7 @@ const App = () => (
               <Route path="/manager/assign" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerAssign /></ProtectedRoute>} />
               <Route path="/manager/files" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerFiles /></ProtectedRoute>} />
               <Route path="/manager/estimates" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerEstimates /></ProtectedRoute>} />
+              <Route path="/manager/saved-estimates" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerSavedEstimates /></ProtectedRoute>} />
               <Route path="/manager/calendar" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerCalendar /></ProtectedRoute>} />
               <Route path="/manager/availability" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerAvailability /></ProtectedRoute>} />
 
@@ -137,6 +143,7 @@ const App = () => (
               <Route path="/installer" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerDashboard /></ProtectedRoute>} />
               <Route path="/installer/history" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerHistory /></ProtectedRoute>} />
               <Route path="/installer/estimates" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerEstimates /></ProtectedRoute>} />
+              <Route path="/installer/saved-estimates" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerSavedEstimates /></ProtectedRoute>} />
               <Route path="/installer/calendar" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerCalendar /></ProtectedRoute>} />
 
               {/* Partner */}
@@ -144,6 +151,7 @@ const App = () => (
               <Route path="/partner/new" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerNewRequest /></ProtectedRoute>} />
               <Route path="/partner/history" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerHistory /></ProtectedRoute>} />
               <Route path="/partner/estimates" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerEstimates /></ProtectedRoute>} />
+              <Route path="/partner/saved-estimates" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerSavedEstimates /></ProtectedRoute>} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={isCrm ? <Navigate to="/login" replace /> : <NotFound />} />

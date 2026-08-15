@@ -569,6 +569,9 @@ app.get('/api/requests', auth, async (req, res) => {
     if (date_from) { conds.push(`${dateCol} >= $${idx++}`); params.push(date_from); }
     if (date_to) { conds.push(`${dateCol} <= $${idx++}::date + interval '1 day'`); params.push(date_to); }
 
+    const scheduledQuery = req.query.scheduled === '1';
+    if (scheduledQuery) conds.push(`agreed_date IS NOT NULL`);
+
     if (quick === 'new') conds.push(`status = 'new'`);
     else if (quick === 'in_progress') conds.push(`status NOT IN ('new','closed','cancelled')`);
     else if (quick === 'pending') conds.push(`status = 'pending'`);
@@ -582,8 +585,12 @@ app.get('/api/requests', auth, async (req, res) => {
       ? (hasClosedAtColumn ? 'closed_at' : 'updated_at')
       : requestedDateField;
     const orderBy = `ORDER BY ${sortCol} DESC NULLS LAST, created_at DESC`;
+    const dataQuery = scheduledQuery
+      ? `SELECT * FROM requests ${where} ${orderBy}`
+      : `SELECT * FROM requests ${where} ${orderBy} LIMIT $${idx} OFFSET $${idx+1}`;
+    const dataParams = scheduledQuery ? params : [...params, parseInt(limit), offset];
     const [dataRes, countRes, countsRes] = await Promise.all([
-      pool.query(`SELECT * FROM requests ${where} ${orderBy} LIMIT $${idx} OFFSET $${idx+1}`, [...params, parseInt(limit), offset]),
+      pool.query(dataQuery, dataParams),
       pool.query(`SELECT COUNT(*)::int as total FROM requests ${where}`, params),
       pool.query(`SELECT COUNT(*)::int as "all", COUNT(*) FILTER (WHERE status='new')::int as "new", COUNT(*) FILTER (WHERE status='pending')::int as "pending", COUNT(*) FILTER (WHERE status NOT IN ('new','closed','cancelled'))::int as "in_progress", COUNT(*) FILTER (WHERE type='reclamation')::int as "reclamation" FROM requests ${baseWhere}`, baseParams)
     ]);
@@ -651,10 +658,55 @@ app.post('/api/requests/public', async (req, res) => {
   }
 });
 
+const COMMENT_STAGES = ['measurement', 'installation', 'general'];
+
+// Этап файла по типу заявки
+function stageForType(type) {
+  return type === 'measurement' ? 'measurement' : 'installation';
+}
+
+// Проставить stage всем файлам, у которых его нет
+function withStage(photos, type) {
+  if (!Array.isArray(photos)) return [];
+  const fallback = stageForType(type);
+  return photos.map((p) => (p && typeof p === 'object' ? { ...p, stage: p.stage || fallback } : p));
+}
+
+async function copyCommentsFromParent(newId, parentId) {
+  try {
+    await pool.query(
+      `INSERT INTO request_comments (request_id, author_id, author_name, author_role, stage, text, created_at)
+       SELECT $1, author_id, author_name, author_role, stage, text, created_at
+       FROM request_comments WHERE request_id = $2 AND is_deleted = false ORDER BY created_at ASC`,
+      [newId, parentId]
+    );
+  } catch (e) {
+    console.error('Copy comments error:', e.message);
+  }
+}
+
+// Файлы родителя копируются с сохранением их исходного этапа
+async function inheritParentPhotos(newRequest, parentId) {
+  try {
+    const parent = await pool.query('SELECT type, photos FROM requests WHERE id = $1', [parentId]);
+    const parentRow = parent.rows[0];
+    if (!parentRow || !Array.isArray(parentRow.photos) || parentRow.photos.length === 0) return null;
+    const inherited = withStage(parentRow.photos, parentRow.type);
+    const own = Array.isArray(newRequest.photos) ? newRequest.photos : [];
+    const ownUrls = new Set(own.map((p) => p && p.url));
+    const merged = [...inherited.filter((p) => !ownUrls.has(p && p.url)), ...own];
+    const upd = await pool.query('UPDATE requests SET photos = $1::jsonb WHERE id = $2 RETURNING photos', [JSON.stringify(merged), newRequest.id]);
+    return upd.rows[0].photos;
+  } catch (e) {
+    console.error('Copy photos error:', e.message);
+    return null;
+  }
+}
+
 // Create request (from CRM)
 app.post('/api/requests', auth, async (req, res) => {
   try {
-    const { client_name, client_phone: rawPhone, client_address, city, type, work_description, source, comment, extra_name, extra_phone: rawExtraPhone, photos, interior_doors, entrance_doors, partitions } = req.body;
+    const { client_name, client_phone: rawPhone, client_address, city, type, work_description, source, comment, extra_name, extra_phone: rawExtraPhone, photos, interior_doors, entrance_doors, partitions, entrance_panels, baseboard_meters, portals, parent_request_id } = req.body;
     const client_phone = normalizePhone(rawPhone) || rawPhone;
     const extra_phone = rawExtraPhone ? (normalizePhone(rawExtraPhone) || rawExtraPhone) : null;
     const countResult = await pool.query("SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 5) AS INTEGER)), 0) AS count FROM requests");
@@ -663,12 +715,19 @@ app.post('/api/requests', auth, async (req, res) => {
     const partnerId = req.user.role === 'partner' ? req.user.id : (req.body.partner_id || null);
 
     const { rows } = await pool.query(
-      `INSERT INTO requests (number, partner_id, client_name, client_phone, client_address, city, type, work_description, source, notes, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14, $15, $16, 'new') RETURNING *`,
-      [number, partnerId, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, photos ? JSON.stringify(photos) : '[]', interior_doors || null, entrance_doors || null, partitions || null]
+      `INSERT INTO requests (number, partner_id, client_name, client_phone, client_address, city, type, work_description, source, notes, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions, entrance_panels, baseboard_meters, portals, parent_request_id, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14, $15, $16, $17, $18, $19, $20, 'new') RETURNING *`,
+      [number, partnerId, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, JSON.stringify(withStage(photos, type || 'measurement')), interior_doors || null, entrance_doors || null, partitions || null, entrance_panels || null, baseboard_meters || null, portals || null, parent_request_id || null]
     );
 
     const req_data = rows[0];
+
+    // Клонирование: комментарии и файлы родительской заявки
+    if (parent_request_id) {
+      await copyCommentsFromParent(req_data.id, parent_request_id);
+      const mergedPhotos = await inheritParentPhotos(req_data, parent_request_id);
+      if (mergedPhotos) req_data.photos = mergedPhotos;
+    }
     const sourceName = req.user.role === 'partner' ? `Партнёр (${req.user.name})` : req.user.name;
     await notifyManagersAndAdmins(pool,
       `📋 <b>Новая заявка ${req_data.number}</b>\n\nКлиент: ${req_data.client_name}\nТелефон: ${req_data.client_phone}\nАдрес: ${req_data.client_address}\nТип: ${typeLabels[req_data.type] || req_data.type}\nИсточник: ${sourceName}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
@@ -706,7 +765,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       if (request.status === 'closed') {
         return res.status(403).json({ error: 'Закрытые заявки нельзя редактировать' });
       }
-      const partnerAllowed = ['client_name', 'client_phone', 'client_address', 'city', 'extra_name', 'extra_phone', 'work_description', 'interior_doors', 'entrance_doors', 'partitions', 'notes', 'photos', 'partner_notes'];
+      const partnerAllowed = ['client_name', 'client_phone', 'client_address', 'city', 'extra_name', 'extra_phone', 'work_description', 'interior_doors', 'entrance_doors', 'partitions', 'entrance_panels', 'baseboard_meters', 'portals', 'notes', 'photos', 'partner_notes'];
       const forbidden = Object.keys(updates).filter(k => !partnerAllowed.includes(k));
       if (forbidden.length > 0) {
         return res.status(403).json({ error: `Партнёрам недоступно изменение: ${forbidden.join(', ')}` });
@@ -722,21 +781,23 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       }
     }
 
+    const statusChangedByUser = updates.status && updates.status !== request.status;
+
     // Auto-assign status on executor assignment
-    if (updates.measurer_id && !request.measurer_id && ['new', 'pending'].includes(request.status)) {
+    if (!statusChangedByUser && updates.measurer_id && !request.measurer_id && ['new', 'pending'].includes(request.status)) {
       updates.status = 'measurer_assigned';
     }
-    if (updates.installer_id && !request.installer_id && ['new', 'pending'].includes(request.status)) {
+    if (!statusChangedByUser && updates.installer_id && !request.installer_id && ['new', 'pending'].includes(request.status)) {
       updates.status = 'installer_assigned';
     }
 
     // Auto: date agreed
-    if (updates.agreed_date && ['measurer_assigned', 'new', 'pending'].includes(request.status)) {
+    if (!statusChangedByUser && updates.agreed_date && ['measurer_assigned', 'new', 'pending'].includes(request.status)) {
       updates.status = 'date_agreed';
     }
 
     // Auto: installation rescheduled
-    const userExplicitlyChangedStatus = updates.status && updates.status !== request.status;
+    const userExplicitlyChangedStatus = statusChangedByUser;
     if (updates.agreed_date && !userExplicitlyChangedStatus && ["date_agreed", "installation_rescheduled"].includes(request.status) && request.type === "installation" && ["installer", "admin", "manager"].includes(role)) {
       updates.status = "installation_rescheduled";
     }
@@ -956,6 +1017,128 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
   }
 });
 
+// === Request comments ===
+async function loadRequestForComment(id) {
+  const { rows } = await pool.query('SELECT id, number, partner_id, measurer_id, installer_id, installer_2_id, installer_3_id, installer_4_id FROM requests WHERE id = $1', [id]);
+  return rows[0] || null;
+}
+
+function canViewRequest(user, request) {
+  if (['admin', 'manager'].includes(user.role)) return true;
+  if (user.role === 'partner') return request.partner_id === user.id;
+  if (user.role === 'measurer') return request.measurer_id === user.id;
+  if (user.role === 'installer') {
+    return [request.installer_id, request.installer_2_id, request.installer_3_id, request.installer_4_id].includes(user.id);
+  }
+  return false;
+}
+
+function mapComment(r) {
+  return {
+    id: r.id,
+    request_id: r.request_id,
+    author_id: r.author_id,
+    author_name: r.user_name || r.author_name || 'Без имени',
+    author_role: r.user_role || r.author_role || null,
+    stage: r.stage,
+    text: r.is_deleted ? '' : r.text,
+    is_deleted: !!r.is_deleted,
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+    edited_at: r.edited_at,
+  };
+}
+
+app.get('/api/requests/:id/comments', auth, async (req, res) => {
+  try {
+    const request = await loadRequestForComment(req.params.id);
+    if (!request) return res.status(404).json({ error: 'Заявка не найдена' });
+    if (!canViewRequest(req.user, request)) return res.status(403).json({ error: 'Нет доступа' });
+    const { rows } = await pool.query(
+      `SELECT c.*, u.name AS user_name, u.role AS user_role
+       FROM request_comments c
+       LEFT JOIN users u ON u.id = c.author_id
+       WHERE c.request_id = $1
+       ORDER BY c.created_at ASC`,
+      [req.params.id]
+    );
+    res.json(rows.map(mapComment));
+  } catch (err) {
+    console.error('Get comments error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки комментариев' });
+  }
+});
+
+app.post('/api/requests/:id/comments', auth, async (req, res) => {
+  try {
+    const request = await loadRequestForComment(req.params.id);
+    if (!request) return res.status(404).json({ error: 'Заявка не найдена' });
+    if (!canViewRequest(req.user, request)) return res.status(403).json({ error: 'Нет доступа' });
+
+    const text = typeof req.body.text === 'string' ? req.body.text.trim() : '';
+    if (!text) return res.status(400).json({ error: 'Комментарий пустой' });
+    if (text.length > 5000) return res.status(400).json({ error: 'Комментарий слишком длинный' });
+    const stage = COMMENT_STAGES.includes(req.body.stage) ? req.body.stage : 'general';
+
+    const { rows } = await pool.query(
+      `INSERT INTO request_comments (request_id, author_id, author_name, author_role, stage, text)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [req.params.id, req.user.id, req.user.name || null, req.user.role, stage, text]
+    );
+    res.json(mapComment({ ...rows[0], user_name: req.user.name, user_role: req.user.role }));
+  } catch (err) {
+    console.error('Create comment error:', err);
+    res.status(500).json({ error: 'Ошибка добавления комментария' });
+  }
+});
+
+app.put('/api/comments/:commentId', auth, async (req, res) => {
+  try {
+    const { rows: found } = await pool.query('SELECT * FROM request_comments WHERE id = $1', [req.params.commentId]);
+    if (!found.length) return res.status(404).json({ error: 'Комментарий не найден' });
+    const comment = found[0];
+    if (comment.is_deleted) return res.status(400).json({ error: 'Комментарий удалён' });
+    const isOwner = comment.author_id && comment.author_id === req.user.id;
+    if (!isOwner && !['admin', 'manager'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Можно редактировать только свои комментарии' });
+    }
+    const text = typeof req.body.text === 'string' ? req.body.text.trim() : '';
+    if (!text) return res.status(400).json({ error: 'Комментарий пустой' });
+    const stage = COMMENT_STAGES.includes(req.body.stage) ? req.body.stage : comment.stage;
+    const { rows } = await pool.query(
+      'UPDATE request_comments SET text = $1, stage = $2, updated_at = NOW(), edited_at = NOW() WHERE id = $3 RETURNING *',
+      [text, stage, req.params.commentId]
+    );
+    res.json(mapComment(rows[0]));
+  } catch (err) {
+    console.error('Update comment error:', err);
+    res.status(500).json({ error: 'Ошибка обновления комментария' });
+  }
+});
+
+// Свои — мягкое удаление, admin/manager — жёсткое
+app.delete('/api/comments/:commentId', auth, async (req, res) => {
+  try {
+    const { rows: found } = await pool.query('SELECT * FROM request_comments WHERE id = $1', [req.params.commentId]);
+    if (!found.length) return res.status(404).json({ error: 'Комментарий не найден' });
+    const comment = found[0];
+    const isPrivileged = ['admin', 'manager'].includes(req.user.role);
+    const isOwner = comment.author_id && comment.author_id === req.user.id;
+    if (!isOwner && !isPrivileged) {
+      return res.status(403).json({ error: 'Можно удалять только свои комментарии' });
+    }
+    if (isPrivileged) {
+      await pool.query('DELETE FROM request_comments WHERE id = $1', [req.params.commentId]);
+      return res.json({ success: true, hard: true });
+    }
+    await pool.query("UPDATE request_comments SET is_deleted = true, text = '', updated_at = NOW() WHERE id = $1", [req.params.commentId]);
+    res.json({ success: true, hard: false });
+  } catch (err) {
+    console.error('Delete comment error:', err);
+    res.status(500).json({ error: 'Ошибка удаления комментария' });
+  }
+});
+
 // === Articles ===
 app.get('/api/articles', async (req, res) => {
   try {
@@ -1021,12 +1204,20 @@ app.delete('/api/articles/:id', auth, async (req, res) => {
 // === Estimates ===
 app.get('/api/estimates', auth, async (req, res) => {
   try {
-    let query = 'SELECT * FROM estimates';
+    const conds = [];
     const params = [];
+    let i = 1;
     if (req.user.role === 'measurer' || req.user.role === 'installer') {
-      query += ' WHERE created_by = $1';
-      params.push(req.user.id);
+      conds.push(`created_by = $${i++}`); params.push(req.user.id);
     }
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    if (search) {
+      conds.push(`(client_name ILIKE $${i} OR number ILIKE $${i} OR client_address ILIKE $${i} OR COALESCE(client_phone,'') ILIKE $${i} OR COALESCE(city,'') ILIKE $${i})`);
+      params.push(`%${search}%`); i++;
+    }
+    if (req.query.city && req.query.city !== 'all') { conds.push(`city = $${i++}`); params.push(req.query.city); }
+    let query = 'SELECT * FROM estimates';
+    if (conds.length) query += ' WHERE ' + conds.join(' AND ');
     query += ' ORDER BY created_at DESC';
     const { rows } = await pool.query(query, params);
     res.json(rows);
@@ -1036,15 +1227,52 @@ app.get('/api/estimates', auth, async (req, res) => {
   }
 });
 
+app.get('/api/estimates/:id', auth, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM estimates WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Смета не найдена' });
+    const est = rows[0];
+    if (['measurer', 'installer'].includes(req.user.role) && est.created_by !== req.user.id) {
+      return res.status(403).json({ error: 'Нет доступа' });
+    }
+    res.json(est);
+  } catch (err) {
+    console.error('Get estimate error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки сметы' });
+  }
+});
+
+app.put('/api/estimates/:id', auth, async (req, res) => {
+  try {
+    const existing = await pool.query('SELECT * FROM estimates WHERE id = $1', [req.params.id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Смета не найдена' });
+    const est = existing.rows[0];
+    if (['measurer', 'installer'].includes(req.user.role) && est.created_by !== req.user.id) {
+      return res.status(403).json({ error: 'Нет доступа' });
+    }
+    const { client_name, client_phone, client_address, city, items, discount, total } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE estimates SET client_name = $1, client_phone = $2, client_address = $3, city = $4,
+         items = $5, discount = $6, total = $7, updated_at = NOW() WHERE id = $8 RETURNING *`,
+      [client_name ?? est.client_name, client_phone ?? est.client_phone, client_address ?? est.client_address,
+       city ?? est.city, JSON.stringify(items || []), discount || 0, total || 0, req.params.id]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Update estimate error:', err);
+    res.status(500).json({ error: 'Ошибка обновления сметы' });
+  }
+});
+
 app.post('/api/estimates', auth, async (req, res) => {
   try {
-    const { client_name, client_address, city, items, discount, total, request_id } = req.body;
+    const { client_name, client_phone, client_address, city, items, discount, total, request_id } = req.body;
     const countResult = await pool.query('SELECT COUNT(*) FROM estimates');
     const number = 'EST-' + String(parseInt(countResult.rows[0].count) + 1).padStart(3, '0');
     const { rows } = await pool.query(
-      `INSERT INTO estimates (number, client_name, client_address, city, items, discount, total, created_by, request_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [number, client_name, client_address || null, city || null, JSON.stringify(items || []), discount || 0, total || 0, req.user.id, request_id || null]
+      `INSERT INTO estimates (number, client_name, client_phone, client_address, city, items, discount, total, created_by, request_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [number, client_name, client_phone || null, client_address || null, city || null, JSON.stringify(items || []), discount || 0, total || 0, req.user.id, request_id || null]
     );
     res.json(rows[0]);
   } catch (err) {
@@ -1515,6 +1743,40 @@ async function applyBridgeUpdateToRequest(requestId, payload, includeUpdatedAt =
     console.log('Bridge columns ensured');
   } catch (err) {
     console.error('Bridge columns error:', err.message);
+  }
+})();
+
+// Auto-add comments table / extra request+estimate columns if missing
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS request_comments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        request_id UUID NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+        author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        author_name TEXT,
+        author_role TEXT,
+        stage TEXT NOT NULL DEFAULT 'general',
+        text TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ,
+        edited_at TIMESTAMPTZ,
+        is_deleted BOOLEAN NOT NULL DEFAULT false
+      );
+      ALTER TABLE request_comments ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ;
+      ALTER TABLE request_comments ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT false;
+      CREATE INDEX IF NOT EXISTS idx_request_comments_request ON request_comments(request_id, created_at);
+      ALTER TABLE requests ADD COLUMN IF NOT EXISTS entrance_panels INTEGER;
+      ALTER TABLE requests ADD COLUMN IF NOT EXISTS baseboard_meters NUMERIC(10,2);
+      ALTER TABLE requests ADD COLUMN IF NOT EXISTS portals INTEGER;
+      ALTER TABLE requests ADD COLUMN IF NOT EXISTS parent_request_id UUID REFERENCES requests(id) ON DELETE SET NULL;
+      ALTER TABLE estimates ADD COLUMN IF NOT EXISTS client_phone TEXT;
+      ALTER TABLE estimates ADD COLUMN IF NOT EXISTS city TEXT;
+      ALTER TABLE estimates ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ;
+    `);
+    console.log('Comments and extra columns ensured');
+  } catch (err) {
+    console.error('Comments/extra columns error:', err.message);
   }
 })();
 

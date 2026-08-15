@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format, subDays, parseISO, startOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
+import { mskDayKey } from "@/lib/formatDate";
 import { useNavigate } from "react-router-dom";
 
 const FUNNEL_STAGES: { status: RequestStatus; fill: string }[] = [
@@ -42,10 +43,10 @@ function computeWeeklyChart(requests: ApiRequest[]) {
     const day = subDays(today, i);
     const dayStr = format(day, "yyyy-MM-dd");
     const dayName = DAY_NAMES[day.getDay()];
-    const created = requests.filter(r => r.created_at?.startsWith(dayStr)).length;
+    const created = requests.filter(r => mskDayKey(r.created_at) === dayStr).length;
     const done = requests.filter(r =>
       DONE_STATUSES.includes(r.status as RequestStatus) &&
-      r.updated_at?.startsWith(dayStr)
+      mskDayKey((r as any).closed_at || r.updated_at) === dayStr
     ).length;
     days.push({ name: dayName, заявки: created, выполнено: done });
   }

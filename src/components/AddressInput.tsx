@@ -46,8 +46,12 @@ const AddressInput = ({ value, onChange, city, placeholder, className, error }: 
       try {
         const body: Record<string, any> = { query, count: 7 };
 
-        // Restrict to selected city if provided
-        if (city) {
+        // Ограничение по городу + соответствующей области
+        if (city === "Москва") {
+          body.locations = [{ region: "Москва" }, { region: "Московская" }];
+        } else if (city === "Санкт-Петербург") {
+          body.locations = [{ region: "Санкт-Петербург" }, { region: "Ленинградская" }];
+        } else if (city) {
           body.locations = [{ city }];
         }
 
