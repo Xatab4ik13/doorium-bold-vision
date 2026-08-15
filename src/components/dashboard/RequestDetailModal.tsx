@@ -1,3 +1,5 @@
+import RequestComments from "./RequestComments";
+import { useAuth } from "@/contexts/AuthContext";
 import { useState, useRef, useMemo } from "react";
 import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle, Pencil, Download, FileSpreadsheet, File, Link2, RefreshCw } from "lucide-react";
 import SearchableUserSelect from "./SearchableUserSelect";
@@ -40,8 +42,11 @@ interface RequestDetailModalProps {
   viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
+const stageForType = (t?: string): "measurement" | "installation" => (t === "measurement" ? "measurement" : "installation");
+
 const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, onSendToPrimeDoor, onSyncPrimeDoor, viewerRole = "admin" }: RequestDetailModalProps) => {
   const isMobile = useIsMobile();
+  const { user: currentUser } = useAuth();
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
   const isClosedRequest = request.status === "closed";
   const canPartnerEdit = viewerRole === "partner" && !isClosedRequest;
@@ -607,6 +612,16 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   />
                 </div>
               )}
+              {/* Комментарии по этапам */}
+              <div className="space-y-2">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Комментарии</p>
+                <RequestComments
+                  requestId={request.id}
+                  currentUserId={currentUser?.id}
+                  currentUserRole={viewerRole}
+                  defaultStage={stageForType(request.type)}
+                />
+              </div>
             </div>
           )}
 
@@ -1237,6 +1252,16 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   )}
                 </div>
               )}
+              {/* Комментарии по этапам */}
+              <div className="space-y-2">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Комментарии</p>
+                <RequestComments
+                  requestId={request.id}
+                  currentUserId={currentUser?.id}
+                  currentUserRole={viewerRole}
+                  defaultStage={stageForType(request.type)}
+                />
+              </div>
             </div>
           )}
 
