@@ -30,6 +30,7 @@ const navByRole: Record<UserRole, NavItem[]> = {
     { label: "Заявки", href: "/admin/requests", icon: <ClipboardList size={20} /> },
     { label: "Календарь", href: "/admin/calendar", icon: <CalendarDays size={20} /> },
     { label: "Сметы", href: "/admin/estimates", icon: <FileSpreadsheet size={20} /> },
+    { label: "Сохранённые сметы", href: "/admin/saved-estimates", icon: <FileSpreadsheet size={20} /> },
     { label: "Занятость", href: "/admin/availability", icon: <UserCheck size={20} /> },
     { label: "Аккаунты", href: "/admin/accounts", icon: <Users size={20} /> },
     { label: "Партнёры", href: "/admin/partners", icon: <Handshake size={20} /> },
@@ -42,6 +43,7 @@ const navByRole: Record<UserRole, NavItem[]> = {
     { label: "Распределение", href: "/manager/assign", icon: <Users size={20} /> },
     { label: "Файлы", href: "/manager/files", icon: <Upload size={20} /> },
     { label: "Сметы", href: "/manager/estimates", icon: <Calculator size={20} /> },
+    { label: "Сохранённые сметы", href: "/manager/saved-estimates", icon: <FileSpreadsheet size={20} /> },
   ],
   measurer: [
     { label: "Мои заявки", href: "/measurer", icon: <Ruler size={20} /> },
@@ -52,12 +54,14 @@ const navByRole: Record<UserRole, NavItem[]> = {
     { label: "Мои заявки", href: "/installer", icon: <Wrench size={20} /> },
     { label: "Календарь", href: "/installer/calendar", icon: <CalendarDays size={20} /> },
     { label: "Сметы", href: "/installer/estimates", icon: <Calculator size={20} /> },
+    { label: "Сохранённые сметы", href: "/installer/saved-estimates", icon: <FileSpreadsheet size={20} /> },
     { label: "История", href: "/installer/history", icon: <History size={20} /> },
   ],
   partner: [
     { label: "Мои заявки", href: "/partner/dashboard", icon: <Eye size={20} /> },
     { label: "Новая заявка", href: "/partner/new", icon: <PlusCircle size={20} /> },
     { label: "Сметы", href: "/partner/estimates", icon: <Calculator size={20} /> },
+    { label: "Сохранённые сметы", href: "/partner/saved-estimates", icon: <FileSpreadsheet size={20} /> },
     { label: "История", href: "/partner/history", icon: <History size={20} /> },
   ],
 };
