@@ -67,6 +67,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [closedAt, setClosedAt] = useState<string>(((request as any).closed_at || "").split("T")[0] || "");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "files">("details");
+  const [fileStage, setFileStage] = useState<"all" | "measurement" | "installation">("all");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [sendingToInstall, setSendingToInstall] = useState(false);
@@ -113,6 +114,31 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
   const photos = request.photos || [];
   const hasFiles = photos.length > 0;
+  const photoStage = (f: { stage?: string }) => (f.stage === "measurement" || f.stage === "installation" ? f.stage : stageForType(request.type));
+  const visiblePhotos = fileStage === "all" ? photos : photos.filter((f) => photoStage(f) === fileStage);
+  const stageCounts = {
+    measurement: photos.filter((f) => photoStage(f) === "measurement").length,
+    installation: photos.filter((f) => photoStage(f) === "installation").length,
+  };
+  const stageFilterBar = (
+    <div className="flex gap-2">
+      {([
+        { key: "all", label: `Все (${photos.length})` },
+        { key: "measurement", label: `Замер (${stageCounts.measurement})` },
+        { key: "installation", label: `Монтаж (${stageCounts.installation})` },
+      ] as const).map((t) => (
+        <button
+          key={t.key}
+          onClick={() => setFileStage(t.key)}
+          className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+            fileStage === t.key ? "bg-primary text-primary-foreground shadow-sm" : "bg-accent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
 
   // Determine which assignment fields to show based on request type
   const showMeasurerField = request.type === "measurement";
@@ -637,7 +663,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       try {
                         const uploaded: typeof photos = [];
                         for (const f of selectedFiles) {
-                          try { const result = await uploadFile(f, "requests"); uploaded.push({ url: result.url, type: f.type.startsWith("image/") ? "image" : "document", stage: "general", uploaded_at: new Date().toISOString() }); }
+                          try { const result = await uploadFile(f, "requests"); uploaded.push({ url: result.url, type: f.type.startsWith("image/") ? "image" : "document", stage: stageForType(request.type), uploaded_at: new Date().toISOString() }); }
                           catch { toast.error(`Не удалось: ${f.name}`); }
                         }
                         if (uploaded.length > 0) {
@@ -655,11 +681,12 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   </button>
                 </div>
               )}
-              {photos.length === 0 ? (
+              {hasFiles && stageFilterBar}
+              {visiblePhotos.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground"><Image size={40} className="mx-auto mb-3 opacity-30" /><p className="text-sm">Нет файлов</p></div>
               ) : (
                 <div className="grid grid-cols-1 gap-2">
-                  {photos.map((file, i) => {
+                  {visiblePhotos.map((file, i) => {
                     const fileName = decodeURIComponent(file.url.split("/").pop() || "file");
                     const ext = fileName.split(".").pop()?.toLowerCase() || "";
                     const isImage = file.type === "image" || ["jpg","jpeg","png","gif","webp","svg"].includes(ext);
