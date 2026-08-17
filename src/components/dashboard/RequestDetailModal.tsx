@@ -7,7 +7,7 @@ import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLa
 import { useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { uploadFile, fileUrl } from "@/lib/api";
+import api, { uploadFile, fileUrl } from "@/lib/api";
 import { formatPhone } from "@/lib/formatPhone";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileFullScreen from "./MobileFullScreen";
@@ -76,6 +76,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [sendingToInstall, setSendingToInstall] = useState(false);
   const [sendingToPrimeDoor, setSendingToPrimeDoor] = useState(false);
   const [syncingPrimeDoor, setSyncingPrimeDoor] = useState(false);
+  const [creatingReclamation, setCreatingReclamation] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -252,6 +253,38 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
     }
   };
 
+  const canCreateReclamation = request.type === "installation" && (canEdit || canPartnerEdit);
+
+  const handleCreateReclamation = async () => {
+    setCreatingReclamation(true);
+    try {
+      await api("/api/requests", {
+        method: "POST",
+        auth: true,
+        body: {
+          type: "reclamation",
+          client_name: request.client_name,
+          client_phone: request.client_phone,
+          client_address: request.client_address,
+          city: request.city,
+          extra_name: request.extra_name,
+          extra_phone: request.extra_phone,
+          work_description: request.work_description,
+          notes: request.notes,
+          source: request.source,
+          partner_id: request.partner_id,
+          parent_request_id: request.id,
+        },
+      });
+      toast.success("Заявка на рекламацию создана");
+      onClose();
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка создания рекламации");
+    } finally {
+      setCreatingReclamation(false);
+    }
+  };
+
   const inputClass = "w-full px-3 py-2 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
 
   const editButton = (canEdit || canPartnerEdit) ? (
@@ -355,6 +388,20 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
             className="px-4 py-2.5 rounded-xl text-sm font-medium bg-orange-500 text-white disabled:opacity-50 flex items-center gap-2 active:opacity-80"
           >
             {sendingToInstall ? <Loader2 size={16} className="animate-spin" /> : <><ArrowRight size={16} /> На монтаж</>}
+          </button>
+        )}
+        {canCreateReclamation && (
+          <button
+            onClick={handleCreateReclamation}
+            disabled={creatingReclamation}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-red-500 text-white disabled:opacity-50 flex items-center gap-2 active:opacity-80"
+          >
+            {creatingReclamation ? <Loader2 size={16} className="animate-spin" /> : <><AlertTriangle size={16} /> Рекламация</>}
+          </button>
+        )}
+        {viewerRole !== "partner" && (
+          <button onClick={onClose} className="px-4 py-2.5 rounded-xl text-sm font-medium bg-accent text-foreground active:opacity-60 transition-opacity">
+            Отмена
           </button>
         )}
         {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || (canPartnerEdit && isEditing)) && (
@@ -1601,6 +1648,15 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   className="px-4 py-2.5 rounded-xl text-sm font-medium bg-orange-500 text-white hover:bg-orange-600 transition-all disabled:opacity-50 flex items-center gap-2"
                 >
                   {sendingToInstall ? <Loader2 size={16} className="animate-spin" /> : <><ArrowRight size={16} /> На монтаж</>}
+                </button>
+              )}
+              {canCreateReclamation && (
+                <button
+                  onClick={handleCreateReclamation}
+                  disabled={creatingReclamation}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {creatingReclamation ? <Loader2 size={16} className="animate-spin" /> : <><AlertTriangle size={16} /> Рекламация</>}
                 </button>
               )}
               {viewerRole !== "partner" && (
