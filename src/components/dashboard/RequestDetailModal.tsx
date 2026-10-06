@@ -404,7 +404,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
             Отмена
           </button>
         )}
-        {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || (canPartnerEdit && isEditing)) && (
+        {(canEdit || canPartnerEdit || viewerRole === "installer" || viewerRole === "measurer") && (
           <button
             onClick={handleSave}
             disabled={saving}
@@ -1664,7 +1664,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   Отмена
                 </button>
               )}
-              {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || (canPartnerEdit && isEditing)) && (
+              {(canEdit || canPartnerEdit || viewerRole === "installer" || viewerRole === "measurer") && (
                 <button
                   onClick={handleSave}
                   disabled={saving}
