@@ -8,7 +8,7 @@ import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { toast } from "sonner";
 
 type Role = "admin" | "manager";
-type AbsenceKind = "dayoff" | "vacation" | "sick";
+type AbsenceKind = "dayoff" | "vacation" | "sick" | "inwork";
 
 interface DayRequest {
   id: string;
@@ -47,6 +47,7 @@ const KIND_LABEL: Record<AbsenceKind, string> = {
   dayoff: "Выходной",
   vacation: "Отпуск",
   sick: "Больничный",
+  inwork: "В работе",
 };
 
 const ROLE_LABEL: Record<"installer" | "measurer", string> = {
@@ -132,6 +133,7 @@ const AvailabilityPage = ({ role }: Props) => {
     if (absence === "dayoff") cls = "bg-sky-500/80 text-white";
     else if (absence === "vacation") cls = "bg-violet-500/80 text-white";
     else if (absence === "sick") cls = "bg-rose-500/80 text-white";
+    else if (absence === "inwork") cls = "bg-amber-500/80 text-white";
     else if (reqs.length >= 2) cls = "bg-orange-500/85 text-white";
     else if (reqs.length === 1) cls = "bg-emerald-500/80 text-white";
     return { reqs, absence, cls, dk };
@@ -261,6 +263,7 @@ const AvailabilityPage = ({ role }: Props) => {
             { cls: "bg-sky-500/80", label: "Выходной" },
             { cls: "bg-violet-500/80", label: "Отпуск" },
             { cls: "bg-rose-500/80", label: "Больничный" },
+            { cls: "bg-amber-500/80", label: "В работе" },
           ].map((l) => (
             <div key={l.label} className="flex items-center gap-1.5">
               <span className={`w-3.5 h-3.5 rounded-sm ${l.cls}`} />
@@ -486,13 +489,14 @@ const AvailabilityPage = ({ role }: Props) => {
 
               <div>
                 <div className="text-xs font-bold text-muted-foreground uppercase mb-2">Отметка</div>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["dayoff", "vacation", "sick"] as const).map((k) => {
+                <div className="grid grid-cols-2 gap-2">
+                   {(["dayoff", "vacation", "sick", "inwork"] as const).map((k) => {
                     const active = popupData.absence === k;
                     const colorMap: Record<AbsenceKind, string> = {
                       dayoff: "bg-sky-500/80 text-white",
                       vacation: "bg-violet-500/80 text-white",
                       sick: "bg-rose-500/80 text-white",
+                      inwork: "bg-amber-500/80 text-white",
                     };
                     return (
                       <button

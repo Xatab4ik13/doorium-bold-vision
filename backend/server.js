@@ -1361,12 +1361,15 @@ app.delete('/api/estimates/:id', auth, async (req, res) => {
         id SERIAL PRIMARY KEY,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         date DATE NOT NULL,
-        kind TEXT NOT NULL CHECK (kind IN ('dayoff','vacation','sick')),
+        kind TEXT NOT NULL CHECK (kind IN ('dayoff','vacation','sick','inwork')),
         created_at TIMESTAMPTZ DEFAULT NOW(),
         UNIQUE(user_id, date)
       )
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_absences_user_date ON employee_absences(user_id, date)`);
+    // Обновляем CHECK-ограничение для уже существующей таблицы (добавляем 'inwork')
+    await pool.query(`ALTER TABLE employee_absences DROP CONSTRAINT IF EXISTS employee_absences_kind_check`);
+    await pool.query(`ALTER TABLE employee_absences ADD CONSTRAINT employee_absences_kind_check CHECK (kind IN ('dayoff','vacation','sick','inwork'))`);
     console.log('employee_absences table ensured');
   } catch (err) {
     console.error('employee_absences table creation error:', err.message);
@@ -2362,7 +2365,7 @@ app.post('/api/availability/absence', auth, async (req, res) => {
       await pool.query('DELETE FROM employee_absences WHERE user_id = $1 AND date = $2', [user_id, date]);
       return res.json({ ok: true, removed: true });
     }
-    if (!['dayoff', 'vacation', 'sick'].includes(kind)) {
+    if (!['dayoff', 'vacation', 'sick', 'inwork'].includes(kind)) {
       return res.status(400).json({ error: 'Неверный kind' });
     }
     const { rows } = await pool.query(
