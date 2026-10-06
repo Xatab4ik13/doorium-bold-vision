@@ -1085,6 +1085,7 @@ app.post('/api/requests/:id/comments', auth, async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
       [req.params.id, req.user.id, req.user.name || null, req.user.role, stage, text]
     );
+    bridgePushComment(rows[0], 'upsert');
     res.json(mapComment({ ...rows[0], user_name: req.user.name, user_role: req.user.role }));
   } catch (err) {
     console.error('Create comment error:', err);
@@ -1109,6 +1110,7 @@ app.put('/api/comments/:commentId', auth, async (req, res) => {
       'UPDATE request_comments SET text = $1, stage = $2, updated_at = NOW(), edited_at = NOW() WHERE id = $3 RETURNING *',
       [text, stage, req.params.commentId]
     );
+    bridgePushComment(rows[0], 'upsert');
     res.json(mapComment(rows[0]));
   } catch (err) {
     console.error('Update comment error:', err);
@@ -1127,6 +1129,7 @@ app.delete('/api/comments/:commentId', auth, async (req, res) => {
     if (!isOwner && !isPrivileged) {
       return res.status(403).json({ error: 'Можно удалять только свои комментарии' });
     }
+    bridgePushComment(comment, 'delete');
     if (isPrivileged) {
       await pool.query('DELETE FROM request_comments WHERE id = $1', [req.params.commentId]);
       return res.json({ success: true, hard: true });
@@ -1766,6 +1769,9 @@ async function applyBridgeUpdateToRequest(requestId, payload, includeUpdatedAt =
       ALTER TABLE request_comments ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ;
       ALTER TABLE request_comments ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT false;
       CREATE INDEX IF NOT EXISTS idx_request_comments_request ON request_comments(request_id, created_at);
+      ALTER TABLE request_comments ADD COLUMN IF NOT EXISTS external_id TEXT;
+      ALTER TABLE request_comments ADD COLUMN IF NOT EXISTS external_system TEXT;
+      CREATE INDEX IF NOT EXISTS idx_request_comments_external ON request_comments(external_system, external_id);
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS entrance_panels INTEGER;
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS baseboard_meters NUMERIC(10,2);
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS portals INTEGER;
@@ -2158,10 +2164,99 @@ app.post('/api/bridge/sync/:id', auth, async (req, res) => {
     }
 
     const updated = await applyBridgeUpdateToRequest(request.id, remote, true);
+    // Дотолкать все локальные комментарии (идемпотентно)
+    bridgePushAllComments(request.id).catch(err => console.error('Bridge comments push error:', err.message));
     res.json(updated);
   } catch (err) {
     console.error('Bridge sync error:', err);
     res.status(500).json({ error: err.message || 'Ошибка синхронизации' });
+  }
+});
+
+// === Bridge comments (двусторонняя синхронизация комментариев) ===
+async function bridgePushComment(commentRow, action = 'upsert') {
+  try {
+    if (!commentRow || commentRow.external_system) return; // не отправляем обратно пришедшие извне
+    const { rows } = await pool.query('SELECT id, external_id, external_system FROM requests WHERE id = $1', [commentRow.request_id]);
+    const request = rows[0];
+    if (!request || !request.external_id) return;
+    const target = resolveBridgeTarget(request.external_system);
+    if (!target) return;
+    const result = await bridgeRequest('POST', `${target.url}/api/bridge/comments`, target.key, {
+      action,
+      source_system: LOCAL_SYSTEM_NAME,
+      source_request_id: request.id,
+      target_request_id: request.external_id,
+      comment_id: commentRow.id,
+      author_name: commentRow.author_name || null,
+      author_role: commentRow.author_role || null,
+      stage: commentRow.stage,
+      text: commentRow.text,
+      is_deleted: !!commentRow.is_deleted,
+      created_at: commentRow.created_at,
+    });
+    if (!result.ok) console.error('Bridge comment push failed:', result.status, result.data?.error);
+  } catch (err) {
+    console.error('Bridge comment push error:', err.message);
+  }
+}
+
+async function bridgePushAllComments(requestId) {
+  const { rows } = await pool.query(
+    'SELECT * FROM request_comments WHERE request_id = $1 AND external_system IS NULL ORDER BY created_at ASC',
+    [requestId]
+  );
+  for (const c of rows) await bridgePushComment(c, c.is_deleted ? 'delete' : 'upsert');
+}
+
+app.post('/api/bridge/comments', bridgeAuth, async (req, res) => {
+  try {
+    const { action, source_system, source_request_id, target_request_id, comment_id, author_name, author_role, stage, text, created_at } = req.body || {};
+    if (!source_system || !comment_id) return res.status(400).json({ error: 'source_system и comment_id обязательны' });
+
+    let reqRow = null;
+    if (target_request_id) {
+      const r = await pool.query('SELECT id FROM requests WHERE id::text = $1', [String(target_request_id)]);
+      reqRow = r.rows[0] || null;
+    }
+    if (!reqRow && source_request_id) {
+      const r = await pool.query('SELECT id FROM requests WHERE external_id = $1 AND external_system = $2', [String(source_request_id), source_system]);
+      reqRow = r.rows[0] || null;
+    }
+    if (!reqRow) return res.status(404).json({ error: 'Заявка не найдена' });
+
+    const existing = await pool.query(
+      'SELECT id FROM request_comments WHERE external_id = $1 AND external_system = $2',
+      [String(comment_id), source_system]
+    );
+
+    if (action === 'delete') {
+      if (existing.rows.length) await pool.query('DELETE FROM request_comments WHERE id = $1', [existing.rows[0].id]);
+      return res.json({ success: true, deleted: true });
+    }
+
+    const cleanText = typeof text === 'string' ? text.trim().slice(0, 5000) : '';
+    if (!cleanText) return res.status(400).json({ error: 'Комментарий пустой' });
+    const cleanStage = COMMENT_STAGES.includes(stage) ? stage : 'general';
+    const label = `${author_name || 'Без имени'} (${bridgeSystemLabel(source_system)})`;
+
+    if (existing.rows.length) {
+      await pool.query(
+        'UPDATE request_comments SET text = $1, stage = $2, author_name = $3, updated_at = NOW(), edited_at = NOW() WHERE id = $4',
+        [cleanText, cleanStage, label, existing.rows[0].id]
+      );
+      return res.json({ success: true, id: existing.rows[0].id, updated: true });
+    }
+
+    const { rows } = await pool.query(
+      `INSERT INTO request_comments (request_id, author_id, author_name, author_role, stage, text, created_at, external_id, external_system)
+       VALUES ($1, NULL, $2, $3, $4, $5, COALESCE($6::timestamptz, NOW()), $7, $8) RETURNING id`,
+      [reqRow.id, label, author_role || null, cleanStage, cleanText, created_at || null, String(comment_id), source_system]
+    );
+    res.json({ success: true, id: rows[0].id, created: true });
+  } catch (err) {
+    console.error('Bridge comments receive error:', err);
+    res.status(500).json({ error: 'Ошибка приёма комментария' });
   }
 });
 
