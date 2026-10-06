@@ -516,6 +516,11 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
               </CardContent>
             </Card>
 
+            <button onClick={handleSave}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-card border border-primary text-primary rounded-xl text-sm font-medium hover:bg-primary/10 transition-all">
+              {editId ? "Сохранить изменения" : "Сохранить смету"}
+            </button>
+
             <button onClick={handleDownloadPdf}
               className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-all shadow-md shadow-primary/25">
               <Download size={18} /> Скачать смету
