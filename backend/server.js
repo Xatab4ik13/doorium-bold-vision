@@ -1913,6 +1913,7 @@ app.post('/api/bridge/send/:id', auth, async (req, res) => {
       'UPDATE requests SET external_id = $1, external_system = $2, external_synced_at = NOW() WHERE id = $3',
       [data.id, REMOTE_SYSTEM_NAME, request.id]
     );
+    bridgePushAllComments(request.id).catch(err => console.error('Bridge comments push error:', err.message));
 
     const updated = await pool.query('SELECT * FROM requests WHERE id = $1', [request.id]);
 
