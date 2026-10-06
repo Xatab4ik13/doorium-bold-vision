@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS employee_absences (
   id SERIAL PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   date DATE NOT NULL,
-  kind TEXT NOT NULL CHECK (kind IN ('dayoff','vacation','sick')),
+  kind TEXT NOT NULL CHECK (kind IN ('dayoff','vacation','sick','inwork')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, date)
 );
