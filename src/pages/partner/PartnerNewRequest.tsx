@@ -32,6 +32,7 @@ const PartnerNewRequest = () => {
   const [entrancePanels, setEntrancePanels] = useState("");
   const [baseboardMeters, setBaseboardMeters] = useState("");
   const [portals, setPortals] = useState("");
+  const [pencilCases, setPencilCases] = useState("");
   const [agree, setAgree] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -103,6 +104,7 @@ const PartnerNewRequest = () => {
             entrance_panels: entrancePanels ? parseInt(entrancePanels) : undefined,
             baseboard_meters: baseboardMeters ? parseFloat(baseboardMeters) : undefined,
             portals: portals ? parseInt(portals) : undefined,
+            pencil_cases: pencilCases ? parseInt(pencilCases) : undefined,
           } : {}),
           ...(photos ? { photos } : {}),
         },
@@ -275,6 +277,10 @@ const PartnerNewRequest = () => {
                     <div>
                       <label className="text-[10px] text-muted-foreground mb-1 block text-center">Порталы</label>
                       <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Пенал</label>
+                      <input type="number" min="0" value={pencilCases} onChange={(e) => setPencilCases(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
                     </div>
                   </div>
                 </div>
