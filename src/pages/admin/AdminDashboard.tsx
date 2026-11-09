@@ -66,21 +66,21 @@ function computeFunnel(requests: ApiRequest[]) {
   });
 }
 
-function computeTopEmployees(requests: ApiRequest[], getUserName: (id?: string) => string | undefined) {
+function computeTopBy(
+  requests: ApiRequest[],
+  getUserName: (id?: string) => string | undefined,
+  field: "measurer_id" | "installer_id" | "partner_id",
+  role: string
+) {
   const counts: Record<string, { name: string; role: string; completed: number }> = {};
 
   requests.forEach(r => {
     if (!DONE_STATUSES.includes(r.status as RequestStatus)) return;
-    
-    const checkUser = (id?: string, role?: string) => {
-      if (!id) return;
-      const name = getUserName(id) || id;
-      if (!counts[id]) counts[id] = { name, role: role || "", completed: 0 };
-      counts[id].completed++;
-    };
-
-    checkUser(r.measurer_id, "Замерщик");
-    checkUser(r.installer_id, "Монтажник");
+    const id = r[field];
+    if (!id) return;
+    const name = getUserName(id) || id;
+    if (!counts[id]) counts[id] = { name, role, completed: 0 };
+    counts[id].completed++;
   });
 
   return Object.values(counts).sort((a, b) => b.completed - a.completed).slice(0, 5);
@@ -98,7 +98,9 @@ const AdminDashboard = () => {
   const stats = useMemo(() => computeStats(requests), [requests]);
   const chartData = useMemo(() => computeWeeklyChart(requests), [requests]);
   const funnelData = useMemo(() => computeFunnel(requests), [requests]);
-  const topEmployees = useMemo(() => computeTopEmployees(requests, getUserName), [requests, getUserName]);
+  const topInstallers = useMemo(() => computeTopBy(requests, getUserName, "installer_id", "Монтажник"), [requests, getUserName]);
+  const topMeasurers = useMemo(() => computeTopBy(requests, getUserName, "measurer_id", "Замерщик"), [requests, getUserName]);
+  const topPartners = useMemo(() => computeTopBy(requests, getUserName, "partner_id", "Партнёр"), [requests, getUserName]);
 
   const statCards = [
     { label: "Всего заявок", value: stats.total, icon: <ClipboardList size={20} />, color: "text-blue-600 bg-blue-50", onClick: () => navigate("/admin/requests") },
@@ -191,36 +193,44 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Top employees */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Топ сотрудников</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {topEmployees.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Нет данных</p>
-              ) : (
-                <div className="space-y-3">
-                  {topEmployees.map((emp, i) => (
-                    <div key={emp.name} className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
-                        {i + 1}
+        {/* Top lists: installers, measurers, partners */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { title: "Топ монтажников", data: topInstallers },
+            { title: "Топ замерщиков", data: topMeasurers },
+            { title: "Топ партнёров", data: topPartners },
+          ].map((list) => (
+            <Card key={list.title}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">{list.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {list.data.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Нет данных</p>
+                ) : (
+                  <div className="space-y-3">
+                    {list.data.map((emp, i) => (
+                      <div key={emp.name} className="flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                          {i + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{emp.name}</p>
+                          <p className="text-xs text-muted-foreground">{emp.role}</p>
+                        </div>
+                        <span className="text-sm font-bold">{emp.completed}</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{emp.name}</p>
-                        <p className="text-xs text-muted-foreground">{emp.role}</p>
-                      </div>
-                      <span className="text-sm font-bold">{emp.completed}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
+        <div className="grid grid-cols-1 gap-6">
           {/* Recent requests */}
-          <Card className="lg:col-span-2">
+          <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Последние заявки</CardTitle>
             </CardHeader>
