@@ -1174,12 +1174,19 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
                       {request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}
                     </p>
-                    <input
-                      type="date"
-                      value={agreedDate}
-                      onChange={(e) => setAgreedDate(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="date"
+                        value={agreedDate}
+                        onChange={(e) => setAgreedDate(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      />
+                      {agreedDate && (
+                        <button type="button" onClick={() => setAgreedDate("")} className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive shrink-0" aria-label="Очистить дату">
+                          <X size={16} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
