@@ -706,7 +706,7 @@ async function inheritParentPhotos(newRequest, parentId) {
 // Create request (from CRM)
 app.post('/api/requests', auth, async (req, res) => {
   try {
-    const { client_name, client_phone: rawPhone, client_address, city, type, work_description, source, comment, extra_name, extra_phone: rawExtraPhone, photos, interior_doors, entrance_doors, partitions, entrance_panels, baseboard_meters, portals, parent_request_id } = req.body;
+    const { client_name, client_phone: rawPhone, client_address, city, type, work_description, source, comment, extra_name, extra_phone: rawExtraPhone, photos, interior_doors, entrance_doors, partitions, entrance_panels, baseboard_meters, portals, pencil_cases, parent_request_id } = req.body;
     const client_phone = normalizePhone(rawPhone) || rawPhone;
     const extra_phone = rawExtraPhone ? (normalizePhone(rawExtraPhone) || rawExtraPhone) : null;
     const countResult = await pool.query("SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 5) AS INTEGER)), 0) AS count FROM requests");
@@ -715,9 +715,9 @@ app.post('/api/requests', auth, async (req, res) => {
     const partnerId = req.user.role === 'partner' ? req.user.id : (req.body.partner_id || null);
 
     const { rows } = await pool.query(
-      `INSERT INTO requests (number, partner_id, client_name, client_phone, client_address, city, type, work_description, source, notes, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions, entrance_panels, baseboard_meters, portals, parent_request_id, status)
+      `INSERT INTO requests (number, partner_id, client_name, client_phone, client_address, city, type, work_description, source, notes, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions, entrance_panels, baseboard_meters, portals, pencil_cases, parent_request_id, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14, $15, $16, $17, $18, $19, $20, 'new') RETURNING *`,
-      [number, partnerId, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, JSON.stringify(withStage(photos, type || 'measurement')), interior_doors || null, entrance_doors || null, partitions || null, entrance_panels || null, baseboard_meters || null, portals || null, parent_request_id || null]
+      [number, partnerId, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, JSON.stringify(withStage(photos, type || 'measurement')), interior_doors || null, entrance_doors || null, partitions || null, entrance_panels || null, baseboard_meters || null, portals || null, pencil_cases || null, parent_request_id || null]
     );
 
     const req_data = rows[0];
@@ -765,7 +765,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       if (request.status === 'closed') {
         return res.status(403).json({ error: 'Закрытые заявки нельзя редактировать' });
       }
-      const partnerAllowed = ['client_name', 'client_phone', 'client_address', 'city', 'extra_name', 'extra_phone', 'work_description', 'interior_doors', 'entrance_doors', 'partitions', 'entrance_panels', 'baseboard_meters', 'portals', 'notes', 'photos', 'partner_notes'];
+      const partnerAllowed = ['client_name', 'client_phone', 'client_address', 'city', 'extra_name', 'extra_phone', 'work_description', 'interior_doors', 'entrance_doors', 'partitions', 'entrance_panels', 'baseboard_meters', 'portals', 'pencil_cases', 'notes', 'photos', 'partner_notes'];
       const forbidden = Object.keys(updates).filter(k => !partnerAllowed.includes(k));
       if (forbidden.length > 0) {
         return res.status(403).json({ error: `Партнёрам недоступно изменение: ${forbidden.join(', ')}` });
@@ -1778,6 +1778,7 @@ async function applyBridgeUpdateToRequest(requestId, payload, includeUpdatedAt =
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS entrance_panels INTEGER;
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS baseboard_meters NUMERIC(10,2);
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS portals INTEGER;
+      ALTER TABLE requests ADD COLUMN IF NOT EXISTS pencil_cases INTEGER;
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS parent_request_id UUID REFERENCES requests(id) ON DELETE SET NULL;
       ALTER TABLE estimates ADD COLUMN IF NOT EXISTS client_phone TEXT;
       ALTER TABLE estimates ADD COLUMN IF NOT EXISTS city TEXT;

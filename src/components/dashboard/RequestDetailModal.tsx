@@ -1388,6 +1388,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-[10px] text-muted-foreground">Порталы</p>
                       <p className="font-semibold">{request.portals || 0}</p>
                     </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Пенал</p>
+                      <p className="font-semibold">{request.pencil_cases || 0}</p>
+                    </div>
                   </div>
                 </div>
               )}
