@@ -67,6 +67,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [entrancePanels, setEntrancePanels] = useState<string>(request.entrance_panels != null ? String(request.entrance_panels) : "");
   const [baseboardMeters, setBaseboardMeters] = useState<string>(request.baseboard_meters != null ? String(request.baseboard_meters) : "");
   const [portals, setPortals] = useState<string>(request.portals != null ? String(request.portals) : "");
+  const [pencilCases, setPencilCases] = useState<string>(request.pencil_cases != null ? String(request.pencil_cases) : "");
   const [closedAt, setClosedAt] = useState<string>(((request as any).closed_at || "").split("T")[0] || "");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "files">("details");
@@ -179,6 +180,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.entrance_panels = entrancePanels ? parseInt(entrancePanels) : null;
       updates.baseboard_meters = baseboardMeters ? parseFloat(baseboardMeters) : null;
       updates.portals = portals ? parseInt(portals) : null;
+      updates.pencil_cases = pencilCases ? parseInt(pencilCases) : null;
       // Admin can edit closed_at when request is closed
       if (viewerRole === "admin" && status === "closed") {
         const originalClosed = ((request as any).closed_at || "").split("T")[0] || "";
@@ -207,6 +209,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.entrance_panels = entrancePanels ? parseInt(entrancePanels) : null;
       updates.baseboard_meters = baseboardMeters ? parseFloat(baseboardMeters) : null;
       updates.portals = portals ? parseInt(portals) : null;
+      updates.pencil_cases = pencilCases ? parseInt(pencilCases) : null;
       updates.notes = notes || null;
       updates.partner_notes = partnerNotes || null;
       // Remove status for partners
@@ -540,6 +543,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-[10px] text-muted-foreground mb-1">Порталы</p>
                       <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
                     </div>
+                    <div className="text-center p-3 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground mb-1">Пенал</p>
+                      <input type="number" min="0" value={pencilCases} onChange={(e) => setPencilCases(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -597,7 +604,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-sm text-amber-900">{request.status_comment}</p>
                     </div>
                   )}
-                  {(request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals) && (
+                  {(request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals || request.pencil_cases) && (
                     <div className="grid grid-cols-3 gap-2">
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">МК</p><p className="text-lg font-bold text-foreground">{request.interior_doors || 0}</p></div>
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Входные</p><p className="text-lg font-bold text-foreground">{request.entrance_doors || 0}</p></div>
@@ -605,6 +612,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Вх. панели</p><p className="text-lg font-bold text-foreground">{request.entrance_panels || 0}</p></div>
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Плинтус, м</p><p className="text-lg font-bold text-foreground">{request.baseboard_meters || 0}</p></div>
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Порталы</p><p className="text-lg font-bold text-foreground">{request.portals || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Пенал</p><p className="text-lg font-bold text-foreground">{request.pencil_cases || 0}</p></div>
                     </div>
                   )}
                 </>
@@ -696,6 +704,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-1 text-center">Порталы</p>
                       <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)} className={inputClass + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1 text-center">Пенал</p>
+                      <input type="number" min="0" value={pencilCases} onChange={(e) => setPencilCases(e.target.value)} className={inputClass + " text-center"} placeholder="0" />
                     </div>
                   </div>
                 </div>
@@ -1293,6 +1305,11 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
                       </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Пенал</label>
+                        <input type="number" min="0" value={pencilCases} onChange={(e) => setPencilCases(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1333,12 +1350,17 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)}
                         className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
                     </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Пенал</label>
+                      <input type="number" min="0" value={pencilCases} onChange={(e) => setPencilCases(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Door counts read-only for executors */}
-              {!canEdit && !canPartnerEdit && (request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals) && (
+              {!canEdit && !canPartnerEdit && (request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals || request.pencil_cases) && (
                 <div className="p-4 rounded-xl bg-accent/30 border border-border">
                   <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Количество изделий</label>
                   <div className="grid grid-cols-3 gap-2 text-sm text-center">

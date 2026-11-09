@@ -24,6 +24,7 @@ export interface ApiRequest {
   entrance_panels?: number;
   baseboard_meters?: number;
   portals?: number;
+  pencil_cases?: number;
   parent_request_id?: string;
   source: "site" | "partner" | "bridge";
   partner_id?: string;
