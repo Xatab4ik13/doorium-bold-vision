@@ -193,36 +193,44 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Top employees */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Топ сотрудников</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {topEmployees.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Нет данных</p>
-              ) : (
-                <div className="space-y-3">
-                  {topEmployees.map((emp, i) => (
-                    <div key={emp.name} className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
-                        {i + 1}
+        {/* Top lists: installers, measurers, partners */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { title: "Топ монтажников", data: topInstallers },
+            { title: "Топ замерщиков", data: topMeasurers },
+            { title: "Топ партнёров", data: topPartners },
+          ].map((list) => (
+            <Card key={list.title}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">{list.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {list.data.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Нет данных</p>
+                ) : (
+                  <div className="space-y-3">
+                    {list.data.map((emp, i) => (
+                      <div key={emp.name} className="flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                          {i + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{emp.name}</p>
+                          <p className="text-xs text-muted-foreground">{emp.role}</p>
+                        </div>
+                        <span className="text-sm font-bold">{emp.completed}</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{emp.name}</p>
-                        <p className="text-xs text-muted-foreground">{emp.role}</p>
-                      </div>
-                      <span className="text-sm font-bold">{emp.completed}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
+        <div className="grid grid-cols-1 gap-6">
           {/* Recent requests */}
-          <Card className="lg:col-span-2">
+          <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Последние заявки</CardTitle>
             </CardHeader>
