@@ -86,7 +86,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
       }
 
       await onCreate({
-        type,
+        type: type as "measurement" | "installation" | "reclamation",
         client_name: clientName,
         client_phone: clientPhone,
         client_address: clientAddress,
