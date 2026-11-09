@@ -511,7 +511,14 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         {request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}
                       </p>
                       {canChangeDate ? (
-                        <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-primary" />
+                        <div className="flex items-center gap-2">
+                          <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-primary" />
+                          {agreedDate && (
+                            <button type="button" onClick={() => setAgreedDate("")} className="p-1 rounded-full text-muted-foreground hover:text-destructive" aria-label="Очистить дату">
+                              <X size={14} />
+                            </button>
+                          )}
+                        </div>
                       ) : (
                         <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
                       )}
@@ -1121,12 +1128,19 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                           {request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}
                         </p>
                         {canChangeDate ? (
-                          <input
-                            type="date"
-                            value={agreedDate}
-                            onChange={(e) => setAgreedDate(e.target.value)}
-                            className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                          />
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="date"
+                              value={agreedDate}
+                              onChange={(e) => setAgreedDate(e.target.value)}
+                              className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            />
+                            {agreedDate && (
+                              <button type="button" onClick={() => setAgreedDate("")} className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive shrink-0" aria-label="Очистить дату">
+                                <X size={16} />
+                              </button>
+                            )}
+                          </div>
                         ) : (
                           <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
                         )}
