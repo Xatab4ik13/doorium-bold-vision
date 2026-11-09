@@ -66,21 +66,21 @@ function computeFunnel(requests: ApiRequest[]) {
   });
 }
 
-function computeTopEmployees(requests: ApiRequest[], getUserName: (id?: string) => string | undefined) {
+function computeTopBy(
+  requests: ApiRequest[],
+  getUserName: (id?: string) => string | undefined,
+  field: "measurer_id" | "installer_id" | "partner_id",
+  role: string
+) {
   const counts: Record<string, { name: string; role: string; completed: number }> = {};
 
   requests.forEach(r => {
     if (!DONE_STATUSES.includes(r.status as RequestStatus)) return;
-    
-    const checkUser = (id?: string, role?: string) => {
-      if (!id) return;
-      const name = getUserName(id) || id;
-      if (!counts[id]) counts[id] = { name, role: role || "", completed: 0 };
-      counts[id].completed++;
-    };
-
-    checkUser(r.measurer_id, "Замерщик");
-    checkUser(r.installer_id, "Монтажник");
+    const id = r[field];
+    if (!id) return;
+    const name = getUserName(id) || id;
+    if (!counts[id]) counts[id] = { name, role, completed: 0 };
+    counts[id].completed++;
   });
 
   return Object.values(counts).sort((a, b) => b.completed - a.completed).slice(0, 5);
@@ -98,7 +98,9 @@ const AdminDashboard = () => {
   const stats = useMemo(() => computeStats(requests), [requests]);
   const chartData = useMemo(() => computeWeeklyChart(requests), [requests]);
   const funnelData = useMemo(() => computeFunnel(requests), [requests]);
-  const topEmployees = useMemo(() => computeTopEmployees(requests, getUserName), [requests, getUserName]);
+  const topInstallers = useMemo(() => computeTopBy(requests, getUserName, "installer_id", "Монтажник"), [requests, getUserName]);
+  const topMeasurers = useMemo(() => computeTopBy(requests, getUserName, "measurer_id", "Замерщик"), [requests, getUserName]);
+  const topPartners = useMemo(() => computeTopBy(requests, getUserName, "partner_id", "Партнёр"), [requests, getUserName]);
 
   const statCards = [
     { label: "Всего заявок", value: stats.total, icon: <ClipboardList size={20} />, color: "text-blue-600 bg-blue-50", onClick: () => navigate("/admin/requests") },
