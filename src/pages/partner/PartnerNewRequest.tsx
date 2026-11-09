@@ -51,7 +51,7 @@ const PartnerNewRequest = () => {
     const e: Record<string, string> = {};
     if (!city) e.city = "Выберите город";
     if (!address.trim()) e.address = "Укажите адрес";
-    if (phone.replace(/\D/g, "").length < 11) e.phone = "Введите корректный номер";
+    if (phone.replace(/\D/g, "").length < 10) e.phone = "Введите корректный номер";
     if (!contactName.trim()) e.contactName = "Укажите контактное лицо";
     if (type === "reclamation" && !comment.trim()) e.comment = "Опишите проблему";
     if (!agree) e.agree = "Необходимо согласие";
