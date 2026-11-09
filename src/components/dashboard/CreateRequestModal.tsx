@@ -53,7 +53,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
     const e: Record<string, string> = {};
     if (!type) e.type = "Выберите тип заявки";
     if (!clientName.trim()) e.clientName = "Обязательно";
-    if (clientPhone.replace(/\D/g, "").length < 11) e.clientPhone = "Некорректный номер";
+    if (clientPhone.replace(/\D/g, "").length < 10) e.clientPhone = "Некорректный номер";
     if (!clientAddress.trim()) e.clientAddress = "Обязательно";
     if (!city) e.city = "Выберите город";
     return e;

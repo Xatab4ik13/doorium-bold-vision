@@ -69,7 +69,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       .then((e) => {
         setEditNumber(e.number || null);
         setClientName(e.client_name || "");
-        setClientPhone(e.client_phone ? formatPhone(e.client_phone) : "+7 ");
+        setClientPhone(e.client_phone ? formatPhone(e.client_phone) : "");
         setClientAddress(e.client_address || "");
         setCity(e.city === "spb" ? "spb" : "moscow");
         setItems(Array.isArray(e.items) ? e.items : []);
