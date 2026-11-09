@@ -117,7 +117,15 @@ const InstallerDashboard = () => {
 
   // No separate "start installation" step needed - installer confirms date then completes
 
-  const activeRequests = requests.filter((r) => !["closed", "cancelled"].includes(r.status));
+  const fmtDate = (d: string) => {
+    const [y, m, dd] = d.split("T")[0].split("-");
+    return `${dd}.${m}.${y}`;
+  };
+
+  // Незакрытые заявки первыми, ближайшая дата монтажа — сверху
+  const activeRequests = requests
+    .filter((r) => !["closed", "cancelled"].includes(r.status))
+    .sort((a, b) => (a.agreed_date || "9999") < (b.agreed_date || "9999") ? -1 : 1);
   const doneRequests = requests.filter((r) => r.status === "closed");
 
   const missingFields: string[] = [];
@@ -143,7 +151,7 @@ const InstallerDashboard = () => {
             {activeRequests.map((r) => (
               <Card key={r.id}
                 className={`hover:shadow-md transition-shadow cursor-pointer border-l-4 ${
-                  selected?.id === r.id ? "border-l-primary ring-2 ring-primary/20" : "border-l-orange-400"
+                  selected?.id === r.id ? "border-l-primary ring-2 ring-primary/20" : "border-l-red-500 bg-red-50/50"
                 }`}
                 onClick={() => handleSelectRequest(r)}>
                 <CardContent className="p-4">
@@ -164,8 +172,8 @@ const InstallerDashboard = () => {
                       <p className="font-semibold">{r.client_name}</p>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin size={12} /> <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(r.client_address + (r.city ? ", " + r.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{r.client_address}</a></div>
                       {r.agreed_date && (
-                        <div className="flex items-center gap-1 text-xs text-primary font-medium">
-                          <Calendar size={12} /> Согласовано: {r.agreed_date.split("T")[0]}
+                        <div className="inline-flex items-center gap-1.5 mt-1 px-2.5 py-1 rounded-lg bg-red-100 text-red-700 text-sm font-bold">
+                          <Calendar size={14} /> {r.type === "reclamation" ? "Визит" : "Монтаж"}: {fmtDate(r.agreed_date)}
                         </div>
                       )}
                     </div>
