@@ -6,6 +6,7 @@ import { ClipboardList, Clock, CheckCircle, AlertTriangle, Briefcase, Loader2, P
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 import RequestFilters, { type FilterState, defaultFilters } from "@/components/dashboard/RequestFilters";
 import CreateRequestModal from "@/components/dashboard/CreateRequestModal";
+import OverdueRequestsCard from "@/components/dashboard/OverdueRequestsCard";
 import Pagination from "@/components/dashboard/Pagination";
 import CityToggle, { type CityFilter } from "@/components/dashboard/CityToggle";
 import MobileRequestCard from "@/components/dashboard/MobileRequestCard";
@@ -31,7 +32,7 @@ const ManagerDashboard = () => {
   const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва" });
   const [quickFilter, setQuickFilter] = useState("all");
   const { requests, total, page, totalPages, limit, counts, loading, setPage, refetch } = usePaginatedRequests(filters, { quickFilter });
-  const { createRequest, updateRequest } = useRequests();
+  const { requests: allRequests, createRequest, updateRequest } = useRequests();
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
@@ -71,6 +72,9 @@ const ManagerDashboard = () => {
             <Plus size={16} /> Создать заявку
           </button>
         </div>
+
+        {/* Overdue installations & reclamations (>5 days not closed) */}
+        <OverdueRequestsCard requests={allRequests} onOpenRequest={(r) => setSelectedRequest(r)} />
 
         {/* Quick filters */}
         <div className="flex flex-wrap gap-2">

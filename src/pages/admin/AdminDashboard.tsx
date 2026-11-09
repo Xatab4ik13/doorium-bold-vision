@@ -11,6 +11,7 @@ import { format, subDays, parseISO, startOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
 import { mskDayKey } from "@/lib/formatDate";
 import { useNavigate } from "react-router-dom";
+import OverdueRequestsCard from "@/components/dashboard/OverdueRequestsCard";
 
 const FUNNEL_STAGES: { status: RequestStatus; fill: string }[] = [
   { status: "new", fill: "hsl(217, 91%, 50%)" },
@@ -137,6 +138,9 @@ const AdminDashboard = () => {
             </Card>
           ))}
         </div>
+
+        {/* Overdue installations & reclamations (>5 days not closed) */}
+        <OverdueRequestsCard requests={requests} onOpenRequest={() => navigate("/admin/requests")} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Weekly chart */}
