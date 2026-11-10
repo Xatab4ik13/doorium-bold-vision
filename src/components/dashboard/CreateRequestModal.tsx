@@ -125,7 +125,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-[70] flex items-end md:items-center justify-center md:p-4">
+      <div className="fixed inset-0 z-[70] dashboard-theme flex items-end md:items-center justify-center md:p-4">
         <div
           className="absolute inset-0 bg-foreground/50"
           onClick={() => {
