@@ -12,6 +12,7 @@ import { ru } from "date-fns/locale";
 import { mskDayKey } from "@/lib/formatDate";
 import { useNavigate } from "react-router-dom";
 import OverdueRequestsCard from "@/components/dashboard/OverdueRequestsCard";
+import { computeTopMeasurers } from "@/lib/topMeasurers";
 
 const FUNNEL_STAGES: { status: RequestStatus; fill: string }[] = [
   { status: "new", fill: "hsl(217, 91%, 50%)" },
@@ -99,7 +100,7 @@ const AdminDashboard = () => {
   const chartData = useMemo(() => computeWeeklyChart(requests), [requests]);
   const funnelData = useMemo(() => computeFunnel(requests), [requests]);
   const topInstallers = useMemo(() => computeTopBy(requests, getUserName, "installer_id", "Монтажник"), [requests, getUserName]);
-  const topMeasurers = useMemo(() => computeTopBy(requests, getUserName, "measurer_id", "Замерщик"), [requests, getUserName]);
+  const topMeasurers = useMemo(() => computeTopMeasurers(requests, getUserName), [requests, getUserName]);
   const topPartners = useMemo(() => computeTopBy(requests, getUserName, "partner_id", "Партнёр"), [requests, getUserName]);
 
   const statCards = [
