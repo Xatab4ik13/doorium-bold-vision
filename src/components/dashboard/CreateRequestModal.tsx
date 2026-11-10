@@ -136,7 +136,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.97 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="relative bg-card shadow-2xl w-full max-w-lg rounded-t-2xl md:rounded-2xl max-h-[90vh] md:max-h-[90vh] flex flex-col"
+          className="relative bg-card shadow-2xl w-full max-w-lg rounded-t-2xl md:rounded-2xl max-h-[90dvh] min-h-0 overflow-hidden flex flex-col"
           onClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
           style={{
@@ -144,14 +144,14 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
             paddingTop: isMobile ? "env(safe-area-inset-top, 0px)" : undefined,
           }}
         >
-          <div className="flex items-center justify-between p-5 border-b border-border">
+          <div className="flex shrink-0 items-center justify-between p-5 border-b border-border">
             <h2 className="text-lg font-heading font-bold">Новая заявка</h2>
             <button onClick={onClose} className="p-2 rounded-xl hover:bg-accent transition-colors">
               <X size={18} />
             </button>
           </div>
 
-          <div className="p-5 space-y-4 flex-1 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: "touch" as any, touchAction: "pan-y" }}>
+          <div className="p-5 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
             {/* Type */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-2 block">Тип заявки <span className="text-destructive">*</span></label>
@@ -329,7 +329,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 p-5 border-t border-border sticky bottom-0 bg-card">
+          <div className="flex shrink-0 justify-end gap-3 p-5 border-t border-border bg-card">
             <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">
               Отмена
             </button>
