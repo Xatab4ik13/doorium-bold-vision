@@ -11,6 +11,7 @@ import api, { uploadFile, fileUrl } from "@/lib/api";
 import { formatPhone } from "@/lib/formatPhone";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileFullScreen from "./MobileFullScreen";
+import { Button } from "@/components/ui/button";
 
 /** Format ISO date string to DD.MM.YYYY */
 const fmtDate = (iso?: string | null) => {
@@ -581,7 +582,14 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     {showDateField && (
                       <InfoRow icon={<Calendar size={16} className="text-emerald-600" />} label={request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}>
                         {canChangeDate ? (
-                          <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-primary" />
+                          <div className="flex items-center gap-2">
+                            <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)} className="min-w-0 flex-1 text-sm font-medium bg-transparent focus:outline-none text-primary" />
+                            {agreedDate && (
+                              <Button type="button" variant="ghost" size="icon" onClick={() => setAgreedDate("")} className="shrink-0 text-muted-foreground hover:text-destructive" aria-label="Очистить дату" title="Очистить дату">
+                                <X size={16} />
+                              </Button>
+                            )}
+                          </div>
                         ) : (
                           <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
                         )}
