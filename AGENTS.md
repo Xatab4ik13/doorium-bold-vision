@@ -1,0 +1,1 @@
+- Keep measurer ranking in a pure helper with regression tests; it counts completed measurement requests independently of installation and partner rankings.
