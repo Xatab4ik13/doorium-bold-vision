@@ -143,7 +143,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Overdue installations & reclamations (>5 days not closed) */}
-        <OverdueRequestsCard requests={requests} onOpenRequest={() => navigate("/admin/requests")} />
+        <OverdueRequestsCard requests={requests} onOpenRequest={(r) => navigate(`/admin/requests?open=${r.id}`)} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Weekly chart */}

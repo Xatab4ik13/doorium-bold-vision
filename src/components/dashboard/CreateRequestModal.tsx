@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useState, useRef, useEffect } from "react";
 import { X, Send, Loader2, MapPin, Phone, User, FileText, Building2, Upload, Trash2, Handshake } from "lucide-react";
 import { type ApiRequest, useUsers } from "@/hooks/useRequests";
@@ -122,7 +123,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
       errors[field] ? "border-destructive ring-1 ring-destructive/20" : "border-border hover:border-primary/40"
     }`;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <div className="fixed inset-0 z-[70] flex items-end md:items-center justify-center md:p-4">
         <div
@@ -341,7 +342,8 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

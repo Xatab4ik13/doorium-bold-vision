@@ -43,8 +43,15 @@ const AdminRequests = () => {
 
   const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва", search: searchFromUrl, status: initialStatus, type: initialType });
   const { requests, total, page, totalPages, limit, loading, setPage, refetch } = usePaginatedRequests(filters, { quickFilter: quickFromUrl === "in_progress" ? quickFromUrl : undefined });
-  const { createRequest, deleteRequest, updateRequest } = useRequests();
+  const { requests: allRequests, createRequest, deleteRequest, updateRequest } = useRequests();
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
+  const openFromUrl = searchParams.get("open");
+  const [openedFromUrl, setOpenedFromUrl] = useState(false);
+  useEffect(() => {
+    if (!openFromUrl || openedFromUrl) return;
+    const found = allRequests.find((r) => String(r.id) === openFromUrl);
+    if (found) { setSelectedRequest(found); setOpenedFromUrl(true); }
+  }, [openFromUrl, openedFromUrl, allRequests]);
   const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => { document.title = "Заявки — Админ-панель"; }, []);
