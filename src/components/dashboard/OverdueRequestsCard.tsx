@@ -5,7 +5,8 @@ import { type ApiRequest } from "@/hooks/useRequests";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
 
 const OVERDUE_DAYS = 5;
-const CLOSED_STATUSES = ["closed", "cancelled", "client_refused"];
+// Закрытые, отменённые и заявки «В ожидании» не считаются просроченными
+const EXCLUDED_STATUSES = ["closed", "cancelled", "client_refused", "pending"];
 
 /** Монтажи и рекламации, не закрытые более OVERDUE_DAYS дней */
 export function getOverdueRequests(requests: ApiRequest[]) {
@@ -13,7 +14,7 @@ export function getOverdueRequests(requests: ApiRequest[]) {
   return requests
     .filter((r) => {
       if (r.type !== "installation" && r.type !== "reclamation") return false;
-      if (CLOSED_STATUSES.includes(r.status)) return false;
+      if (EXCLUDED_STATUSES.includes(r.status)) return false;
       if (!r.created_at) return false;
       return differenceInCalendarDays(now, parseISO(r.created_at)) > OVERDUE_DAYS;
     })
