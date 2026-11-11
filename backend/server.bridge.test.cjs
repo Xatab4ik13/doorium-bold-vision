@@ -87,6 +87,7 @@ test('local save starts bridge delivery before awaiting notifications', async ()
     console: { info() {}, error() {} },
     app: { put: (path, ...handlers) => { handler = handlers.at(-1); } }, auth() {},
     hasClosedAtColumn: false,
+    isValidTransition: () => true,
     pool: { query: async () => ({ rows: [++reads === 1 ? original : { ...original, measurer_id: 'worker', notes: 'Новая заметка' }] }) },
     bridgeAutoSync: async () => { events.push('bridge'); },
     notifyUserById: async () => { events.push('notification'); throw new Error('Notification unavailable'); },
