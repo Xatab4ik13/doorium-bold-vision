@@ -1,2 +1,3 @@
 - Any CRM element rendered via createPortal must carry the `dashboard-theme` class on its root; portals escape the CRM wrapper and otherwise inherit the public site palette.
 - Keep measurer ranking in a pure helper with regression tests; it counts completed measurement requests independently of installation and partner rankings.
+- Start bridge delivery immediately after a local request save, before notifications; notification delays or failures must not prevent synchronization. Cover bridge behavior with backend regression tests.

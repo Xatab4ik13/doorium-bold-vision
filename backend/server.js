@@ -873,6 +873,11 @@ app.put('/api/requests/:id', auth, async (req, res) => {
     );
     const updated = result.rows[0];
 
+    // Start bridge delivery immediately after saving, independently of notifications.
+    if (updated.external_id && updated.external_system) {
+      bridgeAutoSync(updated.id).catch(err => console.error('Bridge auto-sync bg error:', err.message));
+    }
+
     // === NOTIFICATIONS ===
 
     // 1. Measurer assigned
@@ -977,11 +982,6 @@ app.put('/api/requests/:id', auth, async (req, res) => {
         body: `Новый статус: ${statusLabels[updates.status] || updates.status}`,
         url: `/partner?search=${encodeURIComponent(updated.number)}`,
       });
-    }
-
-    // Bridge auto-sync: push changes to remote CRM if linked
-    if (updated.external_id && updated.external_system && typeof bridgeAutoSync === 'function') {
-      bridgeAutoSync(updated.id).catch(err => console.error('Bridge auto-sync bg error:', err.message));
     }
 
     res.json(updated);
@@ -1798,7 +1798,10 @@ async function bridgeAutoSync(requestId) {
 
     const request = rows[0];
     const target = resolveBridgeTarget(request.external_system);
-    if (!target) return;
+    if (!target) {
+      console.error(`Bridge auto-sync skipped: request=${request.id}, remote configuration unavailable`);
+      return;
+    }
 
     const payload = {
       source_system: LOCAL_SYSTEM_NAME,
@@ -1847,11 +1850,15 @@ async function bridgeAutoSync(requestId) {
     for (const attempt of attempts) {
       const result = await bridgeRequest(attempt.method, attempt.url, target.key, attempt.payload);
       if (result.ok) {
+        if (result.data?.blocked) {
+          throw new Error(`Обновление отклонено внешней CRM: ${result.data.reason || 'blocked'}`);
+        }
         synced = true;
         break;
       }
       if (![404, 405].includes(result.status)) {
         lastError = result.data?.error || `HTTP ${result.status}`;
+        break;
       }
     }
 
@@ -1860,6 +1867,7 @@ async function bridgeAutoSync(requestId) {
     }
 
     await pool.query('UPDATE requests SET external_synced_at = NOW() WHERE id = $1', [request.id]);
+    console.info(`Bridge auto-sync OK: request=${request.id}, fields include notes`);
   } catch (err) {
     console.error('Bridge auto-sync error:', err.message);
   }
