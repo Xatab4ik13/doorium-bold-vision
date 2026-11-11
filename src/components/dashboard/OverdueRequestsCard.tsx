@@ -14,7 +14,7 @@ export function getOverdueRequests(requests: ApiRequest[]) {
   return requests
     .filter((r) => {
       if (r.type !== "installation" && r.type !== "reclamation") return false;
-      if (CLOSED_STATUSES.includes(r.status)) return false;
+      if (EXCLUDED_STATUSES.includes(r.status)) return false;
       if (!r.created_at) return false;
       return differenceInCalendarDays(now, parseISO(r.created_at)) > OVERDUE_DAYS;
     })
